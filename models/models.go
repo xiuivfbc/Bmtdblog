@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/glebarez/sqlite"
 	"github.com/wangsongyan/wblog/system"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -22,12 +21,7 @@ func InitDB() (*gorm.DB, error) {
 		err error
 		cfg = system.GetConfiguration()
 	)
-	// 支持 sqlite 和 mysql
-	if cfg.Database.Dialect == "sqlite" {
-		db, err = gorm.Open(sqlite.Open(cfg.Database.DSN), &gorm.Config{})
-	} else if cfg.Database.Dialect == "mysql" {
-		db, err = gorm.Open(mysql.Open(cfg.Database.DSN), &gorm.Config{})
-	}
+	db, err = gorm.Open(mysql.Open(cfg.Database.DSN), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

@@ -10,7 +10,7 @@ public = 'static'
 view = 'views/**/*'
 
 [database]
-dsn = 'cp:cp123456@tcp(127.0.0.1:3306)/wblog?charset=utf8mb4&parseTime=True&loc=Local'
+dsn = 'cp:cp123456@tcp(127.0.0.1:3306)/bmtdblog?charset=utf8mb4&parseTime=True&loc=Local'
 
 [seo]
 description = 'bmtdblog, just my toy'

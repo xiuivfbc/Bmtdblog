@@ -172,6 +172,7 @@ func main() {
 		authorized.POST("/new_batchmail", controllers.SendBatchMail)
 	}
 
+	fmt.Println("Welcome to bmtdblog!")
 	err = router.Run(system.GetConfiguration().Addr)
 	if err != nil {
 		logger.Error("gin run error", "err", err)
