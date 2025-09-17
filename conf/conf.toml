@@ -1,4 +1,4 @@
-addr = ':8090'
+addr = '127.0.0.1:8090'
 signup_enabled = true
 title = 'bmtdblog'
 session_secret = 'wblog'
@@ -10,8 +10,7 @@ public = 'static'
 view = 'views/**/*'
 
 [database]
-dialect = 'sqlite'
-dsn = 'wblog.db?_loc=Asia/Chongqing'
+dsn = 'cp:cp123456@tcp(127.0.0.1:3306)/wblog?charset=utf8mb4&parseTime=True&loc=Local'
 
 [seo]
 description = 'bmtdblog, just my toy'

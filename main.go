@@ -2,12 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"path/filepath"
 
-	"github.com/cihub/seelog"
+	"log/slog"
+	"os"
+	"time"
+
 	"github.com/claudiu/gocron"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -21,31 +24,29 @@ import (
 func main() {
 
 	configFilePath := flag.String("C", "conf/conf.toml", "config file path")
-	logConfigPath := flag.String("L", "conf/seelog.xml", "log config file path")
-	generate := flag.Bool("g", false, "generate sample config file")
 	flag.Parse()
 
-	if *generate {
-		system.Generate()
-		os.Exit(0)
+	// 日志文件名带日期，每次启动新建
+	logDir := "log"
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		panic(err)
 	}
-
-	logger, err := seelog.LoggerFromConfigAsFile(*logConfigPath)
+	logFile := filepath.Join(logDir, fmt.Sprintf("wblog-%s.log", time.Now().Format("20060102-150405")))
+	f, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		seelog.Critical("err parsing seelog config file", err)
-		return
+		panic(err)
 	}
-	seelog.ReplaceLogger(logger)
-	defer seelog.Flush()
+	logger := slog.New(slog.NewJSONHandler(f, nil))
+	slog.SetDefault(logger)
 
 	if err := system.LoadConfiguration(*configFilePath); err != nil {
-		seelog.Critical("err parsing config log file", err)
+		logger.Error("err parsing config log file", "err", err)
 		return
 	}
 
 	db, err := models.InitDB()
 	if err != nil {
-		seelog.Critical("err open databases", err)
+		logger.Error("err open databases", "err", err)
 		return
 	}
 	defer func() {
@@ -173,7 +174,7 @@ func main() {
 
 	err = router.Run(system.GetConfiguration().Addr)
 	if err != nil {
-		seelog.Critical(err)
+		logger.Error("gin run error", "err", err)
 	}
 }
 
@@ -240,7 +241,7 @@ func AuthRequired(adminScope bool) gin.HandlerFunc {
 				return
 			}
 		}
-		seelog.Warnf("User not authorized to visit %s", c.Request.RequestURI)
+		slog.Warn("User not authorized to visit", "uri", c.Request.RequestURI)
 		c.HTML(http.StatusForbidden, "errors/error.html", gin.H{
 			"message": "Forbidden!",
 		})
