@@ -1,11 +1,13 @@
 package models
 
-import ()
+import "time"
 
 type PostTag struct {
-	BaseModel
-	PostId uint `gorm:"uniqueIndex:uk_post_tag"` // post id
-	TagId  uint `gorm:"uniqueIndex:uk_post_tag"` // tag id
+	ID        uint       `gorm:"primarykey"`
+	CreatedAt *time.Time `gorm:"default:null"`
+	UpdatedAt *time.Time `gorm:"default:null"`
+	PostId    uint       `gorm:"uniqueIndex:uk_post_tag"` // post id
+	TagId     uint       `gorm:"uniqueIndex:uk_post_tag"` // tag id
 }
 
 // post_tags

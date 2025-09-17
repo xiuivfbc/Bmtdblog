@@ -1,9 +1,11 @@
 package models
 
-import ()
+import "time"
 
 type Comment struct {
-	BaseModel
+	ID        uint       `gorm:"primarykey"`
+	CreatedAt *time.Time `gorm:"default:null"`
+	UpdatedAt *time.Time `gorm:"default:null"`
 	UserID    uint
 	Content   string `gorm:"type:text"`
 	PostID    uint

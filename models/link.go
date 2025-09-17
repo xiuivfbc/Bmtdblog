@@ -1,15 +1,16 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
+import "time"
 
 type Link struct {
-	gorm.Model
-	Name string
-	Url  string
-	Sort int `gorm:"default:0"`
-	View int
+	ID        uint       `gorm:"primarykey"`
+	CreatedAt *time.Time `gorm:"default:null"`
+	UpdatedAt *time.Time `gorm:"default:null"`
+	DeletedAt *time.Time `gorm:"index"`
+	Name      string
+	Url       string
+	Sort      int `gorm:"default:0"`
+	View      int
 }
 
 func (link *Link) Insert() error {

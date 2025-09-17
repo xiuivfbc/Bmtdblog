@@ -1,11 +1,15 @@
 package models
 
+import "time"
+
 type Page struct {
-	BaseModel
-	Title       string `gorm:"type:text"`     // title
-	Body        string `gorm:"type:longtext"` // body
-	View        int    // view count
-	IsPublished bool   // published or not
+	ID          uint       `gorm:"primarykey"`
+	CreatedAt   *time.Time `gorm:"default:null"`
+	UpdatedAt   *time.Time `gorm:"default:null"`
+	Title       string     `gorm:"type:text"`     // title
+	Body        string     `gorm:"type:longtext"` // body
+	View        int        // view count
+	IsPublished bool       // published or not
 }
 
 func (page *Page) Insert() error {

@@ -89,7 +89,7 @@ func CreateXMLSitemap() (err error) {
 	for _, post := range posts {
 		items = append(items, sitemap.Item{
 			Loc:        fmt.Sprintf("%s/post/%d", domain, post.ID),
-			LastMod:    post.UpdatedAt,
+			LastMod:    *post.UpdatedAt,
 			Changefreq: "weekly",
 			Priority:   0.9,
 		})
@@ -103,7 +103,7 @@ func CreateXMLSitemap() (err error) {
 	for _, page := range pages {
 		items = append(items, sitemap.Item{
 			Loc:        fmt.Sprintf("%s/page/%d", domain, page.ID),
-			LastMod:    page.UpdatedAt,
+			LastMod:    *page.UpdatedAt,
 			Changefreq: "monthly",
 			Priority:   0.8,
 		})

@@ -11,9 +11,11 @@ import (
 )
 
 type Post struct {
-	BaseModel
-	Title        string `gorm:"type:text"`
-	Body         string `gorm:"type:longtext"`
+	ID           uint       `gorm:"primarykey"`
+	CreatedAt    *time.Time `gorm:"default:null"`
+	UpdatedAt    *time.Time `gorm:"default:null"`
+	Title        string     `gorm:"type:text"`
+	Body         string     `gorm:"type:longtext"`
 	View         int
 	IsPublished  bool
 	Tags         []*Tag     `gorm:"-"`

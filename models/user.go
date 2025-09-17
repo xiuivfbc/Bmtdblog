@@ -7,14 +7,17 @@ import (
 )
 
 type User struct {
-	gorm.Model
-	Email         string `gorm:"uniqueIndex;default:null"`
-	Telephone     string `gorm:"uniqueIndex;default:null"`
-	Password      string `gorm:"default:null"`
-	VerifyState   string `gorm:"default:'0'"`
-	SecretKey     string `gorm:"default:null"`
-	OutTime       time.Time
-	GithubLoginId string `gorm:"uniqueIndex;default:null"`
+	ID            uint       `gorm:"primarykey"`
+	CreatedAt     *time.Time `gorm:"default:null"`
+	UpdatedAt     *time.Time `gorm:"default:null"`
+	DeletedAt     *time.Time `gorm:"index"`
+	Email         string     `gorm:"uniqueIndex;default:null"`
+	Telephone     string     `gorm:"uniqueIndex;default:null"`
+	Password      string     `gorm:"default:null"`
+	VerifyState   string     `gorm:"default:'0'"`
+	SecretKey     string     `gorm:"default:null"`
+	OutTime       time.Time  `gorm:"default:null"`
+	GithubLoginId string     `gorm:"uniqueIndex;default:null"`
 	GithubUrl     string
 	IsAdmin       bool
 	AvatarUrl     string

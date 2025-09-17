@@ -2,16 +2,17 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Subscriber struct {
-	gorm.Model
-	Email          string `gorm:"type:varchar(255);uniqueIndex"`
-	VerifyState    bool   `gorm:"default:false"`
-	SubscribeState bool   `gorm:"default:true"`
-	OutTime        time.Time
+	ID             uint       `gorm:"primarykey"`
+	CreatedAt      *time.Time `gorm:"default:null"`
+	UpdatedAt      *time.Time `gorm:"default:null"`
+	DeletedAt      *time.Time `gorm:"index"`
+	Email          string     `gorm:"type:varchar(255);uniqueIndex"`
+	VerifyState    bool       `gorm:"default:false"`
+	SubscribeState bool       `gorm:"default:true"`
+	OutTime        time.Time  `gorm:"default:null"`
 	SecretKey      string
 	Signature      string
 }

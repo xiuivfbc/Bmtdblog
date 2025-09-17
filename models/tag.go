@@ -1,11 +1,13 @@
 package models
 
-import ()
+import "time"
 
 type Tag struct {
-	BaseModel
-	Name  string
-	Total int `gorm:"->"`
+	ID        uint       `gorm:"primarykey"`
+	CreatedAt *time.Time `gorm:"default:null"`
+	UpdatedAt *time.Time `gorm:"default:null"`
+	Name      string
+	Total     int `gorm:"->"`
 }
 
 func (tag *Tag) Insert() error {
