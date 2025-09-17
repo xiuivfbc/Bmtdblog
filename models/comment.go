@@ -55,12 +55,6 @@ func ListCommentByPostID(id uint) ([]*Comment, error) {
 	return comments, err
 }
 
-/*func GetComment(id interface{}) (*Comment, error) {
-	var comment Comment
-	err := DB.First(&comment, id).Error
-	return &comment, err
-}*/
-
 func CountComment() int64 {
 	var count int64
 	DB.Model(&Comment{}).Count(&count)

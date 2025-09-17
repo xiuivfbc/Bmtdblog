@@ -40,9 +40,3 @@ func GetLinkById(id uint) (*Link, error) {
 	err := DB.FirstOrCreate(&link, "id = ?", id).Error
 	return &link, err
 }
-
-/*func GetLinkByUrl(url string) (*Link, error) {
-	var link Link
-	err := DB.Find(&link, "url = ?", url).Error
-	return &link, err
-}*/

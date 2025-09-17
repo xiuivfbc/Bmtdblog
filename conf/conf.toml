@@ -1,7 +1,7 @@
 addr = '127.0.0.1:8090'
 signup_enabled = true
 title = 'bmtdblog'
-session_secret = 'wblog'
+session_secret = 'bmtdblog'
 domain = 'http://localhost'
 file_server = 'smms'
 notify_emails = ''
@@ -16,15 +16,15 @@ dsn = 'cp:cp123456@tcp(127.0.0.1:3306)/bmtdblog?charset=utf8mb4&parseTime=True&l
 description = 'bmtdblog, just my toy'
 
 [seo.author]
-name = 'wangsy'
-email = 'wangsy0129@qq.com'
+name = 'hvfwdemc'
+email = '3138910969@qq.com'
 
 [qiniu]
 enabled = false
 accesskey = ''
 secretkey = ''
 fileserver = ''
-bucket = 'wblog'
+bucket = 'bmtdblog'
 
 [smms]
 enabled = false
