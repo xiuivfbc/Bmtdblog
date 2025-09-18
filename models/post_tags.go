@@ -4,8 +4,8 @@ import "time"
 
 type PostTag struct {
 	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `gorm:"default:null"`
-	UpdatedAt *time.Time `gorm:"default:null"`
+	CreatedAt *time.Time `gorm:"autoCreateTime"`
+	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
 	PostId    uint       `gorm:"uniqueIndex:uk_post_tag"` // post id
 	TagId     uint       `gorm:"uniqueIndex:uk_post_tag"` // tag id
 }

@@ -12,8 +12,8 @@ import (
 
 type Post struct {
 	ID           uint       `gorm:"primarykey"`
-	CreatedAt    *time.Time `gorm:"default:null"`
-	UpdatedAt    *time.Time `gorm:"default:null"`
+	CreatedAt    *time.Time `gorm:"autoCreateTime"`
+	UpdatedAt    *time.Time `gorm:"autoUpdateTime"`
 	Title        string     `gorm:"type:text"`
 	Body         string     `gorm:"type:longtext"`
 	View         int

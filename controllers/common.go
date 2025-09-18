@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cihub/seelog"
-
 	"github.com/denisbakhtin/sitemap"
 	"github.com/gin-gonic/gin"
 	"github.com/wangsongyan/wblog/helpers"
@@ -67,7 +65,7 @@ func CreateXMLSitemap() (err error) {
 	folder := path.Join(helpers.GetCurrentDirectory(), cfg.PublicDir, "sitemap")
 	err = os.MkdirAll(folder, os.ModePerm)
 	if err != nil {
-		seelog.Errorf("create folder:%v", err)
+		system.Logger.Error("create folder error", "err", err)
 		return
 	}
 	domain := cfg.Domain
@@ -83,7 +81,7 @@ func CreateXMLSitemap() (err error) {
 
 	posts, err := models.ListPublishedPost("", 0, 0)
 	if err != nil {
-		seelog.Errorf("models.ListPublishedPost:%v", err)
+		system.Logger.Error("models.ListPublishedPost error", "err", err)
 		return
 	}
 	for _, post := range posts {
@@ -97,7 +95,7 @@ func CreateXMLSitemap() (err error) {
 
 	pages, err := models.ListPublishedPage()
 	if err != nil {
-		seelog.Errorf("models.ListPublishedPage:%v", err)
+		system.Logger.Error("models.ListPublishedPage error", "err", err)
 		return
 	}
 	for _, page := range pages {
@@ -111,12 +109,12 @@ func CreateXMLSitemap() (err error) {
 
 	err = sitemap.SiteMap(path.Join(folder, "sitemap1.xml.gz"), items)
 	if err != nil {
-		seelog.Errorf("sitemap.SiteMap:%v", err)
+		system.Logger.Error("sitemap.SiteMap error", "err", err)
 		return
 	}
 	err = sitemap.SiteMapIndex(folder, "sitemap_index.xml", domain+"/static/sitemap/")
 	if err != nil {
-		seelog.Errorf("sitemap.SiteMapIndex:%v", err)
+		system.Logger.Error("sitemap.SiteMapIndex error", "err", err)
 		return
 	}
 	return

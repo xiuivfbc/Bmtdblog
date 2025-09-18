@@ -47,7 +47,7 @@ func main() {
 		Handler: router,
 	}
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		slog.Error("HTTP server error", "err", err)
+		system.Logger.Error("HTTP server error", "err", err)
 	}
 
 	defer func() {
@@ -63,7 +63,7 @@ func clean() {
 	fmt.Println("Cleaning...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := srv.Shutdown(ctx); err != nil {
-		slog.Error("HTTP server shutdown error", "err", err)
+		system.Logger.Error("HTTP server shutdown error", "err", err)
 	}
 	gocron.Clear()
 	dbInstance, _ := db.DB()
@@ -73,10 +73,10 @@ func clean() {
 	os.Exit(0)
 }
 
-// init configuration , logger and database
+// init configuration , system.logger and database
 func initSomething() {
-	// logger
-	logDir := "log"
+	// system.logger
+	logDir := "slog"
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		panic(err)
 	}
@@ -85,14 +85,14 @@ func initSomething() {
 	if err != nil {
 		panic(err)
 	}
-	logger := slog.New(slog.NewJSONHandler(f, nil))
-	slog.SetDefault(logger)
+	system.Logger = slog.New(slog.NewJSONHandler(f, nil))
+	slog.SetDefault(system.Logger)
 
 	//configuration
 	configFilePath := flag.String("C", "conf/conf.toml", "config file path")
 	flag.Parse()
 	if err := system.LoadConfiguration(*configFilePath); err != nil {
-		logger.Error("err parsing config log file", "err", err)
+		system.Logger.Error("err parsing config log file", "err", err)
 		f.Close()
 		os.Exit(1)
 	}
@@ -100,7 +100,7 @@ func initSomething() {
 	//database
 	db, err = models.InitDB()
 	if err != nil {
-		logger.Error("err open databases", "err", err)
+		system.Logger.Error("err open databases", "err", err)
 		f.Close()
 		os.Exit(1)
 	}

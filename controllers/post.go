@@ -44,7 +44,7 @@ func PostCreate(c *gin.Context) {
 	title := c.PostForm("title")
 	body := c.PostForm("body")
 	isPublished := c.PostForm("isPublished")
-	published := "on" == isPublished
+	published := isPublished == "on"
 
 	post := &models.Post{
 		Title:       title,
@@ -104,7 +104,7 @@ func PostUpdate(c *gin.Context) {
 	title := c.PostForm("title")
 	body := c.PostForm("body")
 	isPublished := c.PostForm("isPublished")
-	published := "on" == isPublished
+	published := isPublished == "on"
 
 	id, err := ParamUint(c, "id")
 	if err != nil {

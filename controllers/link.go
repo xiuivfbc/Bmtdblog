@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"github.com/cihub/seelog"
-	"github.com/wangsongyan/wblog/system"
 	"net/http"
 	"strconv"
+
+	"github.com/wangsongyan/wblog/system"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wangsongyan/wblog/models"
@@ -89,7 +89,7 @@ func LinkGet(c *gin.Context) {
 	}
 	link, err := models.GetLinkById(id)
 	if err != nil {
-		seelog.Errorf("models.GetLinkById err: %v", err)
+		system.Logger.Error("models.GetLinkById error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

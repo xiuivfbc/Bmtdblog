@@ -6,8 +6,8 @@ import (
 
 type Subscriber struct {
 	ID             uint       `gorm:"primarykey"`
-	CreatedAt      *time.Time `gorm:"default:null"`
-	UpdatedAt      *time.Time `gorm:"default:null"`
+	CreatedAt      *time.Time `gorm:"autoCreateTime"`
+	UpdatedAt      *time.Time `gorm:"autoUpdateTime"`
 	DeletedAt      *time.Time `gorm:"index"`
 	Email          string     `gorm:"type:varchar(255);uniqueIndex"`
 	VerifyState    bool       `gorm:"default:false"`

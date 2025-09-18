@@ -8,8 +8,8 @@ import (
 
 type User struct {
 	ID            uint       `gorm:"primarykey"`
-	CreatedAt     *time.Time `gorm:"default:null"`
-	UpdatedAt     *time.Time `gorm:"default:null"`
+	CreatedAt     *time.Time `gorm:"autoCreateTime"`
+	UpdatedAt     *time.Time `gorm:"autoUpdateTime"`
 	DeletedAt     *time.Time `gorm:"index"`
 	Email         string     `gorm:"uniqueIndex;default:null"`
 	Telephone     string     `gorm:"uniqueIndex;default:null"`
@@ -30,7 +30,20 @@ func (user *User) Insert() error {
 }
 
 func (user *User) Update() error {
-	return DB.Save(user).Error
+	return DB.Model(user).Updates(map[string]any{
+		"Email":         user.Email,
+		"Telephone":     user.Telephone,
+		"Password":      user.Password,
+		"VerifyState":   user.VerifyState,
+		"SecretKey":     user.SecretKey,
+		"OutTime":       user.OutTime,
+		"GithubLoginId": user.GithubLoginId,
+		"GithubUrl":     user.GithubUrl,
+		"IsAdmin":       user.IsAdmin,
+		"AvatarUrl":     user.AvatarUrl,
+		"NickName":      user.NickName,
+		"LockState":     user.LockState,
+	}).Error
 }
 
 func GetUserByUsername(username string) (*User, error) {

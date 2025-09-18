@@ -4,8 +4,8 @@ import "time"
 
 type Page struct {
 	ID          uint       `gorm:"primarykey"`
-	CreatedAt   *time.Time `gorm:"default:null"`
-	UpdatedAt   *time.Time `gorm:"default:null"`
+	CreatedAt   *time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   *time.Time `gorm:"autoUpdateTime"`
 	Title       string     `gorm:"type:text"`     // title
 	Body        string     `gorm:"type:longtext"` // body
 	View        int        // view count
@@ -17,7 +17,7 @@ func (page *Page) Insert() error {
 }
 
 func (page *Page) Update() error {
-	return DB.Model(page).Updates(map[string]interface{}{
+	return DB.Model(page).Updates(map[string]any{
 		"title":        page.Title,
 		"body":         page.Body,
 		"is_published": page.IsPublished,
@@ -25,7 +25,7 @@ func (page *Page) Update() error {
 }
 
 func (page *Page) UpdateView() error {
-	return DB.Model(page).Updates(map[string]interface{}{
+	return DB.Model(page).Updates(map[string]any{
 		"view": page.View,
 	}).Error
 }

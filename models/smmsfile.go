@@ -4,8 +4,8 @@ import "time"
 
 type SmmsFile struct {
 	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `gorm:"default:null"`
-	UpdatedAt *time.Time `gorm:"default:null"`
+	CreatedAt *time.Time `gorm:"autoCreateTime"`
+	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
 	FileName  string     `json:"filename"`
 	StoreName string     `json:"storename"`
 	Size      int        `json:"size"`

@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"github.com/cihub/seelog"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/wangsongyan/wblog/models"
 	"github.com/wangsongyan/wblog/system"
-	"net/http"
 )
 
 func PageGet(c *gin.Context) {
@@ -40,7 +40,7 @@ func PageCreate(c *gin.Context) {
 	title := c.PostForm("title")
 	body := c.PostForm("body")
 	isPublished := c.PostForm("isPublished")
-	published := "on" == isPublished
+	published := isPublished == "on"
 
 	page := &models.Page{
 		Title:       title,
@@ -82,7 +82,8 @@ func PageUpdate(c *gin.Context) {
 	title := c.PostForm("title")
 	body := c.PostForm("body")
 	isPublished := c.PostForm("isPublished")
-	published := "on" == isPublished
+	published := isPublished == "on"
+
 	id, err := ParamUint(c, "id")
 	if err != nil {
 		HandleMessage(c, err.Error())
@@ -92,7 +93,7 @@ func PageUpdate(c *gin.Context) {
 	page.ID = id
 	err = page.Update()
 	if err != nil {
-		seelog.Errorf("page.Update err: %v", err)
+		system.Logger.Error("page.Update error", "err", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

@@ -40,7 +40,7 @@ func UUID() string {
 }
 
 func GetCurrentTime() time.Time {
-	loc, _ := time.LoadLocation("Asia/Shanghai")
+	loc, _ := time.LoadLocation("Asia/Chongqing")
 	return time.Now().In(loc)
 }
 
@@ -54,7 +54,7 @@ func SendToMail(user, password, host, to, subject, body, mailType string) error 
 	auth := smtp.PlainAuth("", user, password, hp[0])
 	var contentType string
 	if mailType == "html" {
-		contentType = "Content-Type: text/" + mailType + "; charset=UTF-8"
+		contentType = "Content-Type: text/html" + "; charset=UTF-8"
 	} else {
 		contentType = "Content-Type: text/plain" + "; charset=UTF-8"
 	}
@@ -75,59 +75,39 @@ func PathExists(path string) (bool, error) {
 }
 
 func Decrypt(ciphertext, key []byte) ([]byte, error) {
-	// Create the AES cipher
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-
-	// Before even testing the decryption,
-	// if the text is too small, then it is incorrect
-	if len(ciphertext) < aes.BlockSize {
-		err = errors.New("Text is too short")
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
 		return nil, err
 	}
-
-	// Get the 16 byte IV
-	iv := ciphertext[:aes.BlockSize]
-
-	// Remove the IV from the ciphertext
-	ciphertext = ciphertext[aes.BlockSize:]
-
-	// Return a decrypted stream
-	stream := cipher.NewCFBDecrypter(block, iv)
-
-	// Decrypt bytes from ciphertext
-	stream.XORKeyStream(ciphertext, ciphertext)
-
-	return ciphertext, nil
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+	nonce, enc := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, enc, nil)
+	if err != nil {
+		return nil, err
+	}
+	return plaintext, nil
 }
 
 func Encrypt(plaintext, key []byte) ([]byte, error) {
-
-	// Create the AES cipher
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-
-	// Empty array of 16 + plaintext length
-	// Include the IV at the beginning
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
-
-	// Slice of first 16 bytes
-	iv := ciphertext[:aes.BlockSize]
-
-	// Write 16 rand bytes to fill iv
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
 		return nil, err
 	}
-
-	// Return an encrypted stream
-	stream := cipher.NewCFBEncrypter(block, iv)
-
-	// Encrypt bytes from plaintext to ciphertext
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
-
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
 	return ciphertext, nil
 }

@@ -4,14 +4,7 @@ import (
 	"github.com/wangsongyan/wblog/system"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"time"
 )
-
-type BaseModel struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-}
 
 var DB *gorm.DB
 

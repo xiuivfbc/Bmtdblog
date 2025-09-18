@@ -3,16 +3,18 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/alimoeeny/gooauth2"
-	"github.com/cihub/seelog"
+	"io"
+
+	oauth "github.com/alimoeeny/gooauth2"
+
+	"net/http"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/wangsongyan/wblog/helpers"
 	"github.com/wangsongyan/wblog/models"
 	"github.com/wangsongyan/wblog/system"
-	"io/ioutil"
-	"net/http"
 )
 
 type GithubUserInfo struct {
@@ -160,7 +162,7 @@ func Oauth2Callback(c *gin.Context) {
 	// exchange accesstoken by code
 	token, err := exchangeTokenByCode(code)
 	if err != nil {
-		seelog.Errorf("exchangeTokenByCode err: %v", err)
+		system.Logger.Error("exchangeTokenByCode error", "err", err)
 		c.Redirect(http.StatusMovedPermanently, "/signin")
 		return
 	}
@@ -168,7 +170,7 @@ func Oauth2Callback(c *gin.Context) {
 	//get github userinfo by accesstoken
 	userInfo, err = getGithubUserInfoByAccessToken(token)
 	if err != nil {
-		seelog.Errorf("getGithubUserInfoByAccessToken err: %v", err)
+		system.Logger.Error("getGithubUserInfoByAccessToken error", "err", err)
 		c.Redirect(http.StatusMovedPermanently, "/signin")
 		return
 	}
@@ -237,7 +239,7 @@ func exchangeTokenByCode(code string) (accessToken string, err error) {
 	// cache token
 	tokenCache := oauth.CacheFile("./request.token")
 	if err := tokenCache.PutToken(token); err != nil {
-		seelog.Errorf("tokenCache.PutToken err: %v", err)
+		system.Logger.Error("tokenCache.PutToken error", "err", err)
 	}
 	return
 }
@@ -260,7 +262,7 @@ func getGithubUserInfoByAccessToken(token string) (*GithubUserInfo, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

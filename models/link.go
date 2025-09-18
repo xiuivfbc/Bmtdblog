@@ -4,8 +4,8 @@ import "time"
 
 type Link struct {
 	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `gorm:"default:null"`
-	UpdatedAt *time.Time `gorm:"default:null"`
+	CreatedAt *time.Time `gorm:"autoCreateTime"`
+	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
 	DeletedAt *time.Time `gorm:"index"`
 	Name      string
 	Url       string
@@ -18,7 +18,11 @@ func (link *Link) Insert() error {
 }
 
 func (link *Link) Update() error {
-	return DB.Save(link).Error
+	return DB.Model(link).Updates(map[string]any{
+		"Name": link.Name,
+		"Url":  link.Url,
+		"Sort": link.Sort,
+	}).Error
 }
 
 func (link *Link) Delete() error {

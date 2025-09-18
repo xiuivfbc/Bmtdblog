@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 
-	"github.com/cihub/seelog"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
@@ -27,9 +26,9 @@ func BackupPost(c *gin.Context) {
 	err = Backup()
 	if err != nil {
 		res["message"] = err.Error()
-		return
+	} else {
+		res["succeed"] = true
 	}
-	res["succeed"] = true
 }
 
 func RestorePost(c *gin.Context) {
@@ -66,7 +65,7 @@ func RestorePost(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err = io.ReadAll(resp.Body)
 	if err != nil {
 		res["message"] = err.Error()
 		return
@@ -78,8 +77,8 @@ func RestorePost(c *gin.Context) {
 			return
 		}
 	}
-	err = ioutil.WriteFile(fileName, bodyBytes, os.ModePerm)
-	if err == nil {
+	err = os.WriteFile(fileName, bodyBytes, os.ModePerm)
+	if err != nil {
 		res["message"] = err.Error()
 		return
 	}
@@ -100,31 +99,31 @@ func Backup() (err error) {
 		return
 	}
 	if !cfg.Backup.Enabled || !cfg.Qiniu.Enabled {
-		err = errors.New("backup or quniu not enabled")
+		err = errors.New("backup or qiniu not enabled")
 		return
 	}
 
 	u, err = url.Parse(cfg.Database.DSN)
 	if err != nil {
-		seelog.Debugf("parse dsn error:%v", err)
+		system.Logger.Debug("parse dsn error", "err", err)
 		return
 	}
 	exist, _ = helpers.PathExists(u.Path)
 	if !exist {
 		err = errors.New("database file doesn't exists.")
-		seelog.Debug(err.Error())
+		system.Logger.Debug("database file doesn't exists", "err", err)
 		return
 	}
-	seelog.Debug("start backup...")
-	bodyBytes, err = ioutil.ReadFile(u.Path)
+	system.Logger.Debug("start backup...")
+	bodyBytes, err = os.ReadFile(u.Path)
 	if err != nil {
-		seelog.Error(err)
+		system.Logger.Error("read database file error", "err", err)
 		return
 	}
 	if len(cfg.Backup.BackupKey) > 0 {
 		bodyBytes, err = helpers.Encrypt(bodyBytes, []byte(cfg.Backup.BackupKey))
 		if err != nil {
-			seelog.Error(err)
+			system.Logger.Error("encrypt backup file error", "err", err)
 			return
 		}
 	}
@@ -140,9 +139,9 @@ func Backup() (err error) {
 	fileName := fmt.Sprintf("wblog_%s.db", helpers.GetCurrentTime().Format("20060102150405"))
 	err = uploader.Put(context.Background(), &ret, token, fileName, bytes.NewReader(bodyBytes), int64(len(bodyBytes)), &putExtra)
 	if err != nil {
-		seelog.Debugf("backup error:%v", err)
+		system.Logger.Debug("backup error", "err", err)
 		return
 	}
-	seelog.Debug("backup successfully.")
+	system.Logger.Debug("backup successfully.")
 	return err
 }

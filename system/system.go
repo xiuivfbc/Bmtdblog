@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/spf13/viper"
 )
@@ -85,6 +86,8 @@ type (
 		Backup        Backup      `mapstructure:"backup"`
 	}
 )
+
+var Logger *slog.Logger
 
 func (a Author) String() string {
 	return fmt.Sprintf("%s,%s", a.Name, a.Email)
