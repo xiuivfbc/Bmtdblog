@@ -172,12 +172,7 @@ func ListPostArchives() ([]*QrArchive, error) {
 		archives []*QrArchive
 		querySql string
 	)
-	switch DB.Dialector.Name() {
-	case "mysql":
-		querySql = `select date_format(created_at,'%Y-%m') as month,count(*) as total from posts where is_published = ? group by month order by month desc`
-	case "sqlite":
-		querySql = `select strftime('%Y-%m',created_at) as month,count(*) as total from posts where is_published = ? group by month order by month desc`
-	}
+	querySql = `select date_format(created_at,'%Y-%m') as month,count(*) as total from posts where is_published = ? group by month order by month desc`
 	rows, err := DB.Raw(querySql, true).Rows()
 	if err != nil {
 		return nil, err
@@ -207,20 +202,10 @@ func ListPostByArchive(year, month string, pageIndex, pageSize int) ([]*Post, er
 	}
 	condition := fmt.Sprintf("%s-%s", year, month)
 	if pageIndex > 0 {
-		switch DB.Dialector.Name() {
-		case "mysql":
-			querySql = `select * from posts where date_format(created_at,'%Y-%m') = ? and is_published = ? order by created_at desc limit ? offset ?`
-		case "sqlite":
-			querySql = `select * from posts where strftime('%Y-%m',created_at) = ? and is_published = ? order by created_at desc limit ? offset ?`
-		}
+		querySql = `select * from posts where date_format(created_at,'%Y-%m') = ? and is_published = ? order by created_at desc limit ? offset ?`
 		rows, err = DB.Raw(querySql, condition, true, pageSize, (pageIndex-1)*pageSize).Rows()
 	} else {
-		switch DB.Dialector.Name() {
-		case "mysql":
-			querySql = `select * from posts where date_format(created_at,'%Y-%m') = ? and is_published = ? order by created_at desc`
-		case "sqlite":
-			querySql = `select * from posts where strftime('%Y-%m',created_at) = ? and is_published = ? order by created_at desc`
-		}
+		querySql = `select * from posts where date_format(created_at,'%Y-%m') = ? and is_published = ? order by created_at desc`
 		rows, err = DB.Raw(querySql, condition, true).Rows()
 	}
 	if err != nil {
@@ -242,12 +227,7 @@ func CountPostByArchive(year, month string) (count int, err error) {
 		month = "0" + month
 	}
 	condition := fmt.Sprintf("%s-%s", year, month)
-	switch DB.Dialector.Name() {
-	case "mysql":
-		querySql = `select count(*) from posts where date_format(created_at,'%Y-%m') = ? and is_published = ?`
-	case "sqlite":
-		querySql = `select count(*) from posts where strftime('%Y-%m',created_at) = ? and is_published = ?`
-	}
+	querySql = `select count(*) from posts where date_format(created_at,'%Y-%m') = ? and is_published = ?`
 	err = DB.Raw(querySql, condition, true).Row().Scan(&count)
 	return
 }

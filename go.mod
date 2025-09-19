@@ -6,7 +6,6 @@ toolchain go1.24.5
 
 require (
 	github.com/alimoeeny/gooauth2 v0.0.0-20140214171402-62c620a8c7eb
-	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
 	github.com/claudiu/gocron v0.0.0-20151103142354-980c96bf412b
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
 	github.com/denisbakhtin/sitemap v0.0.0-20151103020935-3b73dfe0369c

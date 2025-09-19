@@ -48,10 +48,6 @@ func RestorePost(c *gin.Context) {
 		return
 	}
 
-	if cfg.Database.Dialect != "sqlite" {
-		res["message"] = "only support sqlite dialect"
-		return
-	}
 	if !cfg.Backup.Enabled || !cfg.Qiniu.Enabled {
 		res["message"] = "backup or quniu not enabled"
 		return
@@ -94,10 +90,6 @@ func Backup() (err error) {
 		cfg       = system.GetConfiguration()
 	)
 
-	if cfg.Database.Dialect != "sqlite" {
-		err = errors.New("only support sqlite dialect")
-		return
-	}
 	if !cfg.Backup.Enabled || !cfg.Qiniu.Enabled {
 		err = errors.New("backup or qiniu not enabled")
 		return

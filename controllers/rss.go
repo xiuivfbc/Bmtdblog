@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cihub/seelog"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/wangsongyan/wblog/helpers"
@@ -27,7 +26,7 @@ func RssGet(c *gin.Context) {
 	feed.Items = make([]*feeds.Item, 0)
 	posts, err := models.ListPublishedPost("", 0, 0)
 	if err != nil {
-		seelog.Errorf("models.ListPublishedPost err: %v", err)
+		system.Logger.Error("models.ListPublishedPost err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -44,7 +43,7 @@ func RssGet(c *gin.Context) {
 	}
 	rss, err := feed.ToRss()
 	if err != nil {
-		seelog.Errorf("feed.ToRss err: %v", err)
+		system.Logger.Error("feed.ToRss err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

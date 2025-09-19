@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 
@@ -69,7 +68,7 @@ func (u SmmsUploader) upload(file multipart.File, fileHeader *multipart.FileHead
 		return
 	}
 	defer resp.Body.Close()
-	bodyBytes, err = ioutil.ReadAll(resp.Body)
+	bodyBytes, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}

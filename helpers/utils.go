@@ -45,7 +45,7 @@ func GetCurrentTime() time.Time {
 }
 
 func GetCurrentDirectory() string {
-	dir := "C:/Users/31389/Desktop/wblog"
+	dir := "C:/Users/31389/Desktop/bmtdblog"
 	return dir
 }
 

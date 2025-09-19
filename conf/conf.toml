@@ -32,10 +32,10 @@ apiurl = 'https://sm.ms/api/v2/upload'
 apikey = ''
 
 [github]
-enabled = false
-clientid = ''
-clientsecret = ''
-redirecturl = 'https://example.com/oauth2callback'
+enabled = true
+clientid = 'Iv23likeZWSmInrQcd1R'
+clientsecret = '2d9032f934f8cf850de78054beb4bf19046e03c3'
+redirecturl = 'https://localhost:8090/oauth2callback'
 authurl = 'https://github.com/login/oauth/authorize?client_id=%s&scope=user:email&state=%s'
 tokenurl = 'https://github.com/login/oauth/access_token'
 scope = ''
@@ -53,7 +53,7 @@ target = ''
 
 [[navigators]]
 title = 'AboutMe'
-url = '/page/6'
+url = '/page/1'
 target = ''
 
 [[navigators]]

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"github.com/cihub/seelog"
 	"math"
 	"net/http"
 	"strconv"
@@ -34,13 +33,13 @@ func ArchiveGet(c *gin.Context) {
 	}
 	posts, err = models.ListPostByArchive(year, month, pageIndex, pageSize)
 	if err != nil {
-		seelog.Errorf("models.ListPostByArchive err: %v", err)
+		system.Logger.Error("models.ListPostByArchive err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	total, err = models.CountPostByArchive(year, month)
 	if err != nil {
-		seelog.Errorf("models.CountPostByArchive err: %v", err)
+		system.Logger.Error("models.CountPostByArchive err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

@@ -175,7 +175,7 @@ func setTemplate(engine *gin.Engine) {
 		"listtag":    helpers.ListTag,
 	}
 	engine.SetFuncMap(funcMap)
-	engine.LoadHTMLGlob("C:/Users/31389/Desktop/wblog/views/**/*.html")
+	engine.LoadHTMLGlob("C:/Users/31389/Desktop/bmtdblog/views/**/*.html")
 }
 
 func setSessions(router *gin.Engine) {

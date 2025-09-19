@@ -149,17 +149,13 @@ func Oauth2Callback(c *gin.Context) {
 	code := c.Query("code")
 	state := c.Query("state")
 
-	// validate state
 	session := sessions.Default(c)
 	if len(state) == 0 || state != session.Get(SessionGithubState) {
 		c.Abort()
 		return
 	}
-	// remove state from session
 	session.Delete(SessionGithubState)
 	session.Save()
-
-	// exchange accesstoken by code
 	token, err := exchangeTokenByCode(code)
 	if err != nil {
 		system.Logger.Error("exchangeTokenByCode error", "err", err)
@@ -167,7 +163,6 @@ func Oauth2Callback(c *gin.Context) {
 		return
 	}
 
-	//get github userinfo by accesstoken
 	userInfo, err = getGithubUserInfoByAccessToken(token)
 	if err != nil {
 		system.Logger.Error("getGithubUserInfoByAccessToken error", "err", err)

@@ -24,13 +24,7 @@ func AuthGet(c *gin.Context) {
 	authurl := "/signin"
 	switch authType {
 	case "github":
-		if cfg.Github.Enabled {
-			authurl = fmt.Sprintf(cfg.Github.AuthUrl, cfg.Github.ClientId, uuid)
-		}
-	case "weibo":
-	case "qq":
-	case "wechat":
-	case "oschina":
+		authurl = fmt.Sprintf(cfg.Github.AuthUrl, cfg.Github.ClientId, uuid)
 	default:
 	}
 	c.Redirect(http.StatusFound, authurl)
