@@ -4,17 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	oauth "github.com/alimoeeny/gooauth2"
-
-	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"github.com/wangsongyan/wblog/helpers"
-	"github.com/wangsongyan/wblog/models"
-	"github.com/wangsongyan/wblog/system"
+	"github.com/xiuivfbc/bmtdblog/helpers"
+	"github.com/xiuivfbc/bmtdblog/models"
+	"github.com/xiuivfbc/bmtdblog/system"
 )
 
 type GithubUserInfo struct {
@@ -66,7 +65,7 @@ func LogoutGet(c *gin.Context) {
 	s := sessions.Default(c)
 	s.Clear()
 	s.Save()
-	c.Redirect(http.StatusSeeOther, "/signin")
+	c.Redirect(http.StatusSeeOther, "/")
 }
 
 func SignupPost(c *gin.Context) {

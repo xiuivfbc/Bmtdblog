@@ -8,8 +8,8 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/wangsongyan/wblog/models"
-	"github.com/wangsongyan/wblog/system"
+	"github.com/xiuivfbc/bmtdblog/models"
+	"github.com/xiuivfbc/bmtdblog/system"
 )
 
 type SmmsUploader struct {

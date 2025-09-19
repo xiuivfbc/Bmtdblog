@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wangsongyan/wblog/models"
+	"github.com/xiuivfbc/bmtdblog/models"
 )
 
 func SendMail(c *gin.Context) {

@@ -13,8 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
-	"github.com/wangsongyan/wblog/helpers"
-	"github.com/wangsongyan/wblog/system"
+	"github.com/xiuivfbc/bmtdblog/helpers"
+	"github.com/xiuivfbc/bmtdblog/system"
 )
 
 func BackupPost(c *gin.Context) {

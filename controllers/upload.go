@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"github.com/wangsongyan/wblog/system"
 	"mime/multipart"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xiuivfbc/bmtdblog/system"
 )
 
 func Upload(c *gin.Context) {

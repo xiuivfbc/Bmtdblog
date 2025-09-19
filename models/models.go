@@ -1,7 +1,8 @@
 package models
 
 import (
-	"github.com/wangsongyan/wblog/system"
+	"github.com/xiuivfbc/bmtdblog/system"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -19,7 +20,16 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 	DB = db
-	//db.LogMode(true)
-	db.AutoMigrate(&Page{}, &Post{}, &Tag{}, &PostTag{}, &User{}, &Comment{}, &Subscriber{}, &Link{}, &SmmsFile{})
+	db.AutoMigrate(
+		&Page{},
+		&Post{},
+		&Tag{},
+		&PostTag{},
+		&User{},
+		&Comment{},
+		&Subscriber{},
+		&Link{},
+		&SmmsFile{},
+	)
 	return db, err
 }

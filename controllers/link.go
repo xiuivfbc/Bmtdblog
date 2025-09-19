@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/wangsongyan/wblog/system"
+	"github.com/xiuivfbc/bmtdblog/models"
+	"github.com/xiuivfbc/bmtdblog/system"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wangsongyan/wblog/models"
 )
 
 func LinkIndex(c *gin.Context) {
