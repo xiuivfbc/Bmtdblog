@@ -52,7 +52,7 @@ func DefineRouter() *gin.Engine {
 	// subscriber
 	router.GET("/subscribe", SubscribeGet)
 	router.POST("/subscribe", Subscribe)
-	router.GET("/active", ActiveSubscriber)
+	router.GET("/active", ActiveSubscriber) // 暂时没用
 	router.GET("/unsubscribe", UnSubscribe)
 
 	router.GET("/page/:id", PageGet)
@@ -106,6 +106,7 @@ func DefineRouter() *gin.Engine {
 		// subscriber
 		authorized.GET("/subscriber", SubscriberIndex)
 		authorized.POST("/subscriber", SubscriberPost)
+		authorized.POST("/unsubscribe", UnSubscribe)
 
 		// link
 		authorized.GET("/link", LinkIndex)

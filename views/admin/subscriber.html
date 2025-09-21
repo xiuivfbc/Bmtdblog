@@ -95,6 +95,11 @@
                                                 <a href="javascript:void(0);" class="btn btn-primary btnsend"
                                                     data-href="/admin/new_mail?userId={{.ID}}" data-toggle="modal"
                                                     data-target="#confirm-delete">发邮件</a>
+                                                <a href="javascript:void(0);" class="btn btn-danger btn-unsubscribe"
+                                                    data-href="/admin/unsubscribe?userId={{.ID}}">不给订阅</a>
+                                                {{else}}
+                                                <a href="javascript:void(0);" class="btn btn-success btn-subscribe"
+                                                    data-email="{{.Email}}">允许订阅</a>
                                                 {{end}}
                                                 {{end}}
                                             </td>
@@ -212,6 +217,22 @@
                     window.location.href = window.location.href;
                 }, "json");
             });
+        });
+        $(document).on('click', '.btn-unsubscribe', function () {
+            var href = $(this).data('href');
+            if (confirm('确定要取消订阅吗？')) {
+                $.post(href, {}, function () {
+                    window.location.reload();
+                }, 'json');
+            }
+        });
+        $(document).on('click', '.btn-subscribe', function () {
+            var email = $(this).data('email');
+            if (confirm('确定要允许订阅吗？')) {
+                $.post("/subscribe", { mail: email }, function () {
+                    window.location.reload();
+                }, 'html');
+            }
         });
     </script>
 </body>

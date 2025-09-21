@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -127,14 +128,16 @@ func ActiveSubscriber(c *gin.Context) {
 	HandleMessage(c, "激活成功！")
 }
 
-// 暂时没用，退订
 func UnSubscribe(c *gin.Context) {
-	sid := c.Query("sid")
-	if sid == "" {
+	fmt.Println("UnSubscribe")
+	userId := c.Query("userId")
+	if userId == "" {
 		HandleMessage(c, "Internal Server Error!")
 		return
 	}
-	subscriber, err := models.GetSubscriberBySignature(sid)
+	temp, _ := strconv.Atoi(userId)
+	userID := uint(temp)
+	subscriber, err := models.GetSubscriberById(userID)
 	if err != nil || !subscriber.VerifyState || !subscriber.SubscribeState {
 		HandleMessage(c, "Unscribe failed.")
 		return
@@ -145,7 +148,10 @@ func UnSubscribe(c *gin.Context) {
 		HandleMessage(c, fmt.Sprintf("Unscribe failed.%s", err.Error()))
 		return
 	}
-	HandleMessage(c, "Unscribe Succeessful!")
+	c.JSON(http.StatusOK, gin.H{
+		"msg":     "Unsubscribe Successful!",
+		"succeed": true,
+	})
 }
 
 func sendEmailToSubscribers(subject, body string) (err error) {

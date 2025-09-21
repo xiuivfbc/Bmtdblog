@@ -10,7 +10,7 @@ type Subscriber struct {
 	UpdatedAt      *time.Time `gorm:"autoUpdateTime"`
 	DeletedAt      *time.Time `gorm:"index"`
 	Email          string     `gorm:"type:varchar(255);uniqueIndex"`
-	VerifyState    bool       `gorm:"default:false"`
+	VerifyState    bool       `gorm:"default:true"`
 	SubscribeState bool       `gorm:"default:true"`
 	OutTime        time.Time  `gorm:"default:null"`
 	SecretKey      string
