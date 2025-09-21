@@ -3,7 +3,8 @@
     <div class="container">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                data-target="#bs-example-navbar-collapse-1">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
@@ -16,7 +17,8 @@
             <ul class="nav navbar-nav">
                 {{range $item := .cfg.Navigators}}
                 <li>
-                    <a href="{{$item.Url}}" {{if gt (len $item.Target) 0}}target="{{$item.Target}}"{{end}}>{{$item.Title}}</a>
+                    <a href="{{$item.Url}}" {{if gt (len $item.Target) 0}}target="{{$item.Target}}"
+                        {{end}}>{{$item.Title}}</a>
                 </li>
                 {{end}}
                 <!--<li>
@@ -34,11 +36,11 @@
                 <ul class="nav navbar-nav">
                     {{if .user}}
                     <li><a href="/logout">退出登录</a></li>
-                        {{if .user.IsAdmin}}}
+                    {{if .user.IsAdmin}}
                     <li><a href="/admin/index">后台管理</a></li>
-                        {{end}}}
+                    {{end}}
                     {{else}}
-                    <li><a href="/auth/github">Github登录</a></li>
+                    <li><a href="/signin">登录</a></li>
                     {{end}}
                 </ul>
             </ul>
