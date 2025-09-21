@@ -2,11 +2,11 @@
 <header class="main-header">
 
     <!-- Logo -->
-    <a href="/admin/index" class="logo">
+    <a href="/" class="logo">
         <!-- mini logo for sidebar mini 50x50 pixels -->
-        <span class="logo-mini"><b>W</b></span>
+        <span class="logo-mini"><b>B</b></span>
         <!-- logo for regular state and mobile devices -->
-        <span class="logo-lg"><b>W</b>blog</span>
+        <span class="logo-lg"><b>B</b>mtdblog</span>
     </a>
 
     <!-- Header Navbar: style can be found in header.less -->
@@ -33,7 +33,8 @@
                             <ul class="menu">
                                 {{range .comments}}
                                 <li>
-                                    <a href="javascript:void(0);" data-href="/admin/comment/{{.ID}}" data-redirect="/post/{{.PostID}}" class="readcomment">
+                                    <a href="javascript:void(0);" data-href="/admin/comment/{{.ID}}"
+                                        data-redirect="/post/{{.PostID}}" class="readcomment">
                                         <i class="fa fa-comment text-aqua"></i> {{.Content}}
                                     </a>
                                 </li>
@@ -81,18 +82,18 @@
                                 </div>
                             </div>
                             <!-- /.row -->
-                        </li>
-                        <!-- Menu Footer-->
-                        <li class="user-footer">
-                            <div class="pull-left">
-                                <a href="/admin/profile" class="btn btn-default btn-flat">Profile</a>
-                            </div>
-                            <div class="pull-right">
-                                <a href="/logout" class="btn btn-default btn-flat">Logout</a>
-                            </div>
-                        </li>
-                    </ul>
                 </li>
+                <!-- Menu Footer-->
+                <li class="user-footer">
+                    <div class="pull-left">
+                        <a href="/admin/profile" class="btn btn-default btn-flat">Profile</a>
+                    </div>
+                    <div class="pull-right">
+                        <a href="/logout" class="btn btn-default btn-flat">Logout</a>
+                    </div>
+                </li>
+            </ul>
+            </li>
 
             </ul>
         </div>

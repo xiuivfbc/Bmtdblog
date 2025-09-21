@@ -1,11 +1,10 @@
 module github.com/xiuivfbc/bmtdblog
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.5
 
 require (
-	github.com/alimoeeny/gooauth2 v0.0.0-20140214171402-62c620a8c7eb
 	github.com/claudiu/gocron v0.0.0-20151103142354-980c96bf412b
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
 	github.com/denisbakhtin/sitemap v0.0.0-20151103020935-3b73dfe0369c
@@ -18,6 +17,7 @@ require (
 	github.com/russross/blackfriday v1.5.2
 	github.com/snluu/uuid v0.0.0-20130306162636-1dd34a9ad6c0
 	github.com/spf13/viper v1.21.0
+	golang.org/x/oauth2 v0.31.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
 )

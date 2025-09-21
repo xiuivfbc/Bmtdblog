@@ -1,4 +1,3 @@
-# Output of project
 *.db
 /slog/
 /request.token

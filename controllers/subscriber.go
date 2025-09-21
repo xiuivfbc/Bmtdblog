@@ -127,6 +127,7 @@ func ActiveSubscriber(c *gin.Context) {
 	HandleMessage(c, "激活成功！")
 }
 
+// 暂时没用，退订
 func UnSubscribe(c *gin.Context) {
 	sid := c.Query("sid")
 	if sid == "" {

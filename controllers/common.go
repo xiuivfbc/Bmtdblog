@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/xiuivfbc/bmtdblog/helpers"
 	"github.com/xiuivfbc/bmtdblog/models"
 	"github.com/xiuivfbc/bmtdblog/system"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -145,4 +147,26 @@ func writeJSON(ctx *gin.Context, h gin.H) {
 		h["succeed"] = false
 	}
 	ctx.JSON(http.StatusOK, h)
+}
+
+func saveToken(path string, token *oauth2.Token) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return json.NewEncoder(f).Encode(token)
+}
+
+func loadToken(path string) (*oauth2.Token, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var token oauth2.Token
+	err = json.NewDecoder(f).Decode(&token)
+	return &token, err
 }

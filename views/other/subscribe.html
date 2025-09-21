@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{template "meta.html" .}}
 
-    <title>Wblog - 订阅</title>
+    <title>Bmtdblog - 订阅</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="/static/libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -30,30 +30,30 @@
     <!-- Bootstrap Core JavaScript -->
     <script src="/static/libs/bootstrap/js/bootstrap.min.js"></script>
 
-    <link rel="stylesheet" href="/static/css/base.css"/>
+    <link rel="stylesheet" href="/static/css/base.css" />
 
 </head>
 
 <body>
-{{template "navigation.html" .}}
+    {{template "navigation.html" .}}
 
-<div class="container">
-    {{if .message}}
-    <div class="alert alert-warning" role="alert">
-        <a href="#" class="alert-link">{{.message}}</a>
-    </div>
-    {{end}}
-
-    <form class="form-inline" method="post">
-        <div class="form-group">
-            <label class="sr-only" for="emailInput">Email</label>
-            <input type="email" name="mail" class="form-control" id="emailInput" placeholder="Email">
+    <div class="container">
+        {{if .message}}
+        <div class="alert alert-warning" role="alert">
+            <a href="#" class="alert-link">{{.message}}</a>
         </div>
-        <button type="submit" class="btn btn-primary">订阅</button>
-        <span>共{{.total}}人订阅</span>
-    </form>
+        {{end}}
 
-</div>
+        <form class="form-inline" method="post">
+            <div class="form-group">
+                <label class="sr-only" for="emailInput">Email</label>
+                <input type="email" name="mail" class="form-control" id="emailInput" placeholder="Email">
+            </div>
+            <button type="submit" class="btn btn-primary">订阅</button>
+            <span>共{{.total}}人订阅</span>
+        </form>
+
+    </div>
 
 </body>
 

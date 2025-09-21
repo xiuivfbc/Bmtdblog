@@ -80,7 +80,7 @@ func initSomething() {
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		panic(err)
 	}
-	logFile := filepath.Join(logDir, fmt.Sprintf("wblog-%s.log", time.Now().Format("20060102-150405")))
+	logFile := filepath.Join(logDir, fmt.Sprintf("Bmtdblog-%s.log", time.Now().Format("20060102-150405")))
 	f, err = os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		panic(err)

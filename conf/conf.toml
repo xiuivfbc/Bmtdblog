@@ -1,7 +1,7 @@
 addr = '127.0.0.1:8090'
 signup_enabled = true
-title = 'bmtdblog'
-session_secret = 'bmtdblog'
+title = 'Bmtdblog'
+session_secret = 'Bmtdblog'
 domain = 'http://localhost'
 file_server = 'smms'
 notify_emails = ''
@@ -13,7 +13,7 @@ view = 'views/**/*'
 dsn = 'cp:cp123456@tcp(127.0.0.1:3306)/bmtdblog?charset=utf8mb4&parseTime=True&loc=Local'
 
 [seo]
-description = 'bmtdblog, just my toy'
+description = 'Bmtdblog, just my toy'
 
 [seo.author]
 name = 'hvfwdemc'
@@ -24,7 +24,7 @@ enabled = false
 accesskey = ''
 secretkey = ''
 fileserver = ''
-bucket = 'bmtdblog'
+bucket = 'Bmtdblog'
 
 [smms]
 enabled = false
@@ -35,7 +35,7 @@ apikey = ''
 enabled = true
 clientid = 'Iv23likeZWSmInrQcd1R'
 clientsecret = '2d9032f934f8cf850de78054beb4bf19046e03c3'
-redirecturl = 'https://localhost:8090/oauth2callback'
+redirecturl = 'http://localhost:8090/oauth2callback'
 authurl = 'https://github.com/login/oauth/authorize?client_id=%s&scope=user:email&state=%s'
 tokenurl = 'https://github.com/login/oauth/access_token'
 scope = ''

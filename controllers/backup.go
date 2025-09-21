@@ -128,7 +128,7 @@ func Backup() (err error) {
 	uploader := storage.NewFormUploader(&storage.Config{})
 	putExtra := storage.PutExtra{}
 
-	fileName := fmt.Sprintf("wblog_%s.db", helpers.GetCurrentTime().Format("20060102150405"))
+	fileName := fmt.Sprintf("Bmtdblog_%s.db", helpers.GetCurrentTime().Format("20060102150405"))
 	err = uploader.Put(context.Background(), &ret, token, fileName, bytes.NewReader(bodyBytes), int64(len(bodyBytes)), &putExtra)
 	if err != nil {
 		system.Logger.Debug("backup error", "err", err)

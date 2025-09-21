@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
-	oauth "github.com/alimoeeny/gooauth2"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -163,6 +165,7 @@ func Oauth2Callback(c *gin.Context) {
 	}
 
 	userInfo, err = getGithubUserInfoByAccessToken(token)
+	fmt.Println(userInfo)
 	if err != nil {
 		system.Logger.Error("getGithubUserInfoByAccessToken error", "err", err)
 		c.Redirect(http.StatusMovedPermanently, "/signin")
@@ -214,26 +217,22 @@ func Oauth2Callback(c *gin.Context) {
 
 func exchangeTokenByCode(code string) (accessToken string, err error) {
 	var (
-		transport *oauth.Transport
-		token     *oauth.Token
-		cfg       = system.GetConfiguration()
+		token *oauth2.Token
+		cfg   = system.GetConfiguration()
 	)
-	transport = &oauth.Transport{Config: &oauth.Config{
-		ClientId:     cfg.Github.ClientId,
+	oauthCfg := &oauth2.Config{
+		ClientID:     cfg.Github.ClientId,
 		ClientSecret: cfg.Github.ClientSecret,
 		RedirectURL:  cfg.Github.RedirectURL,
-		TokenURL:     cfg.Github.TokenUrl,
-		Scope:        cfg.Github.Scope,
-	}}
-	token, err = transport.Exchange(code)
+		Endpoint:     github.Endpoint,
+	}
+	token, err = oauthCfg.Exchange(context.Background(), code)
 	if err != nil {
 		return
 	}
 	accessToken = token.AccessToken
-	// cache token
-	tokenCache := oauth.CacheFile("./request.token")
-	if err := tokenCache.PutToken(token); err != nil {
-		system.Logger.Error("tokenCache.PutToken error", "err", err)
+	if err := saveToken("./request.token", token); err != nil {
+		system.Logger.Error("saveToken error", "err", err)
 	}
 	return
 }
