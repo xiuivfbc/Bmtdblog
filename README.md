@@ -38,8 +38,8 @@
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/xiuivfbc/bmtdblog.git
-cd bmtdblog
+git clone https://github.com/xiuivfbc/Bmtdblog.git
+cd Bmtdblog
 ```
 
 2. **安装依赖**
@@ -68,7 +68,7 @@ go run main.go
 ## 项目结构
 
 ```
-bmtdblog/
+Bmtdblog/
 ├── conf/           # 配置文件
 │   └── conf.toml   # 主配置文件
 ├── controllers/    # 控制器
