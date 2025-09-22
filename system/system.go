@@ -76,6 +76,7 @@ type (
 		PageSize      int         `mapstructure:"page_size"`
 		PublicDir     string      `mapstructure:"public"`
 		ViewDir       string      `mapstructure:"view"`
+		Dir           string      `mapstructure:"dir"`
 		Database      Database    `mapstructure:"database"`
 		Seo           Seo         `mapstructure:"seo"`
 		Qiniu         Qiniu       `mapstructure:"qiniu"`

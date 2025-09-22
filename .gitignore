@@ -1,3 +1,4 @@
 *.db
 /slog/
 /request.token
+/conf/conf_copy.toml

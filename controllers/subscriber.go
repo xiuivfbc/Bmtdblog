@@ -32,7 +32,9 @@ func Subscribe(c *gin.Context) {
 		var subscriber *models.Subscriber
 		subscriber, err = models.GetSubscriberByEmail(mail)
 		if err == nil {
-			if !subscriber.VerifyState && helpers.GetCurrentTime().After(subscriber.OutTime) { //激活链接超时
+			// 已存在
+			if !subscriber.VerifyState && helpers.GetCurrentTime().After(subscriber.OutTime) {
+				// 未激活或激活过期
 				err = sendActiveEmail(subscriber)
 				if err == nil {
 					count, _ := models.CountSubscriber()
@@ -44,7 +46,8 @@ func Subscribe(c *gin.Context) {
 					})
 					return
 				}
-			} else if subscriber.VerifyState && !subscriber.SubscribeState { //已认证，未订阅
+			} else if subscriber.VerifyState && !subscriber.SubscribeState {
+				// 已激活但未订阅
 				subscriber.SubscribeState = true
 				err = subscriber.Update()
 				if err == nil {
@@ -54,6 +57,7 @@ func Subscribe(c *gin.Context) {
 				err = errors.New("mail have already actived or have unactive mail in your mailbox.")
 			}
 		} else {
+			// 不存在
 			subscriber := &models.Subscriber{
 				Email: mail,
 			}
@@ -73,6 +77,7 @@ func Subscribe(c *gin.Context) {
 			}
 		}
 	} else {
+		// 邮箱为空
 		err = errors.New("empty mail address.")
 	}
 	count, _ := models.CountSubscriber()

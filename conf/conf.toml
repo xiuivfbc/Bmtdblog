@@ -1,22 +1,23 @@
 addr = '127.0.0.1:8090'
-signup_enabled = true
+signup_enabled = false
 title = 'Bmtdblog'
 session_secret = 'Bmtdblog'
-domain = 'http://localhost'
+domain = 'http://localhost:8090'
 file_server = 'smms'
 notify_emails = ''
 page_size = 10
 public = 'static'
 view = 'views/**/*'
+dir = ''
 
 [database]
-dsn = 'cp:cp123456@tcp(127.0.0.1:3306)/bmtdblog?charset=utf8mb4&parseTime=True&loc=Local'
+dsn = 'mysql-dsn'
 
 [seo]
 description = 'Bmtdblog, just my toy'
 
 [seo.author]
-name = 'hvfwdemc'
+name = 'xiuivfbc'
 email = '3138910969@qq.com'
 
 [qiniu]
@@ -33,8 +34,8 @@ apikey = ''
 
 [github]
 enabled = true
-clientid = 'Iv23likeZWSmInrQcd1R'
-clientsecret = '2d9032f934f8cf850de78054beb4bf19046e03c3'
+clientid = ''
+clientsecret = ''
 redirecturl = 'http://localhost:8090/oauth2callback'
 authurl = 'https://github.com/login/oauth/authorize?client_id=%s&scope=user:email&state=%s'
 tokenurl = 'https://github.com/login/oauth/access_token'
@@ -44,7 +45,7 @@ scope = ''
 enabled = false
 username = ''
 password = ''
-host = 'smtp.163.com:25'
+host = 'smtp.qq.com:587'
 
 [[navigators]]
 title = 'Posts'

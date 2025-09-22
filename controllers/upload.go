@@ -7,6 +7,10 @@ import (
 	"github.com/xiuivfbc/bmtdblog/system"
 )
 
+type Uploader interface {
+	upload(file multipart.File, fileHeader *multipart.FileHeader) (string, error)
+}
+
 func Upload(c *gin.Context) {
 	var (
 		err      error

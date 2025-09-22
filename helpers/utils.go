@@ -7,13 +7,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"io"
-	"net/smtp"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/snluu/uuid"
+	"github.com/xiuivfbc/bmtdblog/system"
+	"gopkg.in/gomail.v2"
 )
 
 // Md5 计算字符串的md5值
@@ -45,22 +47,28 @@ func GetCurrentTime() time.Time {
 }
 
 func GetCurrentDirectory() string {
-	dir := "C:/Users/31389/Desktop/bmtdblog"
+	dir := system.GetConfiguration().Dir
 	return dir
 }
 
 func SendToMail(user, password, host, to, subject, body, mailType string) error {
-	hp := strings.Split(host, ":")
-	auth := smtp.PlainAuth("", user, password, hp[0])
-	var contentType string
+	m := gomail.NewMessage()
+	m.SetHeader("From", user)
+	m.SetHeader("To", strings.Split(to, ";")...)
+	m.SetHeader("Subject", subject)
 	if mailType == "html" {
-		contentType = "Content-Type: text/html" + "; charset=UTF-8"
+		m.SetBody("text/html", body)
 	} else {
-		contentType = "Content-Type: text/plain" + "; charset=UTF-8"
+		m.SetBody("text/plain", body)
 	}
-	msg := []byte("To: " + to + "\r\nFrom: " + user + "\r\nSubject: " + subject + "\r\n" + contentType + "\r\n\r\n" + body)
-	sendTo := strings.Split(to, ";")
-	return smtp.SendMail(host, auth, user, sendTo, msg)
+
+	hp := strings.Split(host, ":")
+	port := 25
+	if len(hp) > 1 {
+		port, _ = strconv.Atoi(hp[1])
+	}
+	d := gomail.NewDialer(hp[0], port, user, password)
+	return d.DialAndSend(m)
 }
 
 func PathExists(path string) (bool, error) {
