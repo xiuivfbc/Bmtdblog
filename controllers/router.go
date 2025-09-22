@@ -119,7 +119,7 @@ func DefineRouter() *gin.Engine {
 		authorized.POST("/read_all", CommentReadAll)
 
 		// backup
-		authorized.POST("/backup", BackupPost)
+		authorized.GET("/backup", BackupPost)
 		authorized.POST("/restore", RestorePost)
 
 		// mail
@@ -176,7 +176,7 @@ func setTemplate(engine *gin.Engine) {
 		"listtag":    helpers.ListTag,
 	}
 	engine.SetFuncMap(funcMap)
-	engine.LoadHTMLGlob("C:/Users/31389/Desktop/bmtdblog/views/**/*.html")
+	engine.LoadHTMLGlob(helpers.GetCurrentDirectory() + "/views/**/*.html")
 }
 
 func setSessions(router *gin.Engine) {

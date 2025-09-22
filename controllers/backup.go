@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"os"
+	"os/exec"
+	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -47,9 +48,8 @@ func RestorePost(c *gin.Context) {
 		res["message"] = "fileName cannot be empty."
 		return
 	}
-
 	if !cfg.Backup.Enabled || !cfg.Qiniu.Enabled {
-		res["message"] = "backup or quniu not enabled"
+		res["message"] = "backup or qiniu not enabled"
 		return
 	}
 
@@ -60,7 +60,6 @@ func RestorePost(c *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
-
 	bodyBytes, err = io.ReadAll(resp.Body)
 	if err != nil {
 		res["message"] = err.Error()
@@ -73,7 +72,8 @@ func RestorePost(c *gin.Context) {
 			return
 		}
 	}
-	err = os.WriteFile(fileName, bodyBytes, os.ModePerm)
+
+	err = mysqlRestore(string(bodyBytes), cfg.Database.DSN)
 	if err != nil {
 		res["message"] = err.Error()
 		return
@@ -83,33 +83,24 @@ func RestorePost(c *gin.Context) {
 
 func Backup() (err error) {
 	var (
-		u         *url.URL
-		exist     bool
 		ret       PutRet
 		bodyBytes []byte
 		cfg       = system.GetConfiguration()
 	)
-
 	if !cfg.Backup.Enabled || !cfg.Qiniu.Enabled {
 		err = errors.New("backup or qiniu not enabled")
 		return
 	}
-
-	u, err = url.Parse(cfg.Database.DSN)
-	if err != nil {
-		system.Logger.Debug("parse dsn error", "err", err)
-		return
-	}
-	exist, _ = helpers.PathExists(u.Path)
-	if !exist {
-		err = errors.New("database file doesn't exists.")
-		system.Logger.Debug("database file doesn't exists", "err", err)
-		return
-	}
 	system.Logger.Debug("start backup...")
-	bodyBytes, err = os.ReadFile(u.Path)
+	dsn := cfg.Database.DSN
+	host, port, username, password, database, err := parseMySQLDSN(dsn)
 	if err != nil {
-		system.Logger.Error("read database file error", "err", err)
+		system.Logger.Error("parse mysql dsn error", "err", err)
+		return
+	}
+	bodyBytes, err = mysqldump(host, port, username, password, database)
+	if err != nil {
+		system.Logger.Error("mysqldump error", "err", err)
 		return
 	}
 	if len(cfg.Backup.BackupKey) > 0 {
@@ -119,7 +110,7 @@ func Backup() (err error) {
 			return
 		}
 	}
-
+	// upload to qiniu
 	putPolicy := storage.PutPolicy{
 		Scope: cfg.Qiniu.Bucket,
 	}
@@ -127,8 +118,7 @@ func Backup() (err error) {
 	token := putPolicy.UploadToken(mac)
 	uploader := storage.NewFormUploader(&storage.Config{})
 	putExtra := storage.PutExtra{}
-
-	fileName := fmt.Sprintf("Bmtdblog_%s.db", helpers.GetCurrentTime().Format("20060102150405"))
+	fileName := fmt.Sprintf("Bmtdblog_%s.sql", helpers.GetCurrentTime().Format("20060102150405"))
 	err = uploader.Put(context.Background(), &ret, token, fileName, bytes.NewReader(bodyBytes), int64(len(bodyBytes)), &putExtra)
 	if err != nil {
 		system.Logger.Debug("backup error", "err", err)
@@ -136,4 +126,63 @@ func Backup() (err error) {
 	}
 	system.Logger.Debug("backup successfully.")
 	return err
+}
+
+func parseMySQLDSN(dsn string) (host, port, username, password, database string, err error) {
+	re := regexp.MustCompile(`^([^:]+):([^@]*)@tcp\(([^:]+):(\d+)\)/([^?]+)`)
+	matches := re.FindStringSubmatch(dsn)
+
+	if len(matches) != 6 {
+		err = errors.New("invalid mysql dsn format")
+		return
+	}
+
+	username = matches[1]
+	password = matches[2]
+	host = matches[3]
+	port = matches[4]
+	database = matches[5]
+	return
+}
+
+func mysqldump(host, port, username, password, database string) ([]byte, error) {
+	// 构造 mysqldump 命令
+	cmd := exec.Command("mysqldump",
+		"-h", host,
+		"-P", port,
+		"-u", username,
+		fmt.Sprintf("-p%s", password),
+		"--single-transaction",
+		"--routines",
+		"--triggers",
+		database,
+	)
+
+	// 执行命令并获取输出
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, errors.Wrap(err, "mysqldump command failed")
+	}
+
+	return output, nil
+}
+
+func mysqlRestore(sqlContent string, dsn string) error {
+	host, port, username, password, database, err := parseMySQLDSN(dsn)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("mysql",
+		"-h", host,
+		"-P", port,
+		"-u", username,
+		fmt.Sprintf("-p%s", password),
+		database,
+	)
+	cmd.Stdin = strings.NewReader(sqlContent)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.Wrapf(err, "mysql restore failed: %s", string(output))
+	}
+	return nil
 }
