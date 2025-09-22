@@ -38,7 +38,7 @@
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/你的用户名/bmtdblog.git
+git clone https://github.com/xiuivfbc/bmtdblog.git
 cd bmtdblog
 ```
 
@@ -107,7 +107,7 @@ bmtdblog/
 
 ### 后台管理
 访问 `/admin` 进入管理后台：
-- 📝 博文管理（增删改查）
+- 📝 博文管理
 - 📄 页面管理
 - 👥 用户管理
 - 📧 订阅管理
