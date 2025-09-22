@@ -8,7 +8,7 @@
 - **用户系统**: 支持传统账号密码登录和 GitHub OAuth 登录
 - **邮件订阅**: 用户可订阅博客更新，支持邮箱验证和取消订阅
 - **评论系统**: 支持文章评论和管理
-- **数据备份**: 支持本地和七牛云备份
+- **数据备份**: 支持七牛云备份
 - **图片上传**: 支持 SMMS 图床和七牛云存储
 - **RSS 订阅**: 自动生成 RSS feed
 - **响应式设计**: 支持移动端访问
@@ -24,7 +24,12 @@
 - **其他**: Markdown 解析、HTML 安全过滤
 
 ## 实践展示
-
+![alt text](static/image.png)
+![alt text](static/image-1.png)
+![alt text](static/image-2.png)
+![alt text](static/image-3.png)
+![alt text](static/image-4.png)
+![alt text](static/image-5.png)
 
 ## 快速开始
 

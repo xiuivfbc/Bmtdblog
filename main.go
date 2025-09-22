@@ -87,14 +87,14 @@ func initSomething() {
 	}
 	// 调试用设置
 	var opts *slog.HandlerOptions = nil
-	// opts = &slog.HandlerOptions{
-	// 	Level: slog.LevelDebug,
-	// }
+	opts = &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}
 	system.Logger = slog.New(slog.NewJSONHandler(f, opts))
 	slog.SetDefault(system.Logger)
 
 	//configuration
-	configFilePath := flag.String("C", "conf/conf.toml", "config file path")
+	configFilePath := flag.String("C", "conf/conf_copy.toml", "config file path")
 	flag.Parse()
 	if err := system.LoadConfiguration(*configFilePath); err != nil {
 		system.Logger.Error("err parsing config log file", "err", err)
