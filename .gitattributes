@@ -3,6 +3,9 @@ static/* linguist-vendored
 views/* linguist-documentation
 *.html linguist-documentation
 *.css linguist-vendored
+*.scss linguist-vendored
+*.sass linguist-vendored
+*.less linguist-vendored
 *.js linguist-vendored
 
 # 排除一些不必要的文件
