@@ -1,0 +1,11 @@
+# 标记静态资源文件，降低其在语言统计中的权重
+static/* linguist-vendored
+views/* linguist-documentation
+*.html linguist-documentation
+*.css linguist-vendored
+*.js linguist-vendored
+
+# 排除一些不必要的文件
+*.md linguist-documentation
+*.toml linguist-data
+*.json linguist-data
