@@ -1,18 +1,22 @@
-/* 现代化主题样式 */
+/* 现代化主题样式 - 暗色主题 */
 
 /* 全局样式 */
 :root {
-    --primary-color: #667eea;
-    --secondary-color: #764ba2;
-    --accent-color: #f093fb;
-    --text-primary: #2d3748;
-    --text-secondary: #718096;
-    --bg-light: #f7fafc;
-    --bg-white: #ffffff;
-    --border-color: #e2e8f0;
-    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --primary-color: #7c3aed;
+    --secondary-color: #c084fc;
+    --accent-color: #f472b6;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --bg-dark: #0f172a;
+    --bg-darker: #1e293b;
+    --bg-card: #334155;
+    --bg-white: #475569;
+    --border-color: #475569;
+    --border-light: #64748b;
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
     --border-radius: 12px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -20,7 +24,7 @@
 /* 页面基础样式 */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
     background-attachment: fixed;
     min-height: 100vh;
     color: var(--text-primary);
@@ -29,20 +33,20 @@ body {
 
 /* 导航栏美化 */
 .navbar {
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(15px);
     border: none;
     box-shadow: var(--shadow-md);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--border-color);
     transition: var(--transition);
 }
 
 .navbar.navbar-inverse {
-    background: rgba(255, 255, 255, 0.98);
+    background: rgba(15, 23, 42, 0.95);
 }
 
 .navbar-brand {
-    color: #1a202c !important;
+    color: var(--text-primary) !important;
     font-weight: 700;
     font-size: 1.5rem;
     transition: var(--transition);
@@ -58,7 +62,7 @@ body {
 }
 
 .navbar-nav>li>a {
-    color: #2d3748 !important;
+    color: var(--text-secondary) !important;
     font-weight: 600;
     transition: var(--transition);
     border-radius: 6px;
@@ -77,7 +81,7 @@ body {
 
 /* 主要内容区域 */
 .container {
-    background: var(--bg-white);
+    background: var(--bg-card);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-lg);
     margin-top: 100px;
@@ -207,6 +211,94 @@ hr {
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--border-color);
+}
+
+/* 分页容器样式 */
+.pagination-container {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.pagination-container .pager {
+    margin: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.pagination-container .pager li {
+    margin: 0 0.5rem;
+}
+
+.pagination-container .pager li a {
+    color: var(--primary-color);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.pagination-container .pager li a:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.pagination-container .pager li.disabled a {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination-container .pager li.disabled a:hover {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border-color);
+}
+
+/* 分页样式优化 */
+.pager {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.pager li {
+    display: inline-block;
+    margin: 0 0.5rem;
+}
+
+.pager li a {
+    color: var(--primary-color);
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    transition: var(--transition);
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.pager li a:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.pager li.disabled a {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pager li.disabled a:hover {
+    background: var(--bg-white);
+    color: var(--text-muted);
+    border-color: var(--border-color);
+    transform: none;
+    box-shadow: var(--shadow-sm);
 }
 
 /* 按钮美化 */
@@ -611,6 +703,79 @@ hr {
     border-bottom: 3px solid var(--accent-color);
 }
 
+/* 修复博文内容文字显示问题 - 暗色主题 */
+.markdown-body {
+    background: var(--bg-darker) !important;
+    padding: 2rem !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--shadow-md) !important;
+    margin: 2rem 0 !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.markdown-body,
+.markdown-body p,
+.markdown-body div,
+.markdown-body span,
+.markdown-body li,
+.markdown-body td,
+.markdown-body th {
+    color: var(--text-primary) !important;
+    line-height: 1.6 !important;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    margin: 1.5rem 0 1rem 0 !important;
+}
+
+.markdown-body h1 {
+    color: var(--primary-color) !important;
+    border-bottom: 2px solid var(--accent-color) !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.markdown-body a {
+    color: var(--primary-color) !important;
+    text-decoration: none !important;
+}
+
+.markdown-body a:hover {
+    color: var(--secondary-color) !important;
+    text-decoration: underline !important;
+}
+
+.markdown-body code {
+    background: var(--bg-dark) !important;
+    color: var(--accent-color) !important;
+    padding: 0.2rem 0.4rem !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.markdown-body pre {
+    background: var(--bg-dark) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    padding: 1rem !important;
+    color: var(--text-primary) !important;
+}
+
+.markdown-body blockquote {
+    border-left: 4px solid var(--primary-color) !important;
+    background: var(--bg-dark) !important;
+    margin: 1rem 0 !important;
+    padding: 1rem !important;
+    color: var(--text-secondary) !important;
+}
+
 .post-meta {
     color: var(--text-secondary);
     font-size: 0.9rem;
@@ -629,6 +794,61 @@ a {
 a:hover {
     color: var(--secondary-color);
     text-decoration: none;
+}
+
+/* 验证码样式 */
+.j-verifycode {
+    width: auto;
+    max-width: 100%;
+    height: 40px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: white !important;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    padding: 2px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.j-verifycode:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+/* 评论表单优化 */
+#commentForm {
+    background: var(--bg-darker);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    margin-top: 2rem;
+}
+
+#commentForm .form-group {
+    margin-bottom: 1.5rem;
+}
+
+#commentForm .form-control {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1rem;
+}
+
+#commentForm .form-control:focus {
+    background: var(--bg-card);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+#commentForm .form-control::placeholder {
+    color: var(--text-muted);
 }
 
 /* 页脚美化 */
@@ -924,4 +1144,409 @@ footer {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
     color: white !important;
+}
+
+/* 社交登录按钮样式 */
+.social-auth-links {
+    margin-top: 20px;
+}
+
+.btn-social {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    padding: 14px 20px;
+    font-weight: 500;
+    border: none;
+    text-decoration: none !important;
+    line-height: 1.2;
+}
+
+.btn-github {
+    background: linear-gradient(135deg, #333 0%, #24292e 100%);
+    color: white !important;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-github:hover {
+    background: linear-gradient(135deg, #24292e 0%, #1a1e22 100%);
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    text-decoration: none !important;
+}
+
+.btn-github:focus,
+.btn-github:active {
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.btn-github.btn-social i {
+    font-size: 18px !important;
+    margin-right: 8px !important;
+    display: inline-block !important;
+    font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands", FontAwesome !important;
+    font-weight: 400 !important;
+    line-height: 20px !important;
+    vertical-align: middle !important;
+    width: auto !important;
+    color: white !important;
+}
+
+.btn-github.btn-social span {
+    line-height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-block !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.3px !important;
+    vertical-align: middle !important;
+    color: white !important;
+}
+
+/* GitHub按钮文字容器 */
+.btn-github.btn-social {
+    background: linear-gradient(135deg, #333 0%, #24292e 100%) !important;
+    color: white !important;
+    box-shadow: var(--shadow-sm) !important;
+    font-size: 16px !important;
+    letter-spacing: 0.5px !important;
+    display: block !important;
+    text-align: center !important;
+    padding: 14px 20px !important;
+    line-height: 20px !important;
+    width: 100% !important;
+    height: 48px !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    border: none !important;
+}
+
+.btn-github.btn-social .btn-content {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    line-height: 20px !important;
+}
+
+.btn-github.btn-social:hover {
+    background: linear-gradient(135deg, #24292e 0%, #1a1e22 100%) !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    text-decoration: none !important;
+}
+
+.btn-github.btn-social:focus,
+.btn-github.btn-social:active {
+    color: white !important;
+    text-decoration: none !important;
+    outline: none !important;
+}
+
+/* 社交登录区域样式优化 */
+.social-auth-links {
+    margin-top: 25px;
+}
+
+.social-auth-links p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+/* 登录页面特定样式 */
+.login-box {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    margin: 60px auto;
+}
+
+.login-box-body {
+    border-radius: var(--border-radius);
+    padding: 30px;
+}
+
+.login-logo a {
+    color: var(--text-primary) !important;
+    font-weight: 700;
+    text-decoration: none !important;
+}
+
+.login-box-msg {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* 表单控件样式优化 */
+.login-box .form-control {
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    transition: var(--transition);
+    padding: 12px 16px;
+}
+
+.login-box .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.login-box .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.login-box .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* 博文编辑器样式 */
+.post-editor-container {
+    background: var(--bg-darker);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    margin: 2rem 0;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+}
+
+.post-editor-container .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.post-editor-container label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.post-editor-container .form-control {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1rem;
+    transition: var(--transition);
+}
+
+.post-editor-container .form-control:focus {
+    background: var(--bg-card);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+.post-editor-container .form-control::placeholder {
+    color: var(--text-muted);
+}
+
+/* SimpleMDE编辑器样式 */
+.CodeMirror {
+    background: #2d3748 !important;
+    color: #e2e8f0 !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--border-radius) !important;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+.CodeMirror-lines {
+    padding: 10px !important;
+}
+
+.CodeMirror-cursor {
+    border-left: 2px solid #e2e8f0 !important;
+}
+
+.CodeMirror-selected {
+    background: rgba(124, 58, 237, 0.3) !important;
+}
+
+.CodeMirror-line::selection,
+.CodeMirror-line>span::selection,
+.CodeMirror-line>span>span::selection {
+    background: rgba(124, 58, 237, 0.3) !important;
+}
+
+.CodeMirror-line::-moz-selection,
+.CodeMirror-line>span::-moz-selection,
+.CodeMirror-line>span>span::-moz-selection {
+    background: rgba(124, 58, 237, 0.3) !important;
+}
+
+/* 编辑器工具栏 */
+.editor-toolbar {
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-bottom: none !important;
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    padding: 8px !important;
+}
+
+.editor-toolbar a {
+    color: #495057 !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    padding: 6px 8px !important;
+    margin: 0 2px !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.editor-toolbar a:hover {
+    background: #e9ecef !important;
+    color: var(--primary-color) !important;
+    border-color: #dee2e6 !important;
+}
+
+.editor-toolbar a.active {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+}
+
+.editor-toolbar a:before {
+    line-height: 1 !important;
+}
+
+.editor-toolbar i.separator {
+    border-left: 1px solid #dee2e6 !important;
+    margin: 0 6px !important;
+}
+
+/* 编辑器状态栏 */
+.editor-statusbar {
+    background: #f8f9fa !important;
+    color: #6c757d !important;
+    border: 1px solid #e9ecef !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+}
+
+/* 编辑器预览模式 */
+.editor-preview,
+.editor-preview-side {
+    background: #2d3748 !important;
+    border: 1px solid #e9ecef !important;
+    color: #e2e8f0 !important;
+    padding: 20px !important;
+}
+
+.editor-preview-side {
+    border-left: none !important;
+}
+
+/* Markdown语法高亮 - 暗色主题 */
+.CodeMirror .cm-header {
+    color: #c084fc !important;
+    font-weight: bold !important;
+}
+
+.CodeMirror .cm-quote {
+    color: #94a3b8 !important;
+    font-style: italic !important;
+}
+
+.CodeMirror .cm-link {
+    color: #60a5fa !important;
+    text-decoration: underline !important;
+}
+
+.CodeMirror .cm-strong {
+    font-weight: bold !important;
+    color: #f8fafc !important;
+}
+
+.CodeMirror .cm-em {
+    font-style: italic !important;
+    color: #cbd5e1 !important;
+}
+
+.CodeMirror .cm-code {
+    background: #1e293b !important;
+    color: #f472b6 !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+}
+
+.CodeMirror .cm-comment {
+    color: #64748b !important;
+}
+
+/* 按钮样式 */
+.post-editor-container .btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: var(--transition);
+    padding: 0.75rem 1.5rem;
+    margin-right: 0.5rem;
+}
+
+.post-editor-container .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border: none;
+    color: white;
+}
+
+.post-editor-container .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.post-editor-container .btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: white;
+}
+
+.post-editor-container .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* 标签选择器美化 */
+.post-editor-container .tag-selector {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.post-editor-container .tag-selector label {
+    margin-bottom: 0.75rem;
+}
+
+.post-editor-container .checkbox {
+    margin-bottom: 0.5rem;
+}
+
+.post-editor-container .checkbox label {
+    color: var(--text-secondary);
+    font-weight: normal;
+    margin-bottom: 0;
+}
+
+.post-editor-container .checkbox input[type="checkbox"] {
+    margin-right: 0.5rem;
 }

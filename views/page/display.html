@@ -33,7 +33,11 @@
     <!-- github markdown css -->
     <link rel="stylesheet" href="/static/css/markdown.css" />
 
-    <link rel="stylesheet" href="/static/css/base.css"/>
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" href="/static/css/modern-theme.css" />
+
+    <!-- 添加现代化图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- markdown parse -->
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@8.3.1/dist/markdown-it.js"></script>
@@ -47,7 +51,7 @@
         $(document).ready(function () {
             // markdown parse
             var md = window.markdownit({
-                html:true
+                html: true
             });
             var result = md.render($("#body").text());
             $("#body").html(result);
@@ -88,28 +92,28 @@
 
 <body>
 
-{{template "navigation.html" .}}
+    {{template "navigation.html" .}}
 
-<!-- Page Content -->
-<div class="container">
+    <!-- Page Content -->
+    <div class="container">
 
-    <div class="row">
+        <div class="row">
 
-        <!-- Blog Post Content Column -->
-        <div class="col-lg-10 col-lg-offset-1">
-            <article class="markdown-body">
-            <!-- page content-->
-            <div id="body">{{.page.Body}}</div>
-            </article>
+            <!-- Blog Post Content Column -->
+            <div class="col-lg-10 col-lg-offset-1">
+                <article class="markdown-body">
+                    <!-- page content-->
+                    <div id="body">{{.page.Body}}</div>
+                </article>
+            </div>
+
         </div>
+        <!-- /.row -->
 
     </div>
-    <!-- /.row -->
+    <!-- /.container -->
 
-</div>
-<!-- /.container -->
-
-{{template "footer.html"}}
+    {{template "footer.html"}}
 
 </body>
 

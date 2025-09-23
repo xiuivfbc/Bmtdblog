@@ -22,6 +22,9 @@
          folder instead of downloading all of them to reduce the load. -->
     <link rel="stylesheet" href="/static/libs/AdminLTE/css/skins/_all-skins.min.css">
 
+    <!-- 现代化后台管理主题 -->
+    <link rel="stylesheet" href="/static/css/admin-modern.css">
+
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -45,13 +48,15 @@
             <!-- Content Header (Page header) -->
             <section class="content-header">
                 <h1>
-                    <small>友链管理<a class="btn btn-primary" href="javascript:void(0);" data-href="/admin/new_link"
-                            data-toggle="modal" data-target="#add-dialog"><span
-                                class="glyphicon glyphicon-plus"></span>新增</a></small>
+                    友情链接
+                    <small><a class="btn btn-primary btn-sm" href="javascript:void(0);" data-href="/admin/new_link"
+                            data-toggle="modal" data-target="#add-dialog">
+                            <i class="fa fa-plus"></i> 新增链接
+                        </a></small>
                 </h1>
                 <ol class="breadcrumb">
-                    <li><a href="/admin/index"><i class="fa fa-dashboard"></i> Home</a></li>
-                    <li class="active"><a href="#">友链管理</a></li>
+                    <li><a href="/admin/index"><i class="fa fa-dashboard"></i> 控制台</a></li>
+                    <li class="active">友情链接</li>
                 </ol>
             </section>
 
@@ -172,6 +177,10 @@
     <script src="/static/libs/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
     <!-- AdminLTE App -->
     <script src="/static/libs/AdminLTE/js/adminlte.min.js"></script>
+
+    <!-- 现代化后台管理脚本 -->
+    <script src="/static/js/admin-modern.js"></script>
+
     <!-- page script -->
     <script>
         $(function () {

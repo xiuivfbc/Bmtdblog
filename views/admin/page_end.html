@@ -10,6 +10,10 @@
 <script src="bower_components/fastclick/lib/fastclick.js"></script>-->
 <!-- AdminLTE App -->
 <script src="/static/libs/AdminLTE/js/adminlte.min.js"></script>
+
+<!-- 现代化后台管理脚本 -->
+<script src="/static/js/admin-modern.js"></script>
+
 <!-- Sparkline --
 <script src="bower_components/jquery-sparkline/dist/jquery.sparkline.min.js"></script>-->
 <!-- SlimScroll --
@@ -23,19 +27,20 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        $(".readcomment").on("click",function(e){
-            $.post($(e.target).data("href"),{},function(result){
+        $(".readcomment").on("click", function (e) {
+            $.post($(e.target).data("href"), {}, function (result) {
                 window.location.href = $(e.target).data("redirect");
-            },'json');
+            }, 'json');
         });
 
-        $(".readall").on("click",function (e) {
-            $.post("/admin/read_all",{},function(result){
+        $(".readall").on("click", function (e) {
+            $.post("/admin/read_all", {}, function (result) {
                 window.location.href = window.location.href;
-            },"json");
+            }, "json");
         });
     });
 </script>
 </body>
+
 </html>
 {{end}}

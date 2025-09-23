@@ -15,7 +15,7 @@
 
 ## 技术栈
 
-- **后端**: Go + Gin + GORM
+- **后端**: Go + Gin + GORM + slog + viper
 - **数据库**: MySQL
 - **前端**: HTML + JavaScript + Bootstrap
 - **邮件服务**: gomail
@@ -27,9 +27,11 @@
 ![alt text](static/image.png)
 ![alt text](static/image-1.png)
 ![alt text](static/image-2.png)
+![alt text](static/image-7.png)
 ![alt text](static/image-3.png)
 ![alt text](static/image-4.png)
 ![alt text](static/image-5.png)
+![alt text](static/image-6.png)
 
 ## 快速开始
 
