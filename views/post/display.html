@@ -32,10 +32,18 @@
     <!-- Bootstrap Core JavaScript -->
     <script src="/static/libs/bootstrap/js/bootstrap.min.js"></script>
 
+    <!-- 现代化主题交互脚本 -->
+    <script src="/static/js/modern-theme.js"></script>
+
     <!-- github markdown css -->
     <link rel="stylesheet" href="/static/css/markdown.css" />
 
-    <link rel="stylesheet" href="/static/css/base.css"/>
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" href="/static/css/modern-theme.css" />
+
+    <!-- 添加现代化图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <!-- markdown parse -->
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@8.3.1/dist/markdown-it.js"></script>
 
@@ -44,7 +52,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/highlight.js/latest/styles/github.min.css" />
     <script>hljs.initHighlightingOnLoad();</script>
 
-    <script src="https://cdn.jsdelivr.net/gh/jquery-form/form@4.2.2/dist/jquery.form.min.js" integrity="sha384-FzT3vTVGXqf7wRfy8k4BiyzvbNfeYjK+frTVqZeNDFl8woCbF0CYG6g2fMEFFo/i" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jquery-form/form@4.2.2/dist/jquery.form.min.js"
+        integrity="sha384-FzT3vTVGXqf7wRfy8k4BiyzvbNfeYjK+frTVqZeNDFl8woCbF0CYG6g2fMEFFo/i"
+        crossorigin="anonymous"></script>
 
     <style>
         .user-image {
@@ -61,7 +71,7 @@
         $(document).ready(function () {
             // markdown parse
             var md = window.markdownit({
-                html:true
+                html: true
             });
             var result = md.render($("#body").text());
             $("#body").html(result);
@@ -97,133 +107,135 @@
 
 <body>
 
-{{template "navigation.html" .}}
+    {{template "navigation.html" .}}
 
-<!-- Page Content -->
-<div class="container main">
+    <!-- Page Content -->
+    <div class="container main">
 
-    <div class="row">
-        <div class="col-sm-10 col-sm-offset-1">
-            <article class="markdown-body">
-                <!-- Title -->
-                 <h1>{{.post.Title}}</h1>
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <article class="markdown-body">
+                    <!-- Title -->
+                    <h1>{{.post.Title}}</h1>
 
-                <!-- display article info -->
-                <div>
-                    <!-- show tags -->
-                    <tr th:each="tag : ${article.tags}">
-                        {{range $key,$value := .post.Tags}}
-                        <a href="/tag/{{$value.ID}}" class="btn btn-default btn-sm">
-                            <span class="glyphicon glyphicon-tag"></span><span th:text="' ' + ${tag.name}"> {{$value.Name}}</span>
+                    <!-- display article info -->
+                    <div>
+                        <!-- show tags -->
+                        <tr th:each="tag : ${article.tags}">
+                            {{range $key,$value := .post.Tags}}
+                            <a href="/tag/{{$value.ID}}" class="btn btn-default btn-sm">
+                                <span class="glyphicon glyphicon-tag"></span><span th:text="' ' + ${tag.name}">
+                                    {{$value.Name}}</span>
+                            </a>
+                            {{end}}
+                        </tr><!-- show tags -->
+
+                        <!-- display article created time -->
+                        <span class="createdTime">
+                            <span class="glyphicon glyphicon-calendar"></span>{{dateFormat .post.CreatedAt "06-01-02
+                            15:04"}}
+                        </span>
+
+                        <span class="createdTime">
+                            <span class="glyphicon glyphicon-eye-open"></span>{{.post.View}}&nbsp;&nbsp;
+                        </span>
+
+                    </div><!-- display article info -->
+                    <br />
+
+                    <!-- display aritcle body -->
+                    <div id="body">{{.post.Body}}</div>
+
+                </article>
+
+                <hr>
+                <comment>
+                    <!-- Comment -->
+                    {{range .post.Comments}}
+                    <div class="media">
+                        <a class="pull-left" href="{{.GithubUrl}}" target="_blank">
+                            {{if .AvatarUrl}}
+                            <img class="user-image" src="{{.AvatarUrl}}" alt="">
+                            {{else}}
+                            <img class="user-image" src="http://placehold.it/64x64" alt="">
+                            {{end}}
                         </a>
-                        {{end}}
-                    </tr><!-- show tags -->
+                        <div class="media-body">
+                            <h4 class="media-heading"><a href="{{.GithubUrl}}" target="_blank">{{.NickName}}</a>
+                                <small>{{dateFormat .CreatedAt "06-01-02 15:04"}}</small>
+                            </h4>
+                            {{.Content}}
+                        </div>
+                    </div>
+                    {{end}}
+                </comment>
 
-                    <!-- display article created time -->
-                    <span class="createdTime">
-                        <span class="glyphicon glyphicon-calendar"></span>{{dateFormat .post.CreatedAt "06-01-02 15:04"}}
-                    </span>
-
-                    <span class="createdTime">
-                        <span class="glyphicon glyphicon-eye-open"></span>{{.post.View}}&nbsp;&nbsp;
-                    </span>
-
-                </div><!-- display article info -->
-                <br/>
-
-                <!-- display aritcle body -->
-                <div id="body">{{.post.Body}}</div>
-
-            </article>
-
-            <hr>
-            <comment>
-                <!-- Comment -->
-                {{range .post.Comments}}
                 <div class="media">
-                    <a class="pull-left" href="{{.GithubUrl}}" target="_blank">
-                        {{if .AvatarUrl}}
-                        <img class="user-image" src="{{.AvatarUrl}}" alt="">
-                        {{else}}
-                        <img class="user-image" src="http://placehold.it/64x64" alt="">
-                        {{end}}
-                    </a>
-                    <div class="media-body">
-                        <h4 class="media-heading"><a href="{{.GithubUrl}}" target="_blank">{{.NickName}}</a>
-                            <small>{{dateFormat .CreatedAt "06-01-02 15:04"}}</small>
-                        </h4>
-                        {{.Content}}
-                    </div>
+                    {{if not .user}}
+                    {{if .cfg.Github.Enabled}}
+                    <a href="/auth/github">登录发表评论</a>
+                    {{end}}
+                    {{else}}
+                    <div id="messagebox" class="alert alert-danger" style="display: none;" role="alert"></div>
+                    <form id="commentForm" role="form" action="/visitor/new_comment" method="post">
+                        <input name="postId" type="hidden" value="{{.post.ID}}">
+                        <div class="form-group">
+                            <textarea name="content" class="form-control" id="inputContent" placeholder="评论"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input name="verifyCode" class="form-control" placeholder="验证码">
+                            </div>
+                            <div class="col-md-4">
+                                <img src="/captcha" class="j-verifycode" />
+                            </div>
+                        </div>
+                        <div class="pull-right">
+                            <button type="submit" class="btn btn-primary">评论</button>
+                        </div>
+                    </form>
+                    {{end}}
                 </div>
-                {{end}}
-            </comment>
 
-            <div class="media">
-            {{if not .user}}
-                {{if .cfg.Github.Enabled}}
-                <a href="/auth/github">登录发表评论</a>
-                {{end}}
-            {{else}}
-                <div id="messagebox" class="alert alert-danger" style="display: none;" role="alert"></div>
-            <form id="commentForm" role="form" action="/visitor/new_comment" method="post">
-                <input name="postId" type="hidden" value="{{.post.ID}}">
-                <div class="form-group">
-                    <textarea name="content" class="form-control" id="inputContent" placeholder="评论"></textarea>
-                </div>
-                <div class="row">
-                    <div class="col-md-8">
-                        <input name="verifyCode" class="form-control" placeholder="验证码">
-                    </div>
-                    <div class="col-md-4">
-                        <img src="/captcha" class="j-verifycode"/>
-                    </div>
-                </div>
-                <div class="pull-right">
-                    <button type="submit" class="btn btn-primary">评论</button>
-                </div>
-            </form>
-            {{end}}
             </div>
-
         </div>
+        <!-- /.row -->
+
+        <a id="back-to-top" href="#" class="btn btn-default btn-md back-to-top" role="button" data-toggle="tooltip"
+            data-placement="left"><span class="glyphicon glyphicon-chevron-up"></span>
+        </a>
+
     </div>
-    <!-- /.row -->
+    <!-- /.container -->
 
-    <a id="back-to-top" href="#" class="btn btn-default btn-md back-to-top" role="button"
-       data-toggle="tooltip" data-placement="left"><span class="glyphicon glyphicon-chevron-up"></span>
-    </a>
+    {{template "footer.html"}}
 
-</div>
-<!-- /.container -->
-
-{{template "footer.html"}}
-
-<script type="text/javascript">
-    $(document).on("click",".j-verifycode",function(){
-        var path =$(this).attr("src");
-        var index = path.indexOf("?");
-        path = ( index == -1 )? (path+"?" + new Date()) : path.substring(0,index+1)+ new Date();
-        $(this).attr("src", path);
-    });
-
-    $(document).ready(function() {
-        // bind 'myForm' and provide a simple callback function
-        $('#commentForm').ajaxForm(function(data) {
-            if(data.succeed){
-                    window.location.href = window.location.href
-            }else{
-                $('#messagebox').show();
-                setTimeout(hideMessagebox,2000);
-                $('#messagebox').html(data.message);
-                $("input[name='verifyCode']").val('');
-            }
+    <script type="text/javascript">
+        $(document).on("click", ".j-verifycode", function () {
+            var path = $(this).attr("src");
+            var index = path.indexOf("?");
+            path = (index == -1) ? (path + "?" + new Date()) : path.substring(0, index + 1) + new Date();
+            $(this).attr("src", path);
         });
-    });
 
-    function hideMessagebox(){
-        $('#messagebox').hide();
-    }
-</script>
+        $(document).ready(function () {
+            // bind 'myForm' and provide a simple callback function
+            $('#commentForm').ajaxForm(function (data) {
+                if (data.succeed) {
+                    window.location.href = window.location.href
+                } else {
+                    $('#messagebox').show();
+                    setTimeout(hideMessagebox, 2000);
+                    $('#messagebox').html(data.message);
+                    $("input[name='verifyCode']").val('');
+                }
+            });
+        });
+
+        function hideMessagebox() {
+            $('#messagebox').hide();
+        }
+    </script>
 
 </body>
 

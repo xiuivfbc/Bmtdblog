@@ -43,6 +43,10 @@ func Minus(a1, a2 int) int {
 	return a1 - a2
 }
 
+func Multiply(a1, a2 int) int {
+	return a1 * a2
+}
+
 func ListTag() string {
 	tags, err := models.ListTag()
 	if err != nil {

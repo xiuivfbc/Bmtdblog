@@ -173,6 +173,7 @@ func setTemplate(engine *gin.Engine) {
 		"length":     helpers.Len,
 		"add":        helpers.Add,
 		"minus":      helpers.Minus,
+		"multiply":   helpers.Multiply,
 		"listtag":    helpers.ListTag,
 	}
 	engine.SetFuncMap(funcMap)

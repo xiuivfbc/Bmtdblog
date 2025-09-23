@@ -25,6 +25,10 @@
     <![endif]-->
 
     <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/modern-theme.css">
+
+    <!-- 添加现代化图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 </head>
 
@@ -46,46 +50,58 @@
             </h1>-->
 
                 <section class="article">
-                    <!-- First Blog Post -->
+                    <!-- Blog Posts -->
                     {{range $postkey,$postvalue:=.posts}}
-                    <div class="articleInfo">
-                        <span><a class="articleTitle" href="/post/{{$postvalue.ID}}">
-                                {{$length := length $postvalue.Title}}
-                                {{if ge $length 40}}
-                                {{truncate $postvalue.Title 40}}...
+                    <article class="post-card" data-aos="fade-up" data-aos-delay="{{multiply $postkey 100}}">
+                        <div class="articleInfo">
+                            <div class="post-header">
+                                <h2><a class="articleTitle" href="/post/{{$postvalue.ID}}">
+                                        <i class="fas fa-bookmark" style="margin-right: 8px; opacity: 0.8;"></i>
+                                        {{$length := length $postvalue.Title}}
+                                        {{if ge $length 40}}
+                                        {{truncate $postvalue.Title 40}}...
+                                        {{else}}
+                                        {{$postvalue.Title}}
+                                        {{end}}
+                                    </a></h2>
+                                <div class="post-meta">
+                                    <span class="createdTime">
+                                        <i class="fas fa-calendar-alt" style="margin-right: 5px;"></i>
+                                        {{dateFormat $postvalue.CreatedAt "06-01-02 15:04"}}
+                                    </span>
+                                    <span class="post-stats" style="margin-left: 20px; opacity: 0.8;">
+                                        <i class="fas fa-eye" style="margin-right: 5px;"></i>{{$postvalue.View}}
+                                        <i class="fas fa-comment"
+                                            style="margin-left: 15px; margin-right: 5px;"></i>{{$postvalue.CommentTotal}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="articleBody">
+                            <div class="post-excerpt">
+                                {{$length := length $postvalue.Body}}
+                                {{if ge $length 100}}
+                                {{truncate $postvalue.Body 100}}...
                                 {{else}}
-                                {{$postvalue.Title}}
+                                {{$postvalue.Body}}
                                 {{end}}
-                            </a></span>
-                        <span class="createdTime" style="margin-right: 10px;">
-                            <!--<span class="glyphicon glyphicon-eye-open">({{$postvalue.View}})</span>
-                        <span class="glyphicon glyphicon-comment">({{$postvalue.CommentTotal}})</span>-->
-                            {{dateFormat $postvalue.CreatedAt "06-01-02 15:04"}}
-                        </span>
-                    </div>
-                    <div class="articleBody">
-                        {{$length := length $postvalue.Body}}
-                        {{if ge $length 100}}
-                        {{truncate $postvalue.Body 100}}...
-                        {{else}}
-                        {{$postvalue.Body}}
-                        {{end}}
-                    </div>
+                            </div>
+                            <a href="/post/{{$postvalue.ID}}" class="read-more">
+                                阅读全文 <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
 
-                    <!-- article tags -->
-                    <div style="margin-top: 10px">
-                        <tr>
+                        <!-- Article tags -->
+                        <div class="post-tags">
                             {{range $tagkey,$tagvalue:=$postvalue.Tags}}
-                            <a href="/tag/{{$tagvalue.ID}}" class="changeTag"
-                                style="color: #888888;text-decoration: none;">
-                                # <span>{{$tagvalue.Name}}</span>&nbsp;&nbsp;
+                            <a href="/tag/{{$tagvalue.ID}}" class="changeTag">
+                                <i class="fas fa-tag" style="margin-right: 4px;"></i>{{$tagvalue.Name}}
                             </a>
                             {{end}}
-                        </tr>
-                    </div><!-- article tags -->
+                        </div>
 
-                    <hr>
-
+                        <hr class="post-divider">
+                    </article>
                     {{end}}
                 </section>
 
@@ -134,112 +150,77 @@
                     <!-- /.input-group -->
                 </div>
                 */}}
+
                 <!-- Blog Categories Well -->
-                <div class="well">
-                    <h5><span class="glyphicon glyphicon-tag"></span> 文章标签</h5>
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <ul class="list-unstyled">
-                                {{range $tagkey,$tagvalue:=.tags}}
-                                {{if isEven $tagkey}}
-                                <li><a href="/tag/{{$tagvalue.ID}}">{{$tagvalue.Name}}({{$tagvalue.Total}})</a>
-                                </li>
-                                {{end}}
-                                {{end}}
-                            </ul>
-                        </div>
-                        <!-- /.col-lg-6 -->
-                        <div class="col-lg-6">
-                            <ul class="list-unstyled">
-                                {{range $tagkey,$tagvalue:=.tags}}
-                                {{if isOdd $tagkey}}
-                                <li><a href="/tag/{{$tagvalue.ID}}">{{$tagvalue.Name}}({{$tagvalue.Total}})</a>
-                                </li>
-                                {{end}}
-                                {{end}}
-                            </ul>
-                        </div>
-                        <!-- /.col-lg-6 -->
+                <div class="well sidebar-widget">
+                    <h4><i class="fas fa-tags" style="margin-right: 8px; color: var(--primary-color);"></i> 文章标签</h4>
+                    <div class="tags-cloud">
+                        {{range $tagkey,$tagvalue:=.tags}}
+                        <a href="/tag/{{$tagvalue.ID}}" class="tag-cloud-item">
+                            {{$tagvalue.Name}}<span class="tag-count">({{$tagvalue.Total}})</span>
+                        </a>
+                        {{end}}
                     </div>
-                    <!-- /.row -->
                 </div>
 
-                <!-- Side Widget Well -->
-                <div class="well">
-                    <h5><span class="glyphicon glyphicon-folder-open"></span> 文章归档</h5>
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <ul class="list-unstyled">
-                                {{range $archivekey,$archivevalue:=.archives}}
-                                {{if isEven $archivekey}}
-                                <li><a href="/archives/{{$archivevalue.Year}}/{{$archivevalue.Month}}">{{dateFormat
-                                        $archivevalue.ArchiveDate "2006年01月"}}({{$archivevalue.Total}})</a>
-                                </li>
-                                {{end}}
-                                {{end}}
-                            </ul>
+                <!-- Archives Well -->
+                <div class="well sidebar-widget">
+                    <h4><i class="fas fa-archive" style="margin-right: 8px; color: var(--primary-color);"></i> 文章归档</h4>
+                    <div class="archive-list">
+                        {{range $archivekey,$archivevalue:=.archives}}
+                        <div class="archive-item">
+                            <a href="/archives/{{$archivevalue.Year}}/{{$archivevalue.Month}}" class="archive-link">
+                                <i class="fas fa-calendar-alt" style="margin-right: 6px;"></i>
+                                {{dateFormat $archivevalue.ArchiveDate "2006年01月"}}
+                                <span class="archive-count">({{$archivevalue.Total}})</span>
+                            </a>
                         </div>
-                        <!-- /.col-lg-6 -->
-                        <div class="col-lg-6">
-                            <ul class="list-unstyled">
-                                {{range $archivekey,$archivevalue:=.archives}}
-                                {{if isOdd $archivekey}}
-                                <li><a href="/archives/{{$archivevalue.Year}}/{{$archivevalue.Month}}">{{dateFormat
-                                        $archivevalue.ArchiveDate "2006年01月"}}({{$archivevalue.Total}})</a>
-                                </li>
-                                {{end}}
-                                {{end}}
-                            </ul>
-                        </div>
-                        <!-- /.col-lg-6 -->
+                        {{end}}
                     </div>
-                    <!-- /.row -->
                 </div>
 
-                <div class="well">
-                    <h5><span class="glyphicon glyphicon-fire"></span> 阅读最多</h5>
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <ul class="list-unstyled">
-                                {{range $key,$post:=.maxReadPosts}}
-                                <li><a href="/post/{{$post.ID}}">{{$post.Title}}({{$post.View}})</a></li>
-                                {{end}}
-                            </ul>
+                <div class="well sidebar-widget">
+                    <h4><i class="fas fa-fire" style="margin-right: 8px; color: var(--accent-color);"></i> 热门文章</h4>
+                    <div class="popular-posts">
+                        {{range $key,$post:=.maxReadPosts}}
+                        <div class="popular-post-item">
+                            <a href="/post/{{$post.ID}}" class="popular-post-link">
+                                <div class="popular-post-title">{{$post.Title}}</div>
+                                <div class="popular-post-views">
+                                    <i class="fas fa-eye" style="margin-right: 4px;"></i>{{$post.View}} 次阅读
+                                </div>
+                            </a>
                         </div>
-                        <!-- /.col-lg-12 -->
+                        {{end}}
                     </div>
-                    <!-- /.row -->
                 </div>
 
-                <div class="well">
-                    <h5><span class="glyphicon glyphicon-comment"></span> 评论最多</h5>
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <ul class="list-unstyled">
-                                {{range $key,$post:=.maxCommentPosts}}
-                                <li><a href="/post/{{$post.ID}}">{{$post.Title}}({{$post.CommentTotal}})</a></li>
-                                {{end}}
-                            </ul>
+                <div class="well sidebar-widget">
+                    <h4><i class="fas fa-comments" style="margin-right: 8px; color: var(--secondary-color);"></i> 热议文章
+                    </h4>
+                    <div class="comment-posts">
+                        {{range $key,$post:=.maxCommentPosts}}
+                        <div class="comment-post-item">
+                            <a href="/post/{{$post.ID}}" class="comment-post-link">
+                                <div class="comment-post-title">{{$post.Title}}</div>
+                                <div class="comment-post-count">
+                                    <i class="fas fa-comment" style="margin-right: 4px;"></i>{{$post.CommentTotal}} 条评论
+                                </div>
+                            </a>
                         </div>
-                        <!-- /.col-lg-12 -->
+                        {{end}}
                     </div>
-                    <!-- /.row -->
                 </div>
 
-                <div class="well">
-                    <h5><span class="glyphicon glyphicon-link"></span> 友情链接</h5>
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <ul class="list-unstyled">
-                                {{range .links}}
-                                <li><a href="/link/{{.ID}}" target="_blank" title="{{.Url}}">{{.Name}}</a>
-                                </li>
-                                {{end}}
-                            </ul>
-                        </div>
-                        <!-- /.col-lg-6 -->
+                <div class="well sidebar-widget">
+                    <h4><i class="fas fa-link" style="margin-right: 8px; color: var(--primary-color);"></i> 友情链接</h4>
+                    <div class="friend-links">
+                        {{range .links}}
+                        <a href="/link/{{.ID}}" target="_blank" title="{{.Url}}" class="friend-link">
+                            <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i>{{.Name}}
+                        </a>
+                        {{end}}
                     </div>
-                    <!-- /.row -->
                 </div>
 
             </div>
@@ -259,6 +240,65 @@
 
     <!-- Bootstrap Core JavaScript -->
     <script src="/static/libs/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- 现代化主题交互脚本 -->
+    <script src="/static/js/modern-theme.js"></script>
+
+    <!-- 现代化交互增强 -->
+    <script>
+        $(document).ready(function () {
+            // 页面加载动画
+            $('.post-card').each(function (index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+            });
+
+            // 平滑滚动
+            $('a[href^="#"]').on('click', function (event) {
+                var target = $(this.getAttribute('href'));
+                if (target.length) {
+                    event.preventDefault();
+                    $('html, body').stop().animate({
+                        scrollTop: target.offset().top - 70
+                    }, 800);
+                }
+            });
+
+            // 回到顶部按钮
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 100) {
+                    $('#back-to-top').fadeIn();
+                } else {
+                    $('#back-to-top').fadeOut();
+                }
+            });
+
+            $('#back-to-top').click(function () {
+                $('html, body').animate({ scrollTop: 0 }, 800);
+                return false;
+            });
+
+            // 卡片悬停效果
+            $('.post-card').hover(function () {
+                $(this).find('.articleInfo').css('transform', 'translateY(-5px)');
+            }, function () {
+                $(this).find('.articleInfo').css('transform', 'translateY(0)');
+            });
+
+            // 导航栏滚动效果
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 50) {
+                    $('.navbar').addClass('navbar-scrolled');
+                } else {
+                    $('.navbar').removeClass('navbar-scrolled');
+                }
+            });
+        });
+    </script>
+
+    <!-- 添加回到顶部按钮 -->
+    <a href="#" id="back-to-top" class="back-to-top" style="display: none;">
+        <i class="fas fa-chevron-up"></i>
+    </a>
 
 </body>
 

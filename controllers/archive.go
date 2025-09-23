@@ -47,6 +47,7 @@ func ArchiveGet(c *gin.Context) {
 	for _, post := range posts {
 		post.Tags, _ = models.ListTagByPostId(post.ID)
 		post.Body = policy.Sanitize(string(blackfriday.MarkdownCommon([]byte(post.Body))))
+		post.CommentTotal = models.CountCommentByPostID(post.ID)
 	}
 	user, _ := c.Get(ContextUserKey)
 	c.HTML(http.StatusOK, "index/index.html", gin.H{

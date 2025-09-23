@@ -62,3 +62,9 @@ func CountComment() int64 {
 	DB.Model(&Comment{}).Count(&count)
 	return count
 }
+
+func CountCommentByPostID(postID uint) int {
+	var count int64
+	DB.Model(&Comment{}).Where("post_id = ?", postID).Count(&count)
+	return int(count)
+}

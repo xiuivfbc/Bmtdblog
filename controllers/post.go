@@ -24,6 +24,7 @@ func PostGet(c *gin.Context) {
 	post.UpdateView()
 	post.Tags, _ = models.ListTagByPostId(id)
 	post.Comments, _ = models.ListCommentByPostID(id)
+	post.CommentTotal = models.CountCommentByPostID(id)
 	user, _ := c.Get(ContextUserKey)
 	c.HTML(http.StatusOK, "post/display.html", gin.H{
 		"post": post,
