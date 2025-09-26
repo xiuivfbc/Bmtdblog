@@ -24,10 +24,12 @@
 - **其他**: Markdown 解析、HTML 安全过滤
 
 ## 实践展示
+### 前台展示
 ![alt text](static/image.png)
 ![alt text](static/image-1.png)
 ![alt text](static/image-2.png)
 ![alt text](static/image-7.png)
+### 后台管理
 ![alt text](static/image-3.png)
 ![alt text](static/image-4.png)
 ![alt text](static/image-5.png)
