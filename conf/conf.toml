@@ -32,6 +32,13 @@ enabled = false
 apiurl = 'https://sm.ms/api/v2/upload'
 apikey = ''
 
+[redis]
+enabled = true
+addr = ''
+password = ''
+db = 0
+pool_size = 10
+
 [github]
 enabled = true
 clientid = ''

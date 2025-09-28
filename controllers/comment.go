@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+
 	"github.com/dchest/captcha"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -37,7 +38,7 @@ func CommentPost(c *gin.Context) {
 		res["message"] = err.Error()
 		return
 	}
-	post, err = models.GetPostById(pid)
+	post, err = models.GetPostByIdWithCache(pid)
 	if err != nil {
 		res["message"] = err.Error()
 		return

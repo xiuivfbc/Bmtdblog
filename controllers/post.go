@@ -15,16 +15,17 @@ func PostGet(c *gin.Context) {
 		HandleMessage(c, err.Error())
 		return
 	}
-	post, err := models.GetPostById(id)
+	post, err := models.GetPostByIdWithCache(id)
 	if err != nil || !post.IsPublished {
 		Handle404(c)
 		return
 	}
-	post.View++
-	post.UpdateView()
-	post.Tags, _ = models.ListTagByPostId(id)
-	post.Comments, _ = models.ListCommentByPostID(id)
-	post.CommentTotal = models.CountCommentByPostID(id)
+	// 更新浏览数（异步，避免影响缓存和性能）
+	go func() {
+		post.View++
+		post.UpdateView()
+	}()
+
 	user, _ := c.Get(ContextUserKey)
 	c.HTML(http.StatusOK, "post/display.html", gin.H{
 		"post": post,
@@ -87,12 +88,11 @@ func PostEdit(c *gin.Context) {
 		HandleMessage(c, err.Error())
 		return
 	}
-	post, err := models.GetPostById(id)
+	post, err := models.GetPostByIdWithCache(id)
 	if err != nil {
 		Handle404(c)
 		return
 	}
-	post.Tags, _ = models.ListTagByPostId(id)
 	c.HTML(http.StatusOK, "post/modify.html", gin.H{
 		"post": post,
 		"user": c.MustGet(ContextUserKey),
@@ -161,7 +161,7 @@ func PostPublish(c *gin.Context) {
 		res["message"] = err.Error()
 		return
 	}
-	post, err = models.GetPostById(id)
+	post, err = models.GetPostByIdWithCache(id)
 	if err != nil {
 		res["message"] = err.Error()
 		return

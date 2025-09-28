@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
+	"github.com/xiuivfbc/bmtdblog/system"
 )
 
 type Post struct {
@@ -31,15 +33,31 @@ type QrArchive struct {
 }
 
 func (post *Post) Insert() error {
-	return DB.Create(post).Error
+	err := DB.Create(post).Error
+	if err != nil {
+		return err
+	}
+
+	// 清除相关缓存
+	go post.ClearRelatedCache()
+
+	return nil
 }
 
 func (post *Post) Update() error {
-	return DB.Model(post).Updates(map[string]interface{}{
+	err := DB.Model(post).Updates(map[string]interface{}{
 		"title":        post.Title,
 		"body":         post.Body,
 		"is_published": post.IsPublished,
 	}).Error
+	if err != nil {
+		return err
+	}
+
+	// 清除相关缓存
+	go post.ClearRelatedCache()
+
+	return nil
 }
 
 func (post *Post) UpdateView() error {
@@ -49,7 +67,156 @@ func (post *Post) UpdateView() error {
 }
 
 func (post *Post) Delete() error {
-	return DB.Delete(post).Error
+	err := DB.Delete(post).Error
+	if err != nil {
+		return err
+	}
+
+	// 清除相关缓存
+	go post.ClearRelatedCache()
+
+	return nil
+}
+
+// 缓存相关常量
+const (
+	// 单个博文缓存key前缀
+	PostCachePrefix = "post"
+	// 博文列表缓存key前缀
+	PostListCachePrefix = "post_list"
+	// 归档缓存key前缀
+	PostArchiveCachePrefix = "post_archive"
+	// 缓存过期时间
+	PostCacheExpiration     = 1 * time.Hour
+	PostListCacheExpiration = 30 * time.Minute
+)
+
+// 生成博文缓存key
+func (post *Post) CacheKey() string {
+	return system.GenerateKey(PostCachePrefix, post.ID)
+}
+
+// 从缓存获取博文
+func GetPostFromCache(id uint) (*Post, error) {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil, fmt.Errorf("cache not available")
+	}
+
+	key := system.GenerateKey(PostCachePrefix, id)
+	var post Post
+
+	err := system.Redis.Get(key, &post)
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Debug("Post loaded from cache", "id", id, "title", post.Title)
+	return &post, nil
+}
+
+// 将博文存入缓存
+func (post *Post) SetCache() error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil // 缓存不可用时不报错，静默失败
+	}
+
+	key := post.CacheKey()
+	err := system.Redis.Set(key, post, PostCacheExpiration)
+	if err != nil {
+		slog.Error("Failed to cache post", "id", post.ID, "error", err)
+		return err
+	}
+
+	slog.Debug("Post cached successfully", "id", post.ID, "title", post.Title)
+	return nil
+}
+
+// 删除博文缓存
+func (post *Post) DelCache() error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil
+	}
+
+	key := post.CacheKey()
+	err := system.Redis.Del(key)
+	if err != nil {
+		slog.Error("Failed to delete post cache", "id", post.ID, "error", err)
+		return err
+	}
+
+	slog.Debug("Post cache deleted", "id", post.ID)
+	return nil
+}
+
+// 清除所有相关缓存（博文增删改时调用）
+func (post *Post) ClearRelatedCache() error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil
+	}
+
+	// 清除自身缓存
+	if err := post.DelCache(); err != nil {
+		slog.Error("Failed to clear post cache", "id", post.ID, "error", err)
+	}
+
+	// 清除列表缓存（影响首页、归档等）
+	patterns := []string{
+		PostListCachePrefix + "*",
+		PostArchiveCachePrefix + "*",
+		"index*", // 首页缓存
+	}
+
+	for _, pattern := range patterns {
+		if err := system.Redis.DelPattern(pattern); err != nil {
+			slog.Error("Failed to clear cache pattern", "pattern", pattern, "error", err)
+		}
+	}
+
+	slog.Debug("Related cache cleared for post", "id", post.ID)
+	return nil
+}
+
+// 带缓存的获取博文方法
+func GetPostByIdWithCache(id uint) (*Post, error) {
+	// 先尝试从缓存获取
+	if post, err := GetPostFromCache(id); err == nil {
+		// 补充关联数据（Tags, Comments等）
+		if err := LoadPostRelations(post); err != nil {
+			slog.Error("Failed to load post relations from cache", "id", id, "error", err)
+		}
+		return post, nil
+	}
+
+	// 缓存未命中，从数据库获取
+	post, err := GetPostById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 异步写入缓存
+	go func() {
+		if err := post.SetCache(); err != nil {
+			slog.Error("Failed to set post cache async", "id", id, "error", err)
+		}
+	}()
+
+	return post, nil
+}
+
+// 加载博文关联数据（标签、评论等）
+func LoadPostRelations(post *Post) error {
+	// 加载标签
+	if tags, err := ListTagByPostId(post.ID); err == nil {
+		post.Tags = tags
+	}
+
+	// 加载评论
+	if comments, err := ListCommentByPostID(post.ID); err == nil {
+		post.Comments = comments
+		post.CommentTotal = len(comments)
+	}
+
+	return nil
 }
 
 func (post *Post) Excerpt() template.HTML {
