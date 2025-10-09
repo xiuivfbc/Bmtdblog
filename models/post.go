@@ -104,6 +104,12 @@ const (
 	// 防穿透：空值缓存相关
 	NullCachePrefix     = "null_post"     // 空值缓存key前缀
 	NullCacheExpiration = 5 * time.Minute // 空值缓存过期时间（较短）
+
+	// 防击穿：分布式锁相关
+	LockCachePrefix   = "lock_post"            // 分布式锁key前缀
+	LockCacheTimeout  = 10 * time.Second       // 锁超时时间（防死锁）
+	LockRetryInterval = 100 * time.Millisecond // 重试间隔
+	LockMaxRetries    = 30                     // 最大重试次数（总等待时间约3秒）
 )
 
 // 生成博文缓存key
@@ -201,9 +207,15 @@ func (post *Post) ClearRelatedCache() error {
 	return nil
 }
 
-// 带缓存的获取博文方法（防穿透：空值缓存）
+// 带缓存的获取博文方法（防穿透+防击穿）
 func GetPostByIdWithCache(id uint) (*Post, error) {
-	// 1. 先尝试从缓存获取
+	// 1. 检查空值缓存：如果之前确认不存在，直接返回
+	if IsNullCached(id) {
+		slog.Debug("Null cache hit", "post_id", id)
+		return nil, fmt.Errorf("post not found")
+	}
+
+	// 2. 先尝试从缓存获取
 	if post, err := GetPostFromCache(id); err == nil {
 		// 补充关联数据（Tags, Comments等）
 		if err := LoadPostRelations(post); err != nil {
@@ -212,7 +224,62 @@ func GetPostByIdWithCache(id uint) (*Post, error) {
 		return post, nil
 	}
 
-	// 2. 缓存未命中，从数据库获取
+	// 3. 缓存未命中，尝试获取分布式锁（防击穿）
+	locked, err := TryLock(id)
+	if err != nil {
+		slog.Error("Failed to try lock", "post_id", id, "error", err)
+		// 锁操作失败，降级为直接查询数据库
+		return fallbackGetPost(id)
+	}
+
+	if !locked {
+		// 未获得锁，说明其他线程正在重建缓存，等待缓存重建完成
+		slog.Debug("Lock held by other thread, waiting", "post_id", id)
+		if post, err := WaitForLockRelease(id); err == nil {
+			// 等待成功，其他线程已重建缓存
+			if err := LoadPostRelations(post); err != nil {
+				slog.Error("Failed to load post relations after wait", "id", id, "error", err)
+			}
+			return post, nil
+		}
+		// 等待超时，降级为直接查询数据库
+		slog.Debug("Wait timeout, fallback to direct query", "post_id", id)
+		return fallbackGetPost(id)
+	}
+
+	// 4. 获得锁，负责重建缓存
+	slog.Debug("Got lock, rebuilding cache", "post_id", id)
+	defer ReleaseLock(id) // 确保锁被释放
+
+	// 再次检查缓存（双重检查模式）
+	if post, err := GetPostFromCache(id); err == nil {
+		slog.Debug("Cache rebuilt by other thread (double check)", "post_id", id)
+		if err := LoadPostRelations(post); err != nil {
+			slog.Error("Failed to load post relations from double check", "id", id, "error", err)
+		}
+		return post, nil
+	}
+
+	// 从数据库获取并重建缓存
+	return rebuildCacheAndReturn(id)
+}
+
+// fallbackGetPost 降级方案：直接查询数据库（不使用缓存）
+func fallbackGetPost(id uint) (*Post, error) {
+	post, err := GetPostById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := LoadPostRelations(post); err != nil {
+		slog.Error("Failed to load post relations in fallback", "id", id, "error", err)
+	}
+
+	return post, nil
+}
+
+// rebuildCacheAndReturn 重建缓存并返回数据
+func rebuildCacheAndReturn(id uint) (*Post, error) {
 	post, err := GetPostById(id)
 	if err != nil {
 		// 数据库中也不存在，设置空值缓存（避免重复查询）
@@ -224,13 +291,18 @@ func GetPostByIdWithCache(id uint) (*Post, error) {
 		return nil, err
 	}
 
-	// 3. 异步写入缓存
-	go func() {
-		if err := post.SetCache(); err != nil {
-			slog.Error("Failed to set post cache async", "id", id, "error", err)
-		}
-	}()
+	// 同步写入缓存（因为我们持有锁）
+	if err := post.SetCache(); err != nil {
+		slog.Error("Failed to set post cache sync", "id", id, "error", err)
+		// 缓存写入失败不影响返回数据
+	}
 
+	// 加载关联数据
+	if err := LoadPostRelations(post); err != nil {
+		slog.Error("Failed to load post relations after rebuild", "id", id, "error", err)
+	}
+
+	slog.Debug("Cache rebuilt successfully", "post_id", id)
 	return post, nil
 }
 
@@ -465,6 +537,16 @@ func GetListCache(key string, dest interface{}) error {
 
 // ============== 空值缓存相关函数 ==============
 
+// IsNullCached 检查是否已缓存为空值
+func IsNullCached(postID uint) bool {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return false
+	}
+
+	key := system.GenerateKey(NullCachePrefix, postID)
+	return system.Redis.Exists(key)
+}
+
 // SetNullCache 设置空值缓存
 func SetNullCache(postID uint) error {
 	if system.Redis == nil || !system.Redis.IsAvailable() {
@@ -498,4 +580,51 @@ func DeleteNullCache(postID uint) error {
 
 	slog.Debug("Null cache deleted", "post_id", postID)
 	return nil
+}
+
+// ============== 分布式锁相关函数（防击穿） ==============
+
+// TryLock 尝试获取分布式锁
+func TryLock(postID uint) (bool, error) {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return false, fmt.Errorf("redis not available")
+	}
+
+	key := system.GenerateKey(LockCachePrefix, postID)
+	// 使用 SETNX 设置锁，如果key已存在则失败
+	// 同时设置过期时间防止死锁
+	return system.Redis.SetNX(key, "locked", LockCacheTimeout)
+}
+
+// ReleaseLock 释放分布式锁
+func ReleaseLock(postID uint) error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil
+	}
+
+	key := system.GenerateKey(LockCachePrefix, postID)
+	err := system.Redis.Del(key)
+	if err != nil {
+		slog.Error("Failed to release lock", "post_id", postID, "error", err)
+		return err
+	}
+
+	slog.Debug("Lock released", "post_id", postID)
+	return nil
+}
+
+// WaitForLockRelease 等待锁释放（其他线程重建缓存完成）
+func WaitForLockRelease(postID uint) (*Post, error) {
+	for i := 0; i < LockMaxRetries; i++ {
+		time.Sleep(LockRetryInterval)
+
+		// 尝试从缓存获取数据（其他线程可能已经重建了缓存）
+		if post, err := GetPostFromCache(postID); err == nil {
+			slog.Debug("Cache rebuilt by other thread", "post_id", postID)
+			return post, nil
+		}
+	}
+
+	// 等待超时，返回错误
+	return nil, fmt.Errorf("wait for cache rebuild timeout")
 }

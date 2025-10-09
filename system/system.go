@@ -260,6 +260,27 @@ func (r *RedisCacheClient) Exists(key string) bool {
 	return result > 0
 }
 
+// SetNX 设置缓存，仅当key不存在时（分布式锁）
+func (r *RedisCacheClient) SetNX(key string, value interface{}, expiration time.Duration) (bool, error) {
+	if !r.IsAvailable() {
+		return false, fmt.Errorf("redis is not available")
+	}
+
+	result, err := r.client.SetNX(r.ctx, key, value, expiration).Result()
+	if err != nil {
+		slog.Error("Failed to setnx", "key", key, "error", err)
+		return false, err
+	}
+
+	if result {
+		slog.Debug("SetNX successful", "key", key, "expiration", expiration)
+	} else {
+		slog.Debug("SetNX failed, key already exists", "key", key)
+	}
+
+	return result, nil
+}
+
 // 设置过期时间
 func (r *RedisCacheClient) Expire(key string, expiration time.Duration) error {
 	if !r.IsAvailable() {
