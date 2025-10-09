@@ -109,4 +109,10 @@ func initSomething() {
 		f.Close()
 		os.Exit(1)
 	}
+
+	// Redis缓存初始化
+	if err := system.InitRedis(); err != nil {
+		system.Logger.Error("Redis initialization failed", "err", err)
+		// Redis失败不退出程序，允许降级运行
+	}
 }

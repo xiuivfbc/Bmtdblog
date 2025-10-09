@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"log/slog"
+	"math/rand"
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -89,11 +90,22 @@ const (
 	// 缓存过期时间
 	PostCacheExpiration     = 1 * time.Hour
 	PostListCacheExpiration = 30 * time.Minute
+	// 防雪崩：随机偏移量最大值
+	PostCacheRandomOffset     = 30 * time.Minute // 博文缓存 ±30分钟
+	PostListCacheRandomOffset = 10 * time.Minute // 列表缓存 ±10分钟
 )
 
 // 生成博文缓存key
 func (post *Post) CacheKey() string {
 	return system.GenerateKey(PostCachePrefix, post.ID)
+}
+
+// 生成随机过期时间（防缓存雪崩）
+func getRandomExpiration(baseExpiration time.Duration, randomOffset time.Duration) time.Duration {
+	// 生成 -randomOffset 到 +randomOffset 之间的随机偏移量
+	offsetRange := int64(randomOffset * 2)
+	randomOffsetValue := time.Duration(rand.Int63n(offsetRange)) - randomOffset
+	return baseExpiration + randomOffsetValue
 }
 
 // 从缓存获取博文
@@ -121,13 +133,15 @@ func (post *Post) SetCache() error {
 	}
 
 	key := post.CacheKey()
-	err := system.Redis.Set(key, post, PostCacheExpiration)
+	// 使用随机过期时间防止缓存雪崩
+	randomExpiration := getRandomExpiration(PostCacheExpiration, PostCacheRandomOffset)
+	err := system.Redis.Set(key, post, randomExpiration)
 	if err != nil {
 		slog.Error("Failed to cache post", "id", post.ID, "error", err)
 		return err
 	}
 
-	slog.Debug("Post cached successfully", "id", post.ID, "title", post.Title)
+	slog.Debug("Post cached successfully", "id", post.ID, "title", post.Title, "expiration", randomExpiration)
 	return nil
 }
 
@@ -397,4 +411,37 @@ func CountPostByArchive(year, month string) (count int, err error) {
 	querySql = `select count(*) from posts where date_format(created_at,'%Y-%m') = ? and is_published = ?`
 	err = DB.Raw(querySql, condition, true).Row().Scan(&count)
 	return
+}
+
+// 缓存辅助方法：为列表数据设置缓存（使用随机过期时间）
+func SetListCache(key string, data interface{}) error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil // 缓存不可用时不报错，静默失败
+	}
+
+	// 使用随机过期时间防止缓存雪崩
+	randomExpiration := getRandomExpiration(PostListCacheExpiration, PostListCacheRandomOffset)
+	err := system.Redis.Set(key, data, randomExpiration)
+	if err != nil {
+		slog.Error("Failed to cache list data", "key", key, "error", err)
+		return err
+	}
+
+	slog.Debug("List cache set successfully", "key", key, "expiration", randomExpiration)
+	return nil
+}
+
+// 缓存辅助方法：获取列表缓存数据
+func GetListCache(key string, dest interface{}) error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return fmt.Errorf("cache not available")
+	}
+
+	err := system.Redis.Get(key, dest)
+	if err != nil {
+		return err
+	}
+
+	slog.Debug("List cache hit", "key", key)
+	return nil
 }
