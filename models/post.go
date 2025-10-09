@@ -39,6 +39,13 @@ func (post *Post) Insert() error {
 		return err
 	}
 
+	// 清除可能存在的空值缓存
+	go func() {
+		if err := DeleteNullCache(post.ID); err != nil {
+			slog.Error("Failed to delete null cache after insert", "id", post.ID, "error", err)
+		}
+	}()
+
 	// 清除相关缓存
 	go post.ClearRelatedCache()
 
@@ -93,6 +100,10 @@ const (
 	// 防雪崩：随机偏移量最大值
 	PostCacheRandomOffset     = 30 * time.Minute // 博文缓存 ±30分钟
 	PostListCacheRandomOffset = 10 * time.Minute // 列表缓存 ±10分钟
+
+	// 防穿透：空值缓存相关
+	NullCachePrefix     = "null_post"     // 空值缓存key前缀
+	NullCacheExpiration = 5 * time.Minute // 空值缓存过期时间（较短）
 )
 
 // 生成博文缓存key
@@ -190,9 +201,9 @@ func (post *Post) ClearRelatedCache() error {
 	return nil
 }
 
-// 带缓存的获取博文方法
+// 带缓存的获取博文方法（防穿透：空值缓存）
 func GetPostByIdWithCache(id uint) (*Post, error) {
-	// 先尝试从缓存获取
+	// 1. 先尝试从缓存获取
 	if post, err := GetPostFromCache(id); err == nil {
 		// 补充关联数据（Tags, Comments等）
 		if err := LoadPostRelations(post); err != nil {
@@ -201,13 +212,19 @@ func GetPostByIdWithCache(id uint) (*Post, error) {
 		return post, nil
 	}
 
-	// 缓存未命中，从数据库获取
+	// 2. 缓存未命中，从数据库获取
 	post, err := GetPostById(id)
 	if err != nil {
+		// 数据库中也不存在，设置空值缓存（避免重复查询）
+		go func() {
+			if err := SetNullCache(id); err != nil {
+				slog.Error("Failed to set null cache async", "id", id, "error", err)
+			}
+		}()
 		return nil, err
 	}
 
-	// 异步写入缓存
+	// 3. 异步写入缓存
 	go func() {
 		if err := post.SetCache(); err != nil {
 			slog.Error("Failed to set post cache async", "id", id, "error", err)
@@ -443,5 +460,42 @@ func GetListCache(key string, dest interface{}) error {
 	}
 
 	slog.Debug("List cache hit", "key", key)
+	return nil
+}
+
+// ============== 空值缓存相关函数 ==============
+
+// SetNullCache 设置空值缓存
+func SetNullCache(postID uint) error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil
+	}
+
+	key := system.GenerateKey(NullCachePrefix, postID)
+	// 缓存一个简单的标记，表示该ID不存在
+	err := system.Redis.Set(key, "null", NullCacheExpiration)
+	if err != nil {
+		slog.Error("Failed to set null cache", "post_id", postID, "error", err)
+		return err
+	}
+
+	slog.Debug("Null cache set", "post_id", postID, "expiration", NullCacheExpiration)
+	return nil
+}
+
+// DeleteNullCache 删除空值缓存（当博文被创建时调用）
+func DeleteNullCache(postID uint) error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil
+	}
+
+	key := system.GenerateKey(NullCachePrefix, postID)
+	err := system.Redis.Del(key)
+	if err != nil {
+		slog.Error("Failed to delete null cache", "post_id", postID, "error", err)
+		return err
+	}
+
+	slog.Debug("Null cache deleted", "post_id", postID)
 	return nil
 }
