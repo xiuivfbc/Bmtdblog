@@ -29,6 +29,9 @@
 ![alt text](static/image-1.png)
 ![alt text](static/image-2.png)
 ![alt text](static/image-7.png)
+![alt text](static/image-8.png)
+![alt text](static/image-9.png)
+
 ### 后台管理
 ![alt text](static/image-3.png)
 ![alt text](static/image-4.png)
