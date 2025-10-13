@@ -1,5 +1,5 @@
 addr = '127.0.0.1:8090'
-signup_enabled = false
+signup_enabled = true
 title = 'Bmtdblog'
 session_secret = 'Bmtdblog'
 domain = 'http://localhost:8090'
@@ -7,11 +7,18 @@ file_server = 'smms'
 notify_emails = ''
 page_size = 10
 public = 'static'
-view = 'views/**/*'
-dir = ''
+view = 'views/**/*.html'
+dir = '.'
 
 [database]
-dsn = 'mysql-dsn'
+dsn = 'bmtdblog.db'
+
+[elasticsearch]
+enabled = false
+host = 'localhost:9200'
+index_name = 'bmtdblog_posts'
+username = ''
+password = ''
 
 [seo]
 description = 'Bmtdblog, just my toy'
@@ -33,14 +40,14 @@ apiurl = 'https://sm.ms/api/v2/upload'
 apikey = ''
 
 [redis]
-enabled = true
+enabled = false
 addr = ''
 password = ''
 db = 0
 pool_size = 10
 
 [github]
-enabled = true
+enabled = false
 clientid = ''
 clientsecret = ''
 redirecturl = 'http://localhost:8090/oauth2callback'

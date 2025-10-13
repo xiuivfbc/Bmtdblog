@@ -8,6 +8,7 @@ require (
 	github.com/claudiu/gocron v0.0.0-20151103142354-980c96bf412b
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
 	github.com/denisbakhtin/sitemap v0.0.0-20151103020935-3b73dfe0369c
+	github.com/elastic/go-elasticsearch/v8 v8.11.1
 	github.com/gin-contrib/sessions v0.0.0-20190512062852-3cb4c4f2d615
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gorilla/feeds v1.1.1
@@ -21,7 +22,7 @@ require (
 	golang.org/x/oauth2 v0.31.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gorm.io/driver/mysql v1.5.7
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.30.0
 )
 
 require (
@@ -32,6 +33,7 @@ require (
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.6 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -51,6 +53,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
@@ -72,4 +75,5 @@ require (
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/driver/sqlite v1.6.0 // indirect
 )

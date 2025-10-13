@@ -1,0 +1,448 @@
+{{define "search/index.html"}}
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{template "meta.html" .}}
+
+    <title>搜索 | Bmtdblog</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="/static/libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="/static/css/blog-home.css" rel="stylesheet">
+    <link href="/static/css/base.css" rel="stylesheet">
+    <link href="/static/css/modern-theme.css" rel="stylesheet">
+
+    <!-- 添加现代化图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #7c3aed;
+            --secondary-color: #c084fc;
+            --accent-color: #f472b6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --bg-dark: #0f172a;
+            --bg-darker: #1e293b;
+            --bg-card: #334155;
+            --border-color: #475569;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-top: 70px;
+        }
+
+        .search-hero {
+            text-align: center;
+            padding: 80px 0;
+            background: var(--bg-card);
+            margin-bottom: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .search-hero p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        .search-main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .search-box {
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .search-box:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .search-input {
+            border: none;
+            padding: 20px 30px;
+            font-size: 1.1rem;
+            width: 100%;
+            background: transparent;
+            outline: none;
+            color: var(--text-primary);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+        }
+
+        .search-btn:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            transform: scale(1.05);
+        }
+
+        .search-form-wrapper {
+            position: relative;
+        }
+
+        .search-tips {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tip-item {
+            background: var(--bg-darker);
+            padding: 10px 18px;
+            border-radius: 20px;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .tip-item:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .tip-item i {
+            margin-right: 8px;
+        }
+
+        .tag-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tag-btn {
+            transition: all 0.3s ease;
+        }
+
+        .tag-btn:hover {
+            background: var(--primary-color) !important;
+            color: white !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .tag-btn.selected {
+            background: var(--primary-color) !important;
+            color: white !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .advanced-search .form-control {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .advanced-search .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+        }
+
+        @media (max-width: 768px) {
+            .search-hero h1 {
+                font-size: 2rem;
+            }
+
+            .search-input {
+                padding: 15px 50px 15px 20px;
+                font-size: 16px;
+            }
+
+            .search-btn {
+                width: 40px;
+            }
+
+            .search-hero {
+                padding: 60px 20px;
+            }
+        }
+    </style>
+
+    @media (max-width: 768px) {
+    .search-hero h1 {
+    font-size: 2rem;
+    }
+
+    .search-tips {
+    gap: 15px;
+    }
+
+    .tip-item {
+    padding: 10px 15px;
+    font-size: 0.8rem;
+    }
+
+    .search-input {
+    padding: 15px 20px;
+    }
+
+    .search-btn {
+    padding: 15px 25px;
+    }
+    }
+    </style>
+</head>
+
+<body>
+    {{template "navigation.html" .}}
+
+    <div class="search-hero">
+        <div class="container">
+            <h1><i class="fas fa-search" style="margin-right: 15px; opacity: 0.8;"></i>发现精彩内容</h1>
+            <p>探索博客中的知识宝藏，找到你感兴趣的文章</p>
+
+            <div class="search-main">
+                <form method="GET" action="/search" class="search-form">
+                    <div class="search-form-wrapper">
+                        <div class="search-box">
+                            <input type="text" name="q" value="{{.keyword}}" placeholder="输入关键词，开始你的探索之旅..."
+                                class="search-input" autocomplete="off">
+                            <button type="submit" class="search-btn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+
+                        <!-- 搜索建议下拉 -->
+                        <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+                    </div>
+
+                    <!-- 高级搜索选项 -->
+                    <div class="advanced-search" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select name="sort" class="form-control">
+                                    <option value="relevance" {{if eq .sortBy "relevance" }}selected{{end}}>相关性排序
+                                    </option>
+                                    <option value="date" {{if eq .sortBy "date" }}selected{{end}}>发布时间</option>
+                                    <option value="views" {{if eq .sortBy "views" }}selected{{end}}>浏览量</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" name="date_from" value="{{.dateFrom}}" class="form-control"
+                                    placeholder="开始日期">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" name="date_to" value="{{.dateTo}}" class="form-control"
+                                    placeholder="结束日期">
+                            </div>
+                            <div class="col-md-3">
+                                <select name="tags" multiple class="form-control" size="3" style="height: auto;">
+                                    <option value="">选择标签...</option>
+                                    {{range .allTags}}
+                                    <option value="{{.Name}}" {{range $.selectedTags}}{{if eq .
+                                        $.Name}}selected{{end}}{{end}}>{{.Name}} ({{.Total}})</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                        </div>
+                        {{if .allTags}}
+                        <div class="tag-filter-section" style="margin-top: 15px;">
+                            <h6 style="color: var(--text-secondary); margin-bottom: 10px;">
+                                <i class="fas fa-tags"></i> 热门标签
+                            </h6>
+                            <div class="tag-buttons">
+                                {{range .allTags}}
+                                <button type="button" class="tag-btn" data-tag="{{.Name}}" style="background: var(--bg-darker); border: 1px solid var(--border-color); 
+                                               color: var(--text-secondary); padding: 5px 12px; margin: 3px; 
+                                               border-radius: 15px; cursor: pointer; transition: var(--transition);">
+                                    {{.Name}} <span style="opacity: 0.7;">({{.Total}})</span>
+                                </button>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+
+                    <div style="text-align: center;">
+                        <a href="#" class="toggle-advanced" onclick="toggleAdvanced()">
+                            <i class="fas fa-sliders-h"></i> 高级搜索选项
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 搜索提示 -->
+            <div class="search-tips">
+                <div class="tip-item">
+                    <i class="fas fa-lightbulb"></i> 全文搜索
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-tags"></i> 标签筛选
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-sort"></i> 智能排序
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-calendar"></i> 日期筛选
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-magic"></i> 搜索建议
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAdvanced() {
+            const advanced = document.querySelector('.advanced-search');
+            if (advanced.style.display === 'none') {
+                advanced.style.display = 'block';
+            } else {
+                advanced.style.display = 'none';
+            }
+        }
+
+        // 搜索建议功能
+        let suggestTimeout;
+        document.querySelector('.search-input').addEventListener('input', function (e) {
+            clearTimeout(suggestTimeout);
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                document.getElementById('search-suggestions').style.display = 'none';
+                return;
+            }
+
+            suggestTimeout = setTimeout(() => {
+                fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        showSuggestions(data.suggestions || []);
+                    })
+                    .catch(err => console.log('获取建议失败:', err));
+            }, 300);
+        });
+
+        function showSuggestions(suggestions) {
+            const container = document.getElementById('search-suggestions');
+            if (suggestions.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            const html = suggestions.map(s =>
+                `<div class="suggestion-item" onclick="selectSuggestion('${s}')">${s}</div>`
+            ).join('');
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+
+        function selectSuggestion(suggestion) {
+            document.querySelector('.search-input').value = suggestion;
+            document.getElementById('search-suggestions').style.display = 'none';
+            document.querySelector('.search-form').submit();
+        }
+
+        // 点击其他地方隐藏建议
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.search-form-wrapper')) {
+                document.getElementById('search-suggestions').style.display = 'none';
+            }
+        });
+
+        // 标签选择功能
+        document.addEventListener('DOMContentLoaded', function () {
+            const tagButtons = document.querySelectorAll('.tag-btn');
+            const tagSelect = document.querySelector('select[name="tags"]');
+
+            tagButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const tagName = this.dataset.tag;
+                    const option = Array.from(tagSelect.options).find(opt => opt.value === tagName);
+
+                    if (this.classList.contains('selected')) {
+                        // 取消选择
+                        this.classList.remove('selected');
+                        if (option) option.selected = false;
+                    } else {
+                        // 选择标签
+                        this.classList.add('selected');
+                        if (option) option.selected = true;
+                    }
+                });
+            });
+
+            // 同步下拉框和按钮状态
+            if (tagSelect) {
+                tagSelect.addEventListener('change', function () {
+                    tagButtons.forEach(button => {
+                        const tagName = button.dataset.tag;
+                        const option = Array.from(this.options).find(opt => opt.value === tagName);
+
+                        if (option && option.selected) {
+                            button.classList.add('selected');
+                        } else {
+                            button.classList.remove('selected');
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+
+    {{template "footer.html" .}}
+    {{end}}

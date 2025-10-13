@@ -87,9 +87,9 @@ func initSomething() {
 	}
 	// 调试用设置
 	var opts *slog.HandlerOptions = nil
-	// opts = &slog.HandlerOptions{
-	// 	Level: slog.LevelDebug,
-	// }
+	opts = &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}
 	system.Logger = slog.New(slog.NewJSONHandler(f, opts))
 	slog.SetDefault(system.Logger)
 
@@ -114,5 +114,15 @@ func initSomething() {
 	if err := system.InitRedis(); err != nil {
 		system.Logger.Error("Redis initialization failed", "err", err)
 		// Redis失败不退出程序，允许降级运行
+	}
+
+	// ElasticSearch搜索初始化
+	if system.GetConfiguration().Elasticsearch.Enabled {
+		if err := system.InitElasticsearch(); err != nil {
+			system.Logger.Error("ElasticSearch initialization failed", "err", err)
+			// ES失败不退出程序，允许降级运行
+		}
+	} else {
+		system.Logger.Info("ElasticSearch功能已禁用")
 	}
 }

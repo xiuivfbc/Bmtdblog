@@ -46,6 +46,13 @@ func (post *Post) Insert() error {
 		}
 	}()
 
+	// 同步到ES索引
+	go func() {
+		if err := IndexPost(post); err != nil {
+			slog.Error("Failed to index post to ES after insert", "id", post.ID, "error", err)
+		}
+	}()
+
 	// 清除相关缓存
 	go post.ClearRelatedCache()
 
@@ -61,6 +68,13 @@ func (post *Post) Update() error {
 	if err != nil {
 		return err
 	}
+
+	// 同步到ES索引
+	go func() {
+		if err := IndexPost(post); err != nil {
+			slog.Error("Failed to update post in ES after update", "id", post.ID, "error", err)
+		}
+	}()
 
 	// 清除相关缓存
 	go post.ClearRelatedCache()
@@ -79,6 +93,13 @@ func (post *Post) Delete() error {
 	if err != nil {
 		return err
 	}
+
+	// 从ES索引中删除
+	go func() {
+		if err := DeletePostFromIndex(post.ID); err != nil {
+			slog.Error("Failed to delete post from ES after delete", "id", post.ID, "error", err)
+		}
+	}()
 
 	// 清除相关缓存
 	go post.ClearRelatedCache()

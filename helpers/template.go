@@ -39,12 +39,28 @@ func Add(a1, a2 int) int {
 	return a1 + a2
 }
 
+func Sub(a1, a2 int) int {
+	return a1 - a2
+}
+
 func Minus(a1, a2 int) int {
 	return a1 - a2
 }
 
 func Multiply(a1, a2 int) int {
 	return a1 * a2
+}
+
+// Seq 生成从start到end的整数序列
+func Seq(start, end int) []int {
+	if start > end {
+		return []int{}
+	}
+	result := make([]int, end-start+1)
+	for i := 0; i < len(result); i++ {
+		result[i] = start + i
+	}
+	return result
 }
 
 func ListTag() string {

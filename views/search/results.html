@@ -1,0 +1,461 @@
+{{define "search/results.html"}}
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{template "meta.html" .}}
+
+    <title>搜索结果{{if .keyword}} - {{.keyword}}{{end}} | Bmtdblog</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="/static/libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="/static/css/blog-home.css" rel="stylesheet">
+    <link href="/static/css/base.css" rel="stylesheet">
+    <link href="/static/css/modern-theme.css" rel="stylesheet">
+
+    <!-- 添加现代化图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #7c3aed;
+            --secondary-color: #c084fc;
+            --accent-color: #f472b6;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --bg-dark: #0f172a;
+            --bg-darker: #1e293b;
+            --bg-card: #334155;
+            --border-color: #475569;
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-top: 70px;
+        }
+
+        .search-header {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 25px 0;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-box-compact {
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            max-width: 600px;
+            margin: 0 auto;
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+        }
+
+        .search-box-compact:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-input-compact {
+            border: none;
+            padding: 15px 25px;
+            font-size: 1rem;
+            width: 100%;
+            background: transparent;
+            outline: none;
+            color: var(--text-primary);
+        }
+
+        .search-input-compact::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-btn-compact {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            transition: var(--transition);
+        }
+
+        .search-btn-compact:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+        }
+
+        .search-stats {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+
+        .search-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .search-filters {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .sort-options a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: var(--transition);
+            margin-right: 10px;
+            display: inline-block;
+        }
+
+        .sort-options a.active,
+        .sort-options a:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .search-results-list {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-result-item {
+            padding: 25px 0;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: rgba(71, 85, 105, 0.3);
+            margin: 0 -20px;
+            padding: 25px 20px;
+            border-radius: var(--border-radius);
+        }
+
+        .search-result-item h3 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .search-result-item h3 a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .search-result-item h3 a:hover {
+            color: var(--primary-color);
+        }
+
+        .post-meta {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .post-meta span {
+            margin-right: 20px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .post-meta i {
+            margin-right: 5px;
+            color: var(--primary-color);
+        }
+
+        .post-excerpt {
+            line-height: 1.6;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .post-tags {
+            margin-top: 15px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 4px 12px;
+            margin-right: 8px;
+            margin-bottom: 5px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-size: 0.85em;
+            transition: var(--transition);
+        }
+
+        .tag:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pagination-nav {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .pagination .page-link {
+            background: var(--bg-darker);
+            border: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 10px 15px;
+            margin: 0 2px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .pagination .page-link:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .no-results,
+        .empty-search {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .no-results h3,
+        .empty-search h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .no-results p,
+        .empty-search p {
+            color: var(--text-secondary);
+        }
+
+        .search-form-wrapper {
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .search-header {
+                padding: 20px 0;
+            }
+
+            .search-result-item {
+                padding: 20px 0;
+            }
+
+            .post-meta span {
+                margin-right: 15px;
+                margin-bottom: 5px;
+            }
+
+            .search-container {
+                padding: 0 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {{template "navigation.html" .}}
+
+    <!-- 搜索头部 -->
+    <div class="search-header">
+        <div class="container">
+            <form method="GET" action="/search" class="search-form">
+                <div class="search-form-wrapper">
+                    <div class="search-box-compact">
+                        <input type="text" name="q" value="{{.keyword}}" placeholder="搜索博客内容..."
+                            class="search-input-compact">
+                        <button type="submit" class="search-btn-compact">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 保持其他搜索参数 -->
+                {{if .sortBy}}
+                <input type="hidden" name="sort" value="{{.sortBy}}">
+                {{end}}
+                {{range .selectedTags}}
+                <input type="hidden" name="tags" value="{{.}}">
+                {{end}}
+                {{if .dateFrom}}
+                <input type="hidden" name="date_from" value="{{.dateFrom}}">
+                {{end}}
+                {{if .dateTo}}
+                <input type="hidden" name="date_to" value="{{.dateTo}}">
+                {{end}}
+            </form>
+
+            {{if .keyword}}
+            <div class="search-stats">
+                <p>找到 <strong>{{.total}}</strong> 条关于 "<strong>{{.keyword}}</strong>" 的结果</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="search-container">
+        {{if .error}}
+        <!-- 错误信息 -->
+        <div class="alert alert-warning">
+            {{.error}}
+        </div>
+        {{else if .keyword}}
+        <!-- 搜索结果 -->
+        <div class="search-results">
+            <!-- 排序和筛选选项 -->
+            <div class="search-filters">
+                <div class="sort-options">
+                    <span style="margin-right: 15px; color: #666;">排序方式:</span>
+                    <a href="?q={{.keyword}}&sort=relevance{{range .selectedTags}}&tags={{.}}{{end}}{{if .dateFrom}}&date_from={{.dateFrom}}{{end}}{{if .dateTo}}&date_to={{.dateTo}}{{end}}"
+                        class="{{if or (eq .sortBy " relevance") (eq .sortBy "" )}}active{{end}}">相关性</a>
+                    <a href="?q={{.keyword}}&sort=date{{range .selectedTags}}&tags={{.}}{{end}}{{if .dateFrom}}&date_from={{.dateFrom}}{{end}}{{if .dateTo}}&date_to={{.dateTo}}{{end}}"
+                        class="{{if eq .sortBy " date"}}active{{end}}">时间</a>
+                    <a href="?q={{.keyword}}&sort=views{{range .selectedTags}}&tags={{.}}{{end}}{{if .dateFrom}}&date_from={{.dateFrom}}{{end}}{{if .dateTo}}&date_to={{.dateTo}}{{end}}"
+                        class="{{if eq .sortBy " views"}}active{{end}}">浏览量</a>
+                </div>
+            </div>
+
+            {{if .posts}}
+            <!-- 搜索结果列表 -->
+            <div class="search-results-list">
+                {{range .posts}}
+                <article class="search-result-item">
+                    <h3><a href="/post/{{.ID}}">{{.Title}}</a></h3>
+                    <div class="post-meta">
+                        <span class="post-date">
+                            <i class="fas fa-calendar"></i> {{.CreatedAt.Format "2006-01-02"}}
+                        </span>
+                        <span class="post-views">
+                            <i class="fas fa-eye"></i> {{.View}} 次浏览
+                        </span>
+                        <span class="post-comments">
+                            <i class="fas fa-comments"></i> {{.CommentTotal}} 条评论
+                        </span>
+                    </div>
+                    <div class="post-excerpt">
+                        {{truncate .Body 300}}...
+                    </div>
+                    {{if .Tags}}
+                    <div class="post-tags">
+                        {{range .Tags}}
+                        <a href="/tag/{{.Name}}" class="tag">{{.Name}}</a>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </article>
+                {{end}}
+            </div>
+
+            <!-- 分页 -->
+            {{if gt .totalPages 1}}
+            <nav class="pagination-nav">
+                <ul class="pagination">
+                    {{if gt .page 1}}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?q={{.keyword}}&page={{sub .page 1}}&sort={{.sortBy}}{{range .tags}}&tags={{.}}{{end}}{{if .dateFrom}}&date_from={{.dateFrom}}{{end}}{{if .dateTo}}&date_to={{.dateTo}}{{end}}">上一页</a>
+                    </li>
+                    {{end}}
+
+                    {{range $i := seq 1 .totalPages}}
+                    {{if eq $i $.page}}
+                    <li class="page-item active">
+                        <span class="page-link">{{$i}}</span>
+                    </li>
+                    {{else}}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?q={{$.keyword}}&page={{$i}}&sort={{$.sortBy}}{{range $.tags}}&tags={{.}}{{end}}{{if $.dateFrom}}&date_from={{$.dateFrom}}{{end}}{{if $.dateTo}}&date_to={{$.dateTo}}{{end}}">{{$i}}</a>
+                    </li>
+                    {{end}}
+                    {{end}}
+
+                    {{if lt .page .totalPages}}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?q={{.keyword}}&page={{add .page 1}}&sort={{.sortBy}}{{range .tags}}&tags={{.}}{{end}}{{if .dateFrom}}&date_from={{.dateFrom}}{{end}}{{if .dateTo}}&date_to={{.dateTo}}{{end}}">下一页</a>
+                    </li>
+                    {{end}}
+                </ul>
+            </nav>
+            {{end}}
+            {{else}}
+            <div class="no-results">
+                <h3>没有找到相关结果</h3>
+                <p>建议您:</p>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>检查输入的关键词是否正确</li>
+                    <li>尝试使用更通用的关键词</li>
+                    <li>减少关键词数量</li>
+                </ul>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <!-- 空状态 -->
+        <div class="empty-search">
+            <h3>开始搜索</h3>
+            <p>请输入关键词搜索博客内容</p>
+        </div>
+        {{end}}
+    </div>
+
+    <script src="/static/libs/jquery/jquery.min.js"></script>
+    {{template "footer.html" .}}
+</body>
+
+</html>
+{{end}}

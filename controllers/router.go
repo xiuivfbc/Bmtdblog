@@ -60,6 +60,11 @@ func DefineRouter() *gin.Engine {
 	router.GET("/tag/:tag", TagGet)
 	router.GET("/archives/:year/:month", ArchiveGet)
 
+	// 搜索相关路由
+	router.GET("/search", SearchGet)
+	router.GET("/search/index", SearchIndexGet)
+	router.GET("/api/search/suggestions", SearchSuggestionsAPI)
+
 	router.GET("/link/:id", LinkGet)
 
 	authorized := router.Group("/admin")
@@ -172,8 +177,10 @@ func setTemplate(engine *gin.Engine) {
 		"truncate":   helpers.Truncate,
 		"length":     helpers.Len,
 		"add":        helpers.Add,
+		"sub":        helpers.Sub,
 		"minus":      helpers.Minus,
 		"multiply":   helpers.Multiply,
+		"seq":        helpers.Seq,
 		"listtag":    helpers.ListTag,
 	}
 	engine.SetFuncMap(funcMap)
