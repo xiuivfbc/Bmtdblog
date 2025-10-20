@@ -135,6 +135,12 @@ func DefineRouter() *gin.Engine {
 		// mail
 		authorized.POST("/new_mail", SendMail)
 		authorized.POST("/new_batchmail", SendBatchMail)
+
+		// email queue
+		authorized.GET("/email-queue", EmailQueueManage)
+		authorized.GET("/email-queue/status", EmailQueueStatus)
+		authorized.POST("/email-queue/retry", RetryFailedEmails)
+		authorized.POST("/email-queue/clear", ClearFailedEmails)
 	}
 	return router
 }

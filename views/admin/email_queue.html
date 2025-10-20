@@ -1,0 +1,242 @@
+{{define "email_queue.html"}}
+{{template "admin/page_start.html"}}
+{{template "admin/navbar.html" .}}
+{{template "admin/sidebar.html" .}}
+
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            邮件队列管理
+            <small>查看和管理邮件队列状态</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="/admin"><i class="fa fa-dashboard"></i> 首页</a></li>
+            <li class="active">邮件队列</li>
+        </ol>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <!-- 队列状态概览 -->
+        <div class="row">
+            <div class="col-lg-3 col-xs-6">
+                <div class="small-box bg-aqua">
+                    <div class="inner">
+                        <h3>{{.stats.pending}}</h3>
+                        <p>待发送邮件</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-email"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-xs-6">
+                <div class="small-box bg-green">
+                    <div class="inner">
+                        <h3>{{.stats.sent}}</h3>
+                        <p>已发送邮件</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-checkmark"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-xs-6">
+                <div class="small-box bg-yellow">
+                    <div class="inner">
+                        <h3>{{.stats.failed}}</h3>
+                        <p>发送失败</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-alert"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-xs-6">
+                <div class="small-box bg-red">
+                    <div class="inner">
+                        <h3>{{.stats.workers}}</h3>
+                        <p>工作者数量</p>
+                    </div>
+                    <div class="icon">
+                        <i class="ion ion-gear-a"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 队列操作 -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">队列操作</h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-success" onclick="retryFailedEmails()">
+                                <i class="fa fa-refresh"></i> 重试失败邮件
+                            </button>
+                            <button type="button" class="btn btn-warning" onclick="clearFailedEmails()">
+                                <i class="fa fa-trash"></i> 清空失败队列
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="refreshStats()">
+                                <i class="fa fa-refresh"></i> 刷新状态
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 队列详细信息 -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="box box-info">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">队列详细信息</h3>
+                    </div>
+                    <div class="box-body">
+                        <table class="table table-bordered table-striped">
+                            <tbody>
+                                <tr>
+                                    <td><strong>队列状态</strong></td>
+                                    <td>
+                                        <span class="label {{if eq .stats.status " active"}}label-success
+                                            {{else}}label-danger{{end}}">
+                                            {{.stats.status}}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>队列Key</strong></td>
+                                    <td>{{.stats.queue_key}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>失败队列Key</strong></td>
+                                    <td>{{.stats.fail_key}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>工作者数量</strong></td>
+                                    <td>{{.stats.workers}}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>重试次数</strong></td>
+                                    <td>{{.stats.max_retry}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="box box-warning">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">最近发送记录</h3>
+                    </div>
+                    <div class="box-body">
+                        <div id="recent-emails">
+                            <p class="text-muted">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 邮件队列统计图表 -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="box box-default">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">邮件发送趋势</h3>
+                    </div>
+                    <div class="box-body">
+                        <canvas id="emailChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{{template "admin/page_end.html"}}
+
+<!-- 添加额外的脚本 -->
+<script>
+    // 重试失败邮件
+    function retryFailedEmails() {
+        if (confirm('确定要重试所有失败的邮件吗？')) {
+            fetch('/admin/email-queue/retry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('重试操作已启动: ' + data.message);
+                        refreshStats();
+                    } else {
+                        alert('重试失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('操作失败，请检查网络连接');
+                });
+        }
+    }
+
+    // 清空失败队列
+    function clearFailedEmails() {
+        if (confirm('确定要清空失败队列吗？此操作不可恢复！')) {
+            fetch('/admin/email-queue/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('清空操作成功: ' + data.message);
+                        refreshStats();
+                    } else {
+                        alert('清空失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('操作失败，请检查网络连接');
+                });
+        }
+    }
+
+    // 刷新统计信息
+    function refreshStats() {
+        fetch('/admin/email-queue/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // 简单粗暴的刷新整个页面
+                } else {
+                    console.error('Failed to refresh stats:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing stats:', error);
+            });
+    }
+
+    // 自动刷新统计信息
+    setInterval(refreshStats, 30000); // 每30秒刷新一次
+</script>
+
+{{end}}

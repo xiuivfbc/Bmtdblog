@@ -15,6 +15,7 @@ import (
 	"github.com/claudiu/gocron"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/controllers"
+	"github.com/xiuivfbc/bmtdblog/helpers"
 	"github.com/xiuivfbc/bmtdblog/models"
 	"github.com/xiuivfbc/bmtdblog/system"
 	"gorm.io/gorm"
@@ -91,6 +92,10 @@ func cleanupResources() {
 func clean() {
 	<-c
 	fmt.Println("Cleaning...")
+
+	// 停止邮件队列
+	system.StopEmailQueue()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := srv.Shutdown(ctx); err != nil {
 		system.Logger.Error("HTTP server shutdown error", "err", err)
@@ -154,5 +159,15 @@ func initializeApplication() {
 		}
 	} else {
 		system.Logger.Info("ElasticSearch功能已禁用")
+	}
+
+	// 邮件队列初始化
+	workerCount := 3 // 启动3个邮件工作者
+	if err := system.InitEmailQueue(workerCount); err != nil {
+		system.Logger.Error("EmailQueue initialization failed", "err", err)
+		// 邮件队列失败不退出程序，允许降级运行
+	} else {
+		// 设置邮件发送回调函数
+		system.SetEmailSender(helpers.SendMail)
 	}
 }

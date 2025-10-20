@@ -42,7 +42,15 @@ func sendMail(to, subject, body string) error {
 	if !cfg.Smtp.Enabled {
 		return nil
 	}
-	return helpers.SendToMail(cfg.Smtp.Username, cfg.Smtp.Password, cfg.Smtp.Host, to, subject, body, "html")
+
+	// 尝试使用邮件队列异步发送
+	if err := system.PushEmailTask(to, subject, body); err != nil {
+		// 队列失败时降级到同步发送
+		system.Logger.Warn("邮件队列发送失败，降级到同步发送", "err", err)
+		return helpers.SendToMail(cfg.Smtp.Username, cfg.Smtp.Password, cfg.Smtp.Host, to, subject, body, "html")
+	}
+
+	return nil
 }
 
 func NotifyEmail(subject, body string) error {

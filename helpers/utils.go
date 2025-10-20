@@ -51,6 +51,18 @@ func GetCurrentDirectory() string {
 	return dir
 }
 
+// SendMail 发送邮件（简化版本，用于邮件队列）
+func SendMail(to, subject, body string) error {
+	cfg := system.GetConfiguration()
+	if !cfg.Smtp.Enabled {
+		return nil
+	}
+
+	return SendToMail(cfg.Smtp.Username, cfg.Smtp.Password,
+		cfg.Smtp.Host, // Host中包含端口信息
+		to, subject, body, "html")
+}
+
 func SendToMail(user, password, host, to, subject, body, mailType string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", user)
