@@ -2,15 +2,19 @@ package system
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type (
@@ -87,6 +91,16 @@ type (
 		Target string `mapstructure:"target"`
 	}
 
+	TLSConfig struct {
+		Enabled  bool   `mapstructure:"enabled"`
+		AutoCert bool   `mapstructure:"auto_cert"`
+		Domain   string `mapstructure:"domain"`
+		Email    string `mapstructure:"email"`
+		CertFile string `mapstructure:"cert_file"`
+		KeyFile  string `mapstructure:"key_file"`
+		CertDir  string `mapstructure:"cert_dir"`
+	}
+
 	Configuration struct {
 		Addr          string              `mapstructure:"addr"`
 		SignupEnabled bool                `mapstructure:"signup_enabled"`
@@ -107,6 +121,7 @@ type (
 		Elasticsearch ElasticsearchConfig `mapstructure:"elasticsearch"`
 		Github        Github              `mapstructure:"github"`
 		Smtp          Smtp                `mapstructure:"smtp"`
+		TLS           TLSConfig           `mapstructure:"tls"`
 		Navigators    []Navigator         `mapstructure:"navigators"`
 		Backup        Backup              `mapstructure:"backup"`
 	}
@@ -528,4 +543,220 @@ func IsESAvailable() bool {
 
 	_, err := ESClient.Ping(ESClient.Ping.WithContext(ctx))
 	return err == nil
+}
+
+// CreateAutoCertManager 创建自动证书管理器
+func CreateAutoCertManager(domain, email, certDir string) *autocert.Manager {
+	if certDir == "" {
+		certDir = "certs"
+	}
+
+	// 确保证书目录存在
+	if err := os.MkdirAll(certDir, 0755); err != nil {
+		Logger.Error("创建证书目录失败", "dir", certDir, "err", err)
+		return nil
+	}
+
+	Logger.Info("配置自动证书管理", "domain", domain, "email", email, "certDir", certDir)
+
+	return &autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(domain),
+		Cache:      autocert.DirCache(certDir),
+		Email:      email,
+	}
+}
+
+// StartWithAutoCert 使用自动证书启动HTTPS服务器
+func StartWithAutoCert(srv *http.Server, domain, email, certDir string) error {
+	m := CreateAutoCertManager(domain, email, certDir)
+	if m == nil {
+		return fmt.Errorf("failed to create autocert manager")
+	}
+
+	srv.TLSConfig = &tls.Config{
+		GetCertificate: m.GetCertificate,
+		NextProtos:     []string{"h2", "http/1.1"},
+		MinVersion:     tls.VersionTLS12,
+	}
+
+	// 启动HTTP挑战服务器（端口80）
+	go func() {
+		Logger.Info("启动HTTP挑战服务器在端口80")
+		if err := http.ListenAndServe(":80", m.HTTPHandler(nil)); err != nil {
+			Logger.Error("HTTP挑战服务器错误", "err", err)
+		}
+	}()
+
+	Logger.Info("启动HTTPS服务器", "addr", srv.Addr, "domain", domain)
+	return srv.ListenAndServeTLS("", "")
+}
+
+// GeneratePrivateKeyScript 生成私钥生成脚本
+func GeneratePrivateKeyScript(keyFile string) error {
+	if keyFile == "" {
+		keyFile = "server.key"
+	}
+
+	scriptContent := fmt.Sprintf(`#!/bin/bash
+# 自动生成RSA私钥脚本
+# 生成日期: %s
+
+KEY_FILE="%s"
+KEY_SIZE=2048
+
+echo "正在生成RSA私钥..."
+echo "密钥文件: $KEY_FILE"
+echo "密钥长度: $KEY_SIZE bits"
+
+# 检查是否已存在私钥文件
+if [ -f "$KEY_FILE" ]; then
+    echo "警告: 私钥文件 $KEY_FILE 已存在"
+    read -p "是否覆盖现有文件? (y/N): " confirm
+    if [[ $confirm != [yY] ]]; then
+        echo "操作已取消"
+        exit 0
+    fi
+fi
+
+# 生成RSA私钥
+openssl genrsa -out "$KEY_FILE" $KEY_SIZE
+
+if [ $? -eq 0 ]; then
+    echo "私钥生成成功: $KEY_FILE"
+    
+    # 设置安全权限 (仅所有者可读写)
+    chmod 600 "$KEY_FILE"
+    echo "私钥文件权限已设置为600"
+    
+    # 显示私钥信息
+    echo "私钥信息:"
+    openssl rsa -in "$KEY_FILE" -text -noout | head -10
+    
+    echo ""
+    echo "注意事项:"
+    echo "1. 请妥善保管此私钥文件"
+    echo "2. 不要将私钥文件上传到公共代码仓库"
+    echo "3. 定期备份私钥文件"
+    echo "4. 如果私钥泄露，请立即重新生成"
+else
+    echo "错误: 私钥生成失败"
+    exit 1
+fi
+`, time.Now().Format("2006-01-02 15:04:05"), keyFile)
+
+	scriptFile := "generate_private_key.sh"
+	if err := os.WriteFile(scriptFile, []byte(scriptContent), 0755); err != nil {
+		return fmt.Errorf("生成私钥脚本失败: %v", err)
+	}
+
+	Logger.Info("私钥生成脚本已创建", "script", scriptFile)
+	return nil
+}
+
+// GenerateSelfSignedCert 生成自签名证书（用于开发测试）
+func GenerateSelfSignedCert(domain, certFile, keyFile string) error {
+	if certFile == "" {
+		certFile = "server.crt"
+	}
+	if keyFile == "" {
+		keyFile = "server.key"
+	}
+
+	scriptContent := fmt.Sprintf(`#!/bin/bash
+# 生成自签名证书脚本
+# 生成日期: %s
+
+DOMAIN="%s"
+CERT_FILE="%s"
+KEY_FILE="%s"
+DAYS=365
+
+echo "正在生成自签名SSL证书..."
+echo "域名: $DOMAIN"
+echo "证书文件: $CERT_FILE"
+echo "私钥文件: $KEY_FILE"
+echo "有效期: $DAYS 天"
+
+# 生成私钥
+echo "1. 生成RSA私钥..."
+openssl genrsa -out "$KEY_FILE" 2048
+
+if [ $? -ne 0 ]; then
+    echo "错误: 私钥生成失败"
+    exit 1
+fi
+
+# 生成自签名证书
+echo "2. 生成自签名证书..."
+openssl req -new -x509 -key "$KEY_FILE" -out "$CERT_FILE" -days $DAYS \
+    -subj "/C=CN/ST=State/L=City/O=Organization/OU=OrgUnit/CN=$DOMAIN"
+
+if [ $? -eq 0 ]; then
+    echo "证书生成成功!"
+    
+    # 设置文件权限
+    chmod 600 "$KEY_FILE"
+    chmod 644 "$CERT_FILE"
+    
+    echo "文件权限已设置"
+    echo ""
+    echo "证书信息:"
+    openssl x509 -in "$CERT_FILE" -text -noout | grep -E "(Subject:|Not Before|Not After|DNS:)"
+    
+    echo ""
+    echo "使用方法:"
+    echo "在配置文件中设置:"
+    echo "[tls]"
+    echo "enabled = true"
+    echo "cert_file = \"$CERT_FILE\""
+    echo "key_file = \"$KEY_FILE\""
+    echo ""
+    echo "注意: 自签名证书仅适用于开发测试环境"
+    echo "      生产环境请使用权威CA签发的证书"
+else
+    echo "错误: 证书生成失败"
+    exit 1
+fi
+`, time.Now().Format("2006-01-02 15:04:05"), domain, certFile, keyFile)
+
+	scriptFile := "generate_self_signed_cert.sh"
+	if err := os.WriteFile(scriptFile, []byte(scriptContent), 0755); err != nil {
+		return fmt.Errorf("生成证书脚本失败: %v", err)
+	}
+
+	Logger.Info("自签名证书生成脚本已创建", "script", scriptFile)
+	return nil
+}
+
+// StartServer 启动HTTP/HTTPS服务器
+func StartServer(srv *http.Server) error {
+	cfg := GetConfiguration()
+
+	if !cfg.TLS.Enabled {
+		Logger.Info("启动HTTP服务", "addr", cfg.Addr)
+		return srv.ListenAndServe()
+	}
+
+	return startTLSServer(srv, cfg)
+}
+
+// startTLSServer 启动TLS服务器
+func startTLSServer(srv *http.Server, cfg *Configuration) error {
+	if cfg.TLS.AutoCert && cfg.TLS.Domain != "" {
+		// 自动证书模式
+		Logger.Info("启动自动HTTPS服务", "addr", cfg.Addr, "domain", cfg.TLS.Domain)
+		return StartWithAutoCert(srv, cfg.TLS.Domain, cfg.TLS.Email, cfg.TLS.CertDir)
+	}
+
+	if cfg.TLS.CertFile != "" && cfg.TLS.KeyFile != "" {
+		// 手动证书模式
+		Logger.Info("启动HTTPS服务", "addr", cfg.Addr)
+		return srv.ListenAndServeTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile)
+	}
+
+	// 配置不完整，回退到HTTP
+	Logger.Error("TLS配置错误: 需要配置自动证书(auto_cert+domain)或手动证书(cert_file+key_file)")
+	Logger.Info("TLS配置不完整，回退到HTTP服务", "addr", cfg.Addr)
+	return srv.ListenAndServe()
 }

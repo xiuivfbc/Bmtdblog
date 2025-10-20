@@ -23,6 +23,11 @@ func DefineRouter() *gin.Engine {
 
 	router.Static("/static", filepath.Join(helpers.GetCurrentDirectory(), system.GetConfiguration().PublicDir))
 
+	// favicon.ico路由
+	router.GET("/favicon.ico", func(c *gin.Context) {
+		c.File(filepath.Join(helpers.GetCurrentDirectory(), system.GetConfiguration().PublicDir, "favicon.ico"))
+	})
+
 	router.NoRoute(Handle404)
 	router.GET("/", IndexGet)
 	router.GET("/index", IndexGet)

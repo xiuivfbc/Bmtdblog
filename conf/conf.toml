@@ -84,3 +84,12 @@ target = ''
 [backup]
 enabled = false
 backup_key = ''
+
+[tls]
+enabled = false
+auto_cert = false
+domain = ''
+email = ''
+cert_file = ''
+key_file = ''
+cert_dir = 'certs'
