@@ -60,6 +60,12 @@ func (post *Post) Insert() error {
 }
 
 func (post *Post) Update() error {
+	// 延迟双删策略：第一步 - 先删除缓存
+	if err := post.DelayedDoubleDel(); err != nil {
+		slog.Error("Failed to initiate delayed double delete", "id", post.ID, "error", err)
+	}
+
+	// 更新数据库
 	err := DB.Model(post).Updates(map[string]interface{}{
 		"title":        post.Title,
 		"body":         post.Body,
@@ -76,8 +82,7 @@ func (post *Post) Update() error {
 		}
 	}()
 
-	// 清除相关缓存
-	go post.ClearRelatedCache()
+	// 注意：延迟双删已经处理了缓存清理，不需要再调用ClearRelatedCache
 
 	return nil
 }
@@ -226,6 +231,39 @@ func (post *Post) ClearRelatedCache() error {
 
 	slog.Debug("Related cache cleared for post", "id", post.ID)
 	return nil
+}
+
+// 延迟双删策略：解决缓存一致性问题
+func (post *Post) DelayedDoubleDel() error {
+	if system.Redis == nil || !system.Redis.IsAvailable() {
+		return nil
+	}
+
+	// 收集需要删除的缓存键
+	keys := []string{
+		post.CacheKey(), // 自身缓存
+	}
+
+	// 收集相关缓存模式的具体键
+	patterns := []string{
+		PostListCachePrefix + "*",
+		PostArchiveCachePrefix + "*",
+		"index*", // 首页缓存
+	}
+
+	// 获取匹配模式的具体键名
+	for _, pattern := range patterns {
+		matchedKeys, err := system.Redis.GetKeysByPattern(pattern)
+		if err != nil {
+			slog.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
+			continue
+		}
+		keys = append(keys, matchedKeys...)
+	}
+
+	// 执行延迟双删，延迟500ms
+	delay := 500 * time.Millisecond
+	return system.Redis.DelayedDoubleDelete(keys, delay)
 }
 
 // 带缓存的获取博文方法（防穿透+防击穿）

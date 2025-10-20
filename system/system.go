@@ -287,6 +287,48 @@ func (r *RedisCacheClient) Del(keys ...string) error {
 	return nil
 }
 
+// 延迟双删策略：先删缓存→更新数据库→延迟删除缓存
+func (r *RedisCacheClient) DelayedDoubleDelete(keys []string, delay time.Duration) error {
+	if !r.IsAvailable() {
+		return fmt.Errorf("redis is not available")
+	}
+
+	// 第一次删除：删除缓存
+	err := r.Del(keys...)
+	if err != nil {
+		slog.Error("Failed to delete cache in first phase", "keys", keys, "error", err)
+		return err
+	}
+
+	// 延迟后第二次删除：确保数据一致性
+	go func() {
+		time.Sleep(delay)
+		if delErr := r.Del(keys...); delErr != nil {
+			slog.Error("Failed to delete cache in second phase", "keys", keys, "error", delErr)
+		} else {
+			slog.Debug("Delayed double delete completed", "keys", keys, "delay", delay)
+		}
+	}()
+
+	slog.Debug("Delayed double delete initiated", "keys", keys, "delay", delay)
+	return nil
+}
+
+// 根据模式获取所有匹配的键
+func (r *RedisCacheClient) GetKeysByPattern(pattern string) ([]string, error) {
+	if !r.IsAvailable() {
+		return nil, fmt.Errorf("redis is not available")
+	}
+
+	keys, err := r.client.Keys(r.ctx, pattern).Result()
+	if err != nil {
+		slog.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
+		return nil, err
+	}
+
+	return keys, nil
+}
+
 // 检查key是否存在
 func (r *RedisCacheClient) Exists(key string) bool {
 	if !r.IsAvailable() {
