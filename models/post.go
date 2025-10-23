@@ -46,11 +46,13 @@ func (post *Post) Insert() error {
 		}
 	}()
 
-	// 同步到ES索引
+	// 同步到ES索引（使用批量队列）
 	go func() {
-		if err := IndexPost(post); err != nil {
-			slog.Error("Failed to index post to ES after insert", "id", post.ID, "error", err)
-		}
+		AddESTask(ESTask{
+			Action: "index",
+			PostID: post.ID,
+			Post:   post,
+		})
 	}()
 
 	// 清除相关缓存
@@ -75,11 +77,13 @@ func (post *Post) Update() error {
 		return err
 	}
 
-	// 同步到ES索引
+	// 同步到ES索引（使用批量队列）
 	go func() {
-		if err := IndexPost(post); err != nil {
-			slog.Error("Failed to update post in ES after update", "id", post.ID, "error", err)
-		}
+		AddESTask(ESTask{
+			Action: "index",
+			PostID: post.ID,
+			Post:   post,
+		})
 	}()
 
 	// 注意：延迟双删已经处理了缓存清理，不需要再调用ClearRelatedCache
@@ -99,11 +103,13 @@ func (post *Post) Delete() error {
 		return err
 	}
 
-	// 从ES索引中删除
+	// 从ES索引中删除（使用批量队列）
 	go func() {
-		if err := DeletePostFromIndex(post.ID); err != nil {
-			slog.Error("Failed to delete post from ES after delete", "id", post.ID, "error", err)
-		}
+		AddESTask(ESTask{
+			Action: "delete",
+			PostID: post.ID,
+			Post:   nil,
+		})
 	}()
 
 	// 清除相关缓存

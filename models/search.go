@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8/esapi"
@@ -465,26 +466,328 @@ func SyncAllPostsToES() error {
 		return fmt.Errorf("查询博文失败: %w", err)
 	}
 
-	slog.Info("开始同步博文到ES", "count", len(posts))
+	slog.Info("开始批量同步博文到ES", "total_count", len(posts))
 
+	// 批量处理，每批100个
+	const batchSize = 100
 	successCount := 0
 	failCount := 0
 
-	for _, post := range posts {
-		if err := IndexPost(post); err != nil {
-			slog.Error("同步博文到ES失败", "id", post.ID, "title", post.Title, "error", err)
-			failCount++
+	for i := 0; i < len(posts); i += batchSize {
+		end := i + batchSize
+		if end > len(posts) {
+			end = len(posts)
+		}
+
+		batch := posts[i:end]
+		if err := bulkIndexPosts(batch); err != nil {
+			slog.Error("批量同步失败", "batch_start", i, "batch_size", len(batch), "error", err)
+			failCount += len(batch)
 		} else {
-			successCount++
-			slog.Debug("博文同步成功", "id", post.ID, "title", post.Title)
+			successCount += len(batch)
+			slog.Info("批量同步进度", "processed", end, "total", len(posts))
+		}
+
+		// 避免过快请求，给ES一些处理时间
+		if i+batchSize < len(posts) {
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
-	slog.Info("博文同步完成",
+	slog.Info("博文批量同步完成",
 		"total", len(posts),
 		"success", successCount,
 		"failed", failCount)
 
+	return nil
+}
+
+// bulkIndexPosts 批量索引博文到ES
+func bulkIndexPosts(posts []*Post) error {
+	if len(posts) == 0 {
+		return nil
+	}
+
+	indexName := system.GetConfiguration().GetElasticsearchIndexName()
+	var bulkBody strings.Builder
+
+	for _, post := range posts {
+		// 构建文档数据
+		doc := &PostDocument{
+			ID:           post.ID,
+			Title:        post.Title,
+			Body:         post.Body,
+			IsPublished:  post.IsPublished,
+			CreatedAt:    *post.CreatedAt,
+			UpdatedAt:    *post.UpdatedAt,
+			ViewCount:    post.View,
+			CommentCount: post.CommentTotal,
+			Excerpt:      generateExcerpt(post.Body, 200),
+		}
+
+		// 获取标签
+		if tags, err := ListTagByPostId(post.ID); err == nil {
+			tagNames := make([]string, len(tags))
+			for i, tag := range tags {
+				tagNames[i] = tag.Name
+			}
+			doc.Tags = tagNames
+		}
+
+		// 构建批量请求的action行
+		action := map[string]interface{}{
+			"index": map[string]interface{}{
+				"_index": indexName,
+				"_id":    fmt.Sprintf("%d", post.ID),
+			},
+		}
+
+		actionJSON, err := json.Marshal(action)
+		if err != nil {
+			slog.Error("构建批量action失败", "post_id", post.ID, "error", err)
+			continue
+		}
+
+		docJSON, err := json.Marshal(doc)
+		if err != nil {
+			slog.Error("序列化文档失败", "post_id", post.ID, "error", err)
+			continue
+		}
+
+		// 添加到bulk请求体（每个操作需要两行：action + document）
+		bulkBody.WriteString(string(actionJSON) + "\n")
+		bulkBody.WriteString(string(docJSON) + "\n")
+	}
+
+	if bulkBody.Len() == 0 {
+		return fmt.Errorf("没有有效的文档需要索引")
+	}
+
+	// 执行批量请求
+	res, err := system.ESClient.Bulk(
+		strings.NewReader(bulkBody.String()),
+		system.ESClient.Bulk.WithIndex(indexName),
+		system.ESClient.Bulk.WithRefresh("false"), // 批量完成后再刷新，提高性能
+	)
+
+	if err != nil {
+		return fmt.Errorf("批量索引请求失败: %w", err)
+	}
+	defer res.Body.Close()
+
+	// 检查批量操作结果
+	if res.IsError() {
+		return fmt.Errorf("批量索引响应错误: %s", res.String())
+	}
+
+	// 解析批量响应，检查是否有失败的操作
+	var bulkResp map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&bulkResp); err != nil {
+		return fmt.Errorf("解析批量响应失败: %w", err)
+	}
+
+	// 检查是否有错误
+	if errors, exists := bulkResp["errors"]; exists && errors.(bool) {
+		slog.Warn("批量操作中有部分失败", "batch_size", len(posts))
+		// 可以进一步解析具体的错误信息
+		if items, exists := bulkResp["items"]; exists {
+			slog.Debug("批量操作详情", "items", items)
+		}
+	}
+
+	slog.Debug("批量索引成功", "batch_size", len(posts))
+	return nil
+}
+
+// ESTaskQueue 批量ES任务队列
+type ESTaskQueue struct {
+	tasks  []ESTask
+	mutex  sync.Mutex
+	ticker *time.Ticker
+	quit   chan bool
+}
+
+type ESTask struct {
+	Action string // "index", "delete"
+	PostID uint
+	Post   *Post
+}
+
+var esTaskQueue *ESTaskQueue
+
+// InitESTaskQueue 初始化ES任务队列
+func InitESTaskQueue() {
+	esTaskQueue = &ESTaskQueue{
+		tasks:  make([]ESTask, 0),
+		ticker: time.NewTicker(5 * time.Second), // 每5秒处理一次批量任务
+		quit:   make(chan bool),
+	}
+
+	// 启动后台处理协程
+	go esTaskQueue.processLoop()
+	slog.Info("ES批量任务队列已启动")
+}
+
+// StopESTaskQueue 停止ES任务队列
+func StopESTaskQueue() {
+	if esTaskQueue != nil {
+		esTaskQueue.quit <- true
+		esTaskQueue.ticker.Stop()
+
+		// 处理剩余任务
+		esTaskQueue.processRemaining()
+		slog.Info("ES批量任务队列已停止")
+	}
+}
+
+// AddESTask 添加ES任务到队列
+func AddESTask(task ESTask) {
+	if esTaskQueue == nil {
+		// 如果队列未初始化，直接同步处理
+		processSingleTask(task)
+		return
+	}
+
+	esTaskQueue.mutex.Lock()
+	defer esTaskQueue.mutex.Unlock()
+
+	esTaskQueue.tasks = append(esTaskQueue.tasks, task)
+
+	// 如果队列过大，立即处理
+	if len(esTaskQueue.tasks) >= 50 {
+		go esTaskQueue.processBatch()
+	}
+}
+
+// processLoop 后台处理循环
+func (q *ESTaskQueue) processLoop() {
+	for {
+		select {
+		case <-q.ticker.C:
+			q.processBatch()
+		case <-q.quit:
+			return
+		}
+	}
+}
+
+// processBatch 处理当前批次
+func (q *ESTaskQueue) processBatch() {
+	q.mutex.Lock()
+	if len(q.tasks) == 0 {
+		q.mutex.Unlock()
+		return
+	}
+
+	// 复制当前任务并清空队列
+	batch := make([]ESTask, len(q.tasks))
+	copy(batch, q.tasks)
+	q.tasks = q.tasks[:0]
+	q.mutex.Unlock()
+
+	// 分离索引和删除任务
+	var indexTasks []*Post
+	var deleteTasks []uint
+
+	for _, task := range batch {
+		switch task.Action {
+		case "index":
+			if task.Post != nil {
+				indexTasks = append(indexTasks, task.Post)
+			}
+		case "delete":
+			deleteTasks = append(deleteTasks, task.PostID)
+		}
+	}
+
+	// 批量处理索引任务
+	if len(indexTasks) > 0 {
+		if err := bulkIndexPosts(indexTasks); err != nil {
+			slog.Error("批量索引任务失败", "count", len(indexTasks), "error", err)
+		} else {
+			slog.Debug("批量索引任务完成", "count", len(indexTasks))
+		}
+	}
+
+	// 批量处理删除任务
+	if len(deleteTasks) > 0 {
+		if err := bulkDeletePosts(deleteTasks); err != nil {
+			slog.Error("批量删除任务失败", "count", len(deleteTasks), "error", err)
+		} else {
+			slog.Debug("批量删除任务完成", "count", len(deleteTasks))
+		}
+	}
+}
+
+// processRemaining 处理剩余任务
+func (q *ESTaskQueue) processRemaining() {
+	q.processBatch()
+}
+
+// processSingleTask 单个任务同步处理（降级方案）
+func processSingleTask(task ESTask) {
+	switch task.Action {
+	case "index":
+		if task.Post != nil {
+			if err := IndexPost(task.Post); err != nil {
+				slog.Error("同步索引失败", "post_id", task.PostID, "error", err)
+			}
+		}
+	case "delete":
+		if err := DeletePostFromIndex(task.PostID); err != nil {
+			slog.Error("同步删除失败", "post_id", task.PostID, "error", err)
+		}
+	}
+}
+
+// bulkDeletePosts 批量删除博文索引
+func bulkDeletePosts(postIDs []uint) error {
+	if len(postIDs) == 0 {
+		return nil
+	}
+
+	indexName := system.GetConfiguration().GetElasticsearchIndexName()
+	var bulkBody strings.Builder
+
+	for _, postID := range postIDs {
+		// 构建删除操作
+		action := map[string]interface{}{
+			"delete": map[string]interface{}{
+				"_index": indexName,
+				"_id":    fmt.Sprintf("%d", postID),
+			},
+		}
+
+		actionJSON, err := json.Marshal(action)
+		if err != nil {
+			slog.Error("构建删除action失败", "post_id", postID, "error", err)
+			continue
+		}
+
+		bulkBody.WriteString(string(actionJSON) + "\n")
+	}
+
+	if bulkBody.Len() == 0 {
+		return fmt.Errorf("没有有效的删除操作")
+	}
+
+	// 执行批量删除
+	res, err := system.ESClient.Bulk(
+		strings.NewReader(bulkBody.String()),
+		system.ESClient.Bulk.WithIndex(indexName),
+		system.ESClient.Bulk.WithRefresh("false"),
+	)
+
+	if err != nil {
+		return fmt.Errorf("批量删除请求失败: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("批量删除响应错误: %s", res.String())
+	}
+
+	slog.Debug("批量删除成功", "count", len(postIDs))
 	return nil
 }
 

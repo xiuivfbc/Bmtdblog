@@ -93,6 +93,9 @@ func clean() {
 	<-c
 	fmt.Println("Cleaning...")
 
+	// 停止ES任务队列
+	models.StopESTaskQueue()
+
 	// 停止邮件队列
 	system.StopEmailQueue()
 
@@ -156,6 +159,9 @@ func initializeApplication() {
 		if err := system.InitElasticsearch(); err != nil {
 			system.Logger.Error("ElasticSearch initialization failed", "err", err)
 			// ES失败不退出程序，允许降级运行
+		} else {
+			// 启动ES批量任务队列
+			models.InitESTaskQueue()
 		}
 	} else {
 		system.Logger.Info("ElasticSearch功能已禁用")
