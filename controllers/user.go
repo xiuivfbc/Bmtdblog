@@ -109,13 +109,25 @@ func SignupPost(c *gin.Context) {
 	// 验证成功后删除验证码
 	s.Delete(SessionCaptcha)
 	s.Save()
+
+	// 使用bcrypt哈希密码
+	hashedPassword, err := helpers.HashPassword(password)
+	if err != nil {
+		c.HTML(http.StatusOK, "auth/signup.html", gin.H{
+			"message":   "密码处理失败",
+			"cfg":       system.GetConfiguration(),
+			"email":     email,
+			"telephone": telephone,
+		})
+		return
+	}
+
 	user := &models.User{
 		Email:     email,
 		Telephone: telephone,
-		Password:  password,
+		Password:  hashedPassword,
 		IsAdmin:   true,
 	}
-	user.Password = helpers.Md5(user.Email + user.Password)
 	err = user.Insert()
 	if err != nil {
 		c.HTML(http.StatusOK, "auth/signup.html", gin.H{
@@ -144,7 +156,16 @@ func SigninPost(c *gin.Context) {
 		return
 	}
 	user, err = models.GetUserByUsername(username)
-	if err != nil || user.Password != helpers.Md5(username+password) {
+	if err != nil {
+		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
+			"message": "invalid username or password",
+			"cfg":     system.GetConfiguration(),
+		})
+		return
+	}
+
+	// 使用bcrypt验证密码
+	if helpers.CheckPassword(password, user.Password) != nil {
 		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
 			"message": "invalid username or password",
 			"cfg":     system.GetConfiguration(),

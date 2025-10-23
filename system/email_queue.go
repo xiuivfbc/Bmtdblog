@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // EmailTask 邮件任务结构
@@ -33,6 +35,7 @@ type EmailQueue struct {
 	redis       *RedisCacheClient
 	queueKey    string
 	failKey     string
+	delayedKey  string // 延迟队列key
 	workerCount int
 	workers     []EmailWorker
 	ctx         context.Context
@@ -66,6 +69,7 @@ func InitEmailQueue(workerCount int) error {
 		redis:       Redis,
 		queueKey:    "bmtdblog:email:queue",
 		failKey:     "bmtdblog:email:failed",
+		delayedKey:  "bmtdblog:email:delayed", // 延迟队列key
 		workerCount: workerCount,
 		workers:     make([]EmailWorker, workerCount),
 		ctx:         ctx,
@@ -89,7 +93,11 @@ func InitEmailQueue(workerCount int) error {
 		go worker.Start()
 	}
 
-	Logger.Info("邮件队列已启动", "worker_count", workerCount)
+	// 🚀 启动延迟任务处理器
+	EmailQueueInstance.wg.Add(1)
+	go EmailQueueInstance.processDelayedTasks()
+
+	Logger.Info("邮件队列已启动", "worker_count", workerCount, "delayed_processor", "enabled")
 	return nil
 }
 
@@ -141,6 +149,41 @@ func (eq *EmailQueue) Push(task EmailTask) error {
 	}
 
 	Logger.Debug("邮件任务已推入队列", "task_id", task.ID, "to", task.To)
+	return nil
+}
+
+// PushWithDelay 推送任务到延迟队列
+func (eq *EmailQueue) PushWithDelay(task EmailTask, delaySeconds int) error {
+	if eq.redis == nil || !eq.redis.IsAvailable() {
+		// Redis不可用，降级为同步发送
+		return eq.sendFunc(task.To, task.Subject, task.Body)
+	}
+
+	// 计算执行时间戳
+	executeTime := time.Now().Add(time.Duration(delaySeconds) * time.Second).Unix()
+
+	taskJSON, err := json.Marshal(task)
+	if err != nil {
+		return fmt.Errorf("序列化延迟邮件任务失败: %v", err)
+	}
+
+	// 使用ZAdd将任务推入延迟队列，score为执行时间戳
+	_, err = eq.redis.client.ZAdd(eq.ctx, eq.delayedKey, redis.Z{
+		Score:  float64(executeTime),
+		Member: taskJSON,
+	}).Result()
+
+	if err != nil {
+		// Redis操作失败，降级为同步发送
+		Logger.Error("推送延迟邮件任务到队列失败，降级为同步发送", "err", err)
+		return eq.sendFunc(task.To, task.Subject, task.Body)
+	}
+
+	Logger.Debug("延迟邮件任务已推入队列",
+		"task_id", task.ID,
+		"to", task.To,
+		"delay_seconds", delaySeconds,
+		"execute_time", time.Unix(executeTime, 0))
 	return nil
 }
 
@@ -232,9 +275,14 @@ func (ew *EmailWorker) handleFailedTask(task EmailTask, err error) error {
 	task.Retry++
 
 	if task.Retry < task.MaxRetry {
-		// 重新入队，延迟处理
-		time.Sleep(time.Duration(task.Retry) * 30 * time.Second)
-		return ew.queue.Push(task)
+		// 🚀 优化：使用延迟队列代替Sleep，不阻塞Worker
+		// 延迟策略：30秒、60秒、90秒（递增）
+		delaySeconds := task.Retry * 30
+		Logger.Info("任务将延迟重试",
+			"task_id", task.ID,
+			"retry_count", task.Retry,
+			"delay_seconds", delaySeconds)
+		return ew.queue.PushWithDelay(task, delaySeconds)
 	} else {
 		// 达到最大重试次数，移入失败队列
 		return ew.moveToFailedQueue(task, err)
@@ -266,6 +314,90 @@ func (ew *EmailWorker) moveToFailedQueue(task EmailTask, err error) error {
 		"task_id", task.ID,
 		"worker_id", ew.id,
 		"to", task.To)
+
+	return nil
+}
+
+// processDelayedTasks 处理延迟任务的后台处理器
+func (eq *EmailQueue) processDelayedTasks() {
+	defer eq.wg.Done()
+
+	Logger.Info("延迟任务处理器启动")
+
+	ticker := time.NewTicker(5 * time.Second) // 每5秒检查一次
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-eq.ctx.Done():
+			Logger.Info("延迟任务处理器停止")
+			return
+		case <-ticker.C:
+			if err := eq.moveExpiredTasksToQueue(); err != nil {
+				Logger.Error("处理延迟任务出错", "err", err)
+			}
+		}
+	}
+}
+
+// moveExpiredTasksToQueue 将到期的延迟任务移动到正常队列
+func (eq *EmailQueue) moveExpiredTasksToQueue() error {
+	if eq.redis == nil || !eq.redis.IsAvailable() {
+		return nil
+	}
+
+	now := time.Now().Unix()
+
+	// 获取所有到期的任务（score <= now）
+	result, err := eq.redis.client.ZRangeByScore(eq.ctx, eq.delayedKey, &redis.ZRangeBy{
+		Min:    "0",
+		Max:    fmt.Sprintf("%d", now),
+		Offset: 0,
+		Count:  100, // 每次最多处理100个任务
+	}).Result()
+
+	if err != nil {
+		return fmt.Errorf("获取到期延迟任务失败: %v", err)
+	}
+
+	processedCount := 0
+	for _, taskJSON := range result {
+		// 原子操作：从延迟队列移除
+		removed, err := eq.redis.client.ZRem(eq.ctx, eq.delayedKey, taskJSON).Result()
+		if err != nil {
+			Logger.Error("从延迟队列移除任务失败", "err", err, "task", taskJSON)
+			continue
+		}
+
+		if removed == 0 {
+			// 任务已被其他进程处理
+			continue
+		}
+
+		// 解析任务
+		var task EmailTask
+		if err := json.Unmarshal([]byte(taskJSON), &task); err != nil {
+			Logger.Error("反序列化延迟任务失败", "err", err, "task", taskJSON)
+			continue
+		}
+
+		// 推入正常队列
+		if err := eq.Push(task); err != nil {
+			Logger.Error("将延迟任务推入正常队列失败", "err", err, "task_id", task.ID)
+			// 如果推入失败，可以考虑重新放回延迟队列
+			continue
+		}
+
+		processedCount++
+		Logger.Debug("延迟任务已移入正常队列",
+			"task_id", task.ID,
+			"to", task.To,
+			"original_delay", task.Retry*30)
+	}
+
+	if processedCount > 0 {
+		Logger.Info("处理延迟任务完成", "processed_count", processedCount)
+	}
 
 	return nil
 }

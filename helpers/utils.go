@@ -15,14 +15,29 @@ import (
 	"github.com/pkg/errors"
 	"github.com/snluu/uuid"
 	"github.com/xiuivfbc/bmtdblog/system"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
 
-// Md5 计算字符串的md5值
+// Md5 计算字符串的md5值（用于签名等非密码用途）
 func Md5(source string) string {
 	md5h := md5.New()
 	md5h.Write([]byte(source))
 	return hex.EncodeToString(md5h.Sum(nil))
+}
+
+// HashPassword 使用bcrypt生成密码哈希
+func HashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
+// CheckPassword 验证密码是否匹配哈希值
+func CheckPassword(password, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
 func Truncate(s string, n int) string {
