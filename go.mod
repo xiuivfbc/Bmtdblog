@@ -43,6 +43,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect

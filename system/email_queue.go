@@ -2,23 +2,28 @@ package system
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
 // EmailTask 邮件任务结构
 type EmailTask struct {
-	ID       string    `json:"id"`
-	To       string    `json:"to"`
-	Subject  string    `json:"subject"`
-	Body     string    `json:"body"`
-	Retry    int       `json:"retry"`
-	MaxRetry int       `json:"max_retry"`
-	CreateAt time.Time `json:"create_at"`
+	ID          string    `json:"id"`
+	To          string    `json:"to"`
+	Subject     string    `json:"subject"`
+	Body        string    `json:"body"`
+	Retry       int       `json:"retry"`
+	MaxRetry    int       `json:"max_retry"`
+	CreateAt    time.Time `json:"create_at"`
+	ContentHash string    `json:"content_hash"` // 内容哈希，用于去重
+	DedupeKey   string    `json:"dedupe_key"`   // 去重键
 }
 
 // EmailQueueStats 队列统计信息
@@ -36,6 +41,8 @@ type EmailQueue struct {
 	queueKey   string
 	failKey    string
 	delayedKey string // 延迟队列key
+	sentKey    string // 已发送邮件ID集合key
+	dedupeKey  string // 去重key前缀
 
 	// 动态Worker池配置
 	minWorkers      int                  // 最小Worker数量
@@ -48,6 +55,9 @@ type EmailQueue struct {
 	scaleUpThreshold   int64         // 扩容阈值：队列长度
 	scaleDownThreshold int64         // 缩容阈值：队列长度
 	idleTimeout        time.Duration // Worker空闲超时时间
+
+	// 去重配置
+	dedupeWindow time.Duration // 去重窗口时间（默认24小时）
 
 	ctx         context.Context
 	cancel      context.CancelFunc
@@ -94,6 +104,8 @@ func InitEmailQueue(workerCount int) error {
 		queueKey:   "bmtdblog:email:queue",
 		failKey:    "bmtdblog:email:failed",
 		delayedKey: "bmtdblog:email:delayed", // 延迟队列key
+		sentKey:    "bmtdblog:email:sent",    // 已发送邮件ID集合
+		dedupeKey:  "bmtdblog:email:dedupe",  // 去重key前缀
 
 		// 动态池配置
 		minWorkers:      max(1, workerCount/2),      // 最小Worker数：传入值的一半
@@ -106,6 +118,9 @@ func InitEmailQueue(workerCount int) error {
 		scaleUpThreshold:   int64(workerCount * 10), // 队列长度 > 10*worker数时扩容
 		scaleDownThreshold: int64(workerCount * 2),  // 队列长度 < 2*worker数时缩容
 		idleTimeout:        5 * time.Minute,         // Worker空闲5分钟后可回收
+
+		// 去重配置
+		dedupeWindow: 24 * time.Hour, // 24小时去重窗口
 
 		ctx:    ctx,
 		cancel: cancel,
@@ -136,6 +151,21 @@ func InitEmailQueue(workerCount int) error {
 		"scale_up_threshold", EmailQueueInstance.scaleUpThreshold,
 		"scale_down_threshold", EmailQueueInstance.scaleDownThreshold)
 	return nil
+}
+
+// generateDedupeKey 直接生成去重键，不需要分两步
+func generateDedupeKey(to, subject, body string) string {
+	// 1. 组合内容
+	content := fmt.Sprintf("%s:%s:%s", to, subject, body)
+
+	// 2. 生成哈希
+	hasher := sha256.New()
+	hasher.Write([]byte(content))
+	contentHash := hex.EncodeToString(hasher.Sum(nil))[:16]
+
+	// 3. 生成Redis键（日期前缀便于管理和清理）
+	dailyKey := time.Now().Format("2006-01-02")
+	return fmt.Sprintf("bmtdblog:email:dedupe:%s:%s", dailyKey, contentHash)
 }
 
 // SetEmailSender 设置邮件发送函数
@@ -219,17 +249,63 @@ func PushEmailTask(to, subject, body string) error {
 		return sendEmailSync(to, subject, body)
 	}
 
-	task := EmailTask{
-		ID:       generateTaskID(),
-		To:       to,
-		Subject:  subject,
-		Body:     body,
-		Retry:    0,
-		MaxRetry: 3,
-		CreateAt: time.Now(),
+	return EmailQueueInstance.PushWithDedupe(to, subject, body)
+}
+
+// PushWithDedupe 推送任务到队列（带去重功能）
+func (eq *EmailQueue) PushWithDedupe(to, subject, body string) error {
+	if eq.redis == nil || !eq.redis.IsAvailable() {
+		// Redis不可用，降级为同步发送
+		return eq.sendFunc(to, subject, body)
 	}
 
-	return EmailQueueInstance.Push(task)
+	// 1. 生成去重键（合并了内容哈希和键生成）
+	dedupeKey := generateDedupeKey(to, subject, body)
+
+	// 提取哈希部分用于日志显示
+	hashPart := dedupeKey[len("bmtdblog:email:dedupe:2006-01-02:"):]
+
+	// 2. 检查是否重复（今日内容去重）
+	exists, err := eq.redis.client.Exists(eq.ctx, dedupeKey).Result()
+	if err != nil {
+		Logger.Warn("去重检查失败，继续发送", "error", err, "to", to)
+	} else if exists > 0 {
+		Logger.Info("邮件去重生效，跳过发送",
+			"to", to,
+			"subject", subject,
+			"dedupe_key", hashPart)
+		return nil
+	}
+
+	// 3. 检查任务ID去重（防止同一任务重复处理）
+	taskID := generateTaskID()
+	taskDedupeKey := fmt.Sprintf("%s:task:%s", eq.sentKey, taskID)
+
+	// 检查任务是否已在处理
+	taskExists, err := eq.redis.client.Exists(eq.ctx, taskDedupeKey).Result()
+	if err == nil && taskExists > 0 {
+		Logger.Info("任务正在处理中，跳过", "task_id", taskID)
+		return nil
+	}
+
+	// 4. 标记任务正在处理（设置较短的过期时间，防止处理失败时永久阻塞）
+	eq.redis.client.SetEx(eq.ctx, taskDedupeKey, "processing", 10*time.Minute)
+
+	// 5. 创建任务
+	task := EmailTask{
+		ID:          taskID,
+		To:          to,
+		Subject:     subject,
+		Body:        body,
+		Retry:       0,
+		MaxRetry:    3,
+		CreateAt:    time.Now(),
+		ContentHash: hashPart, // 使用哈希部分
+		DedupeKey:   dedupeKey,
+	}
+
+	// 6. 正常入队
+	return eq.Push(task)
 }
 
 // Push 推送任务到队列
@@ -391,14 +467,70 @@ func (ew *EmailWorker) ProcessTask() error {
 
 // sendEmail 发送邮件
 func (ew *EmailWorker) sendEmail(task EmailTask) error {
+	// 检查是否已发送过（基于任务ID去重）
+	if task.ID != "" {
+		taskSentKey := fmt.Sprintf("%s:task:%s", ew.queue.sentKey, task.ID)
+		exists, err := ew.queue.redis.client.Exists(ew.ctx, taskSentKey).Result()
+		if err == nil && exists > 0 {
+			Logger.Info("任务已发送过，跳过", "task_id", task.ID, "worker_id", ew.id)
+			return nil
+		}
+	}
+
+	// 检查内容去重（防止重复内容）
+	if task.DedupeKey != "" {
+		exists, err := ew.queue.redis.client.Exists(ew.ctx, task.DedupeKey).Result()
+		if err == nil && exists > 0 {
+			Logger.Info("内容已发送过，跳过",
+				"content_hash", task.ContentHash[:8],
+				"worker_id", ew.id)
+			return nil
+		}
+	}
+
 	// 调用队列配置的邮件发送函数
 	err := ew.queue.sendFunc(task.To, task.Subject, task.Body)
+
 	if err == nil {
+		// 发送成功，标记去重状态
+		ew.markEmailAsSent(task)
 		ew.queue.incrementProcessedCount()
+
+		Logger.Info("邮件发送成功",
+			"worker_id", ew.id,
+			"task_id", task.ID,
+			"to", task.To,
+			"content_hash", task.ContentHash[:8])
 	} else {
 		ew.queue.incrementFailedCount()
+		Logger.Error("邮件发送失败",
+			"worker_id", ew.id,
+			"task_id", task.ID,
+			"to", task.To,
+			"error", err)
 	}
+
 	return err
+}
+
+// markEmailAsSent 标记邮件已发送，设置去重状态
+func (ew *EmailWorker) markEmailAsSent(task EmailTask) {
+	// 1. 标记任务ID已处理（24小时过期）
+	if task.ID != "" {
+		taskSentKey := fmt.Sprintf("%s:task:%s", ew.queue.sentKey, task.ID)
+		ew.queue.redis.client.SetEx(ew.ctx, taskSentKey, "sent", 24*time.Hour)
+	}
+
+	// 2. 标记内容已发送（去重窗口时间过期）
+	if task.DedupeKey != "" {
+		ew.queue.redis.client.SetEx(ew.ctx, task.DedupeKey, "sent", ew.queue.dedupeWindow)
+	}
+
+	// 3. 清理处理中标记
+	if task.ID != "" {
+		processingKey := fmt.Sprintf("%s:task:%s", ew.queue.sentKey, task.ID)
+		ew.queue.redis.client.Del(ew.ctx, processingKey)
+	}
 }
 
 // handleFailedTask 处理失败的任务
@@ -694,9 +826,9 @@ func StopEmailQueue() {
 	}
 }
 
-// generateTaskID 生成任务ID
+// generateTaskID 生成任务ID（使用UUID确保全局唯一性）
 func generateTaskID() string {
-	return fmt.Sprintf("email_%d_%d", time.Now().Unix(), time.Now().Nanosecond())
+	return fmt.Sprintf("email_%s", uuid.New().String())
 }
 
 // incrementProcessedCount 增加处理计数
