@@ -13,6 +13,13 @@ dir = '.'
 [database]
 dsn = 'bmtdblog.db'
 
+[redis]
+enabled = false
+addr = ''
+password = ''
+db = 0
+pool_size = 10
+
 [elasticsearch]
 enabled = false
 host = 'localhost:9200'
@@ -38,13 +45,6 @@ bucket = 'Bmtdblog'
 enabled = false
 apiurl = 'https://sm.ms/api/v2/upload'
 apikey = ''
-
-[redis]
-enabled = false
-addr = ''
-password = ''
-db = 0
-pool_size = 10
 
 [github]
 enabled = false
