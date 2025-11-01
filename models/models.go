@@ -29,6 +29,7 @@ func InitDB() (*gorm.DB, error) {
 		&Subscriber{},
 		&Link{},
 		&SmmsFile{},
+		&ESSyncStatus{},
 	)
 	return db, err
 }

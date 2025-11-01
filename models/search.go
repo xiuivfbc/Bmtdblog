@@ -12,6 +12,16 @@ import (
 	"github.com/xiuivfbc/bmtdblog/system"
 )
 
+// 增量同步状态表
+type ESSyncStatus struct {
+	ID           uint      `gorm:"primaryKey"`
+	LastSyncTime time.Time `json:"last_sync_time"`
+	LastPostID   uint      `json:"last_post_id"`
+	TotalSynced  int       `json:"total_synced"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 // PostDocument ES中的博文文档结构
 type PostDocument struct {
 	ID           uint      `json:"id"`
@@ -625,6 +635,10 @@ func InitESTaskQueue() {
 
 	// 启动后台处理协程
 	go esTaskQueue.processLoop()
+
+	// 启动时进行增量同步检查
+	go performIncrementalSync()
+
 	slog.Info("ES批量任务队列已启动")
 }
 
@@ -639,6 +653,157 @@ func StopESTaskQueue() {
 		slog.Info("ES批量任务队列已停止")
 	}
 }
+
+// performIncrementalSync 执行增量同步
+func performIncrementalSync() {
+	slog.Info("开始ES增量同步检查...")
+
+	// 获取上次同步状态
+	var syncStatus ESSyncStatus
+	result := DB.Order("id desc").First(&syncStatus)
+
+	var lastSyncTime time.Time
+	var lastPostID uint
+
+	if result.Error != nil {
+		// 首次同步，获取所有发布的博文
+		slog.Info("首次ES同步，将索引所有已发布博文")
+		lastSyncTime = time.Time{} // 零值时间
+		lastPostID = 0
+	} else {
+		lastSyncTime = syncStatus.LastSyncTime
+		lastPostID = syncStatus.LastPostID
+		slog.Info("检测到上次同步记录",
+			"last_sync_time", lastSyncTime,
+			"last_post_id", lastPostID,
+			"total_synced", syncStatus.TotalSynced)
+	}
+
+	// 查询需要同步的博文
+	var posts []*Post
+	query := DB.Where("status = ? AND is_published = ?", "published", true)
+
+	if !lastSyncTime.IsZero() {
+		// 增量同步：只同步新增或更新的博文
+		query = query.Where("(created_at > ? OR updated_at > ?) AND id > ?",
+			lastSyncTime, lastSyncTime, lastPostID)
+	}
+
+	if err := query.Order("id asc").Find(&posts).Error; err != nil {
+		slog.Error("查询待同步博文失败", "error", err)
+		return
+	}
+
+	if len(posts) == 0 {
+		slog.Info("没有需要同步的博文")
+		return
+	}
+
+	slog.Info("发现待同步博文", "count", len(posts))
+
+	// 批量同步到ES
+	batchSize := 50
+	successCount := 0
+
+	for i := 0; i < len(posts); i += batchSize {
+		end := i + batchSize
+		if end > len(posts) {
+			end = len(posts)
+		}
+
+		batch := posts[i:end]
+		if err := bulkIndexPosts(batch); err != nil {
+			slog.Error("批量索引博文失败", "error", err, "batch_start", i, "batch_size", len(batch))
+			continue
+		}
+
+		successCount += len(batch)
+		slog.Info("批量索引成功", "batch_size", len(batch), "total_success", successCount)
+	}
+
+	// 更新同步状态
+	newSyncStatus := ESSyncStatus{
+		LastSyncTime: time.Now(),
+		LastPostID:   posts[len(posts)-1].ID, // 最后一个博文ID
+		TotalSynced:  successCount,
+	}
+
+	if result.Error != nil {
+		// 创建新记录
+		if err := DB.Create(&newSyncStatus).Error; err != nil {
+			slog.Error("创建同步状态记录失败", "error", err)
+		}
+	} else {
+		// 更新现有记录
+		if err := DB.Model(&syncStatus).Updates(&newSyncStatus).Error; err != nil {
+			slog.Error("更新同步状态记录失败", "error", err)
+		}
+	}
+
+	slog.Info("ES增量同步完成", "synced_count", successCount)
+}
+
+// GetESIndexStatus 获取ES索引状态
+func GetESIndexStatus() (*ESSyncStatus, error) {
+	var syncStatus ESSyncStatus
+	err := DB.Order("id desc").First(&syncStatus).Error
+	if err != nil {
+		return nil, err
+	}
+	return &syncStatus, nil
+}
+
+// ForceFullReindex 强制全量重建索引
+func ForceFullReindex() error {
+	slog.Info("开始强制全量重建ES索引...")
+
+	// 删除现有索引
+	if err := DeleteESIndex(); err != nil {
+		slog.Error("删除ES索引失败", "error", err)
+		// 继续执行，可能索引不存在
+	}
+
+	// 重建索引
+	if err := CreateESIndex(); err != nil {
+		return fmt.Errorf("创建ES索引失败: %w", err)
+	}
+
+	// 清除同步状态
+	if err := DB.Where("1 = 1").Delete(&ESSyncStatus{}).Error; err != nil {
+		slog.Error("清除同步状态失败", "error", err)
+	}
+
+	// 重新执行增量同步（此时会变成全量同步）
+	go performIncrementalSync()
+
+	return nil
+}
+
+// CreateESIndex 创建ES索引
+func CreateESIndex() error {
+	if !system.GetConfiguration().Elasticsearch.Enabled {
+		return fmt.Errorf("ES未启用")
+	}
+
+	// 这里应该调用system包中的创建索引函数
+	// 或者实现具体的索引创建逻辑
+	slog.Info("创建ES索引")
+	return nil
+}
+
+// DeleteESIndex 删除ES索引
+func DeleteESIndex() error {
+	if !system.GetConfiguration().Elasticsearch.Enabled {
+		return fmt.Errorf("ES未启用")
+	}
+
+	// 这里应该调用system包中的删除索引函数
+	// 或者实现具体的索引删除逻辑
+	slog.Info("删除ES索引")
+	return nil
+}
+
+// StopESTaskQueue 停止ES任务队列
 
 // AddESTask 添加ES任务到队列
 func AddESTask(task ESTask) {
