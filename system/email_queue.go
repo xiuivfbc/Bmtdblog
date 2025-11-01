@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -90,11 +92,128 @@ func max(a, b int) int {
 	return b
 }
 
+// checkRedisPersistenceConfig 检查Redis持久化配置
+func checkRedisPersistenceConfig() error {
+	if Redis == nil || !Redis.IsAvailable() {
+		return fmt.Errorf("Redis不可用")
+	}
+
+	ctx := context.Background()
+
+	// 使用INFO命令获取持久化信息
+	info, err := Redis.client.Info(ctx, "persistence").Result()
+	if err != nil {
+		Logger.Warn("无法获取Redis持久化信息", "error", err)
+		return err
+	}
+
+	// 解析AOF状态
+	aofEnabled := strings.Contains(info, "aof_enabled:1")
+	if aofEnabled {
+		Logger.Info("✓ Redis AOF持久化已启用")
+
+		// 检查AOF同步策略
+		if strings.Contains(info, "aof_fsync_pending:0") {
+			Logger.Info("✓ Redis AOF同步正常")
+		}
+	} else {
+		Logger.Warn("⚠ Redis AOF持久化未启用，邮件队列数据可能在重启后丢失")
+		Logger.Info("💡 建议设置: appendonly yes, appendfsync everysec")
+	}
+
+	// 检查RDB状态
+	if strings.Contains(info, "rdb_changes_since_last_save:") {
+		Logger.Info("✓ Redis RDB快照功能可用")
+	}
+
+	// 解析最后保存时间
+	if lastSave := parseLastSaveTime(info); lastSave != "" {
+		Logger.Info("ℹ Redis最后保存时间", "time", lastSave)
+	}
+
+	// 给出持久化建议
+	if !aofEnabled {
+		Logger.Warn("📋 Redis持久化建议:")
+		Logger.Warn("   1. 启用AOF: appendonly yes")
+		Logger.Warn("   2. 设置同步策略: appendfsync everysec")
+		Logger.Warn("   3. 启用混合持久化: aof-use-rdb-preamble yes")
+	}
+
+	return nil
+}
+
+// GetRedisPersistenceStatus 获取Redis持久化状态
+func GetRedisPersistenceStatus() map[string]interface{} {
+	status := map[string]interface{}{
+		"available":      false,
+		"aof_enabled":    false,
+		"rdb_enabled":    false,
+		"hybrid_enabled": false,
+		"last_save":      "",
+	}
+
+	if Redis == nil || !Redis.IsAvailable() {
+		return status
+	}
+
+	ctx := context.Background()
+	status["available"] = true
+
+	// 使用INFO命令获取持久化状态
+	info, err := Redis.client.Info(ctx, "persistence").Result()
+	if err != nil {
+		Logger.Warn("无法获取Redis持久化状态", "error", err)
+		return status
+	}
+
+	// 解析AOF状态
+	status["aof_enabled"] = strings.Contains(info, "aof_enabled:1")
+
+	// 解析RDB状态
+	status["rdb_enabled"] = strings.Contains(info, "rdb_changes_since_last_save:")
+
+	// 检查混合持久化（通过CONFIG GET）
+	if hybrid, err := Redis.client.Do(ctx, "CONFIG", "GET", "aof-use-rdb-preamble").Result(); err == nil {
+		if result, ok := hybrid.([]interface{}); ok && len(result) >= 2 {
+			if val, ok := result[1].(string); ok {
+				status["hybrid_enabled"] = val == "yes"
+			}
+		}
+	}
+
+	// 解析最后保存时间
+	if lastSave := parseLastSaveTime(info); lastSave != "" {
+		status["last_save"] = lastSave
+	}
+
+	return status
+}
+
+// parseLastSaveTime 从Redis INFO persistence中解析最后保存时间
+func parseLastSaveTime(info string) string {
+	lines := strings.Split(info, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "rdb_last_save_time:") {
+			timestamp := strings.TrimPrefix(line, "rdb_last_save_time:")
+			timestamp = strings.TrimSpace(timestamp)
+			if ts, err := strconv.ParseInt(timestamp, 10, 64); err == nil {
+				return time.Unix(ts, 0).Format("2006-01-02 15:04:05")
+			}
+		}
+	}
+	return ""
+}
+
 // InitEmailQueue 初始化邮件队列
 func InitEmailQueue(workerCount int) error {
 	if Redis == nil || !Redis.IsAvailable() {
 		Logger.Warn("Redis不可用，邮件队列将使用同步模式")
 		return nil
+	}
+
+	// 检查Redis持久化配置
+	if err := checkRedisPersistenceConfig(); err != nil {
+		Logger.Warn("Redis持久化配置检查失败", "error", err, "建议", "检查AOF和RDB配置")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
