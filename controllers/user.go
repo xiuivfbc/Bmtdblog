@@ -155,7 +155,9 @@ func SigninPost(c *gin.Context) {
 		})
 		return
 	}
-	user, err = models.GetUserByUsername(username)
+
+	// 使用优化的登录查询，利用联合索引
+	user, err = models.GetUserForLogin(username)
 	if err != nil {
 		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
 			"message": "invalid username or password",

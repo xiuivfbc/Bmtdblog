@@ -11,18 +11,18 @@ type User struct {
 	CreatedAt     *time.Time `gorm:"autoCreateTime"`
 	UpdatedAt     *time.Time `gorm:"autoUpdateTime"`
 	DeletedAt     *time.Time `gorm:"index"`
-	Email         string     `gorm:"uniqueIndex;default:null"`
-	Telephone     string     `gorm:"uniqueIndex;default:null"`
-	Password      string     `gorm:"default:null"`
-	VerifyState   string     `gorm:"default:'0'"`
-	SecretKey     string     `gorm:"default:null"`
-	OutTime       time.Time  `gorm:"default:null"`
-	GithubLoginId string     `gorm:"uniqueIndex;default:null"`
+	Email         string     `gorm:"uniqueindex;index:idx_email_password_lockstate"`
+	Telephone     string
+	Password      string `gorm:"index:idx_email_password_lockstate"`
+	VerifyState   string `gorm:"default:'0'"`
+	SecretKey     string
+	OutTime       time.Time
+	GithubLoginId string `gorm:"uniqueIndex;default:null"`
 	GithubUrl     string
 	IsAdmin       bool
 	AvatarUrl     string
 	NickName      string
-	LockState     bool `gorm:"default:false"`
+	LockState     bool `gorm:"index:idx_email_password_lockstate;default:false"`
 }
 
 func (user *User) Insert() error {
@@ -49,6 +49,14 @@ func (user *User) Update() error {
 func GetUserByUsername(username string) (*User, error) {
 	var user User
 	err := DB.First(&user, "email = ?", username).Error
+	return &user, err
+}
+
+func GetUserForLogin(email string) (*User, error) {
+	var user User
+	err := DB.Select("id, email, password, lock_state").
+		Where("email = ?", email).
+		First(&user).Error
 	return &user, err
 }
 
