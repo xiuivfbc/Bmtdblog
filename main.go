@@ -132,7 +132,7 @@ func initializeApplication() {
 	slog.SetDefault(system.Logger)
 
 	//configuration
-	configFilePath := flag.String("C", "conf/conf_copy.toml", "config file path")
+	configFilePath := flag.String("C", "conf/conf_mine.toml", "config file path")
 	flag.Parse()
 	if err := system.LoadConfiguration(*configFilePath); err != nil {
 		system.Logger.Error("err parsing config log file", "err", err)

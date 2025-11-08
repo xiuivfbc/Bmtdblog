@@ -1,0 +1,24 @@
+[mysqld]
+# 字符集设置
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+# 连接设置
+max_connections = 200
+max_user_connections = 180
+
+# 缓存设置
+innodb_buffer_pool_size = 256M
+query_cache_size = 64M
+query_cache_type = 1
+
+# 日志设置
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = 2
+
+[mysql]
+default-character-set = utf8mb4
+
+[client]
+default-character-set = utf8mb4
