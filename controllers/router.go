@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"html/template"
-	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -19,6 +18,10 @@ import (
 func DefineRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
+
+	// 添加全链路追踪中间件（最先执行）
+	router.Use(system.TraceMiddleware())
+
 	setTemplate(router)
 	setSessions(router)
 	router.Use(SharedData())
@@ -173,7 +176,7 @@ func AuthRequired(adminScope bool) gin.HandlerFunc {
 				return
 			}
 		}
-		slog.Warn("User not authorized to visit", "uri", c.Request.RequestURI)
+		system.LogWarn(c, "User not authorized to visit", "uri", c.Request.RequestURI)
 		c.HTML(http.StatusForbidden, "errors/error.html", gin.H{
 			"message": "Forbidden!",
 		})
@@ -208,7 +211,7 @@ func setSessions(router *gin.Engine) {
 
 	// 检查是否启用Redis
 	if config.Redis.Enabled {
-		slog.Info("使用Redis存储Session", "addr", config.Redis.Addr)
+		system.Logger.Info("使用Redis存储Session", "addr", config.Redis.Addr)
 
 		// 创建Redis存储
 		if config.Redis.Password != "" {
@@ -234,14 +237,14 @@ func setSessions(router *gin.Engine) {
 		}
 
 		if err != nil {
-			slog.Error("Redis Session存储初始化失败，回退到Cookie存储", "error", err)
+			system.Logger.Error("Redis Session存储初始化失败，回退到Cookie存储", "error", err)
 			// 回退到Cookie存储
 			store = cookie.NewStore([]byte(config.SessionSecret))
 		} else {
-			slog.Info("Redis Session存储初始化成功")
+			system.Logger.Info("Redis Session存储初始化成功")
 		}
 	} else {
-		slog.Info("使用Cookie存储Session")
+		system.Logger.Info("使用Cookie存储Session")
 		// 使用Cookie存储
 		store = cookie.NewStore([]byte(config.SessionSecret))
 	}
