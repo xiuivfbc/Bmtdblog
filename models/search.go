@@ -3,7 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
+	
 	"strings"
 	"sync"
 	"time"
@@ -81,7 +81,7 @@ func IndexPost(post *Post) error {
 	}
 
 	if !system.IsESAvailable() {
-		slog.Warn("ES不可用，跳过索引", "post_id", post.ID)
+		system.Logger.Warn("ES不可用，跳过索引", "post_id", post.ID)
 		return nil
 	}
 
@@ -120,11 +120,11 @@ func IndexPost(post *Post) error {
 	)
 
 	if err != nil {
-		slog.Error("博文索引失败", "post_id", post.ID, "error", err)
+		system.Logger.Error("博文索引失败", "post_id", post.ID, "error", err)
 		return err
 	}
 
-	slog.Debug("博文索引成功", "post_id", post.ID)
+	system.Logger.Debug("博文索引成功", "post_id", post.ID)
 	return nil
 }
 
@@ -135,7 +135,7 @@ func DeletePostFromIndex(postID uint) error {
 	}
 
 	if !system.IsESAvailable() {
-		slog.Warn("ES不可用，跳过删除", "post_id", postID)
+		system.Logger.Warn("ES不可用，跳过删除", "post_id", postID)
 		return nil
 	}
 
@@ -147,11 +147,11 @@ func DeletePostFromIndex(postID uint) error {
 	)
 
 	if err != nil {
-		slog.Error("博文删除失败", "post_id", postID, "error", err)
+		system.Logger.Error("博文删除失败", "post_id", postID, "error", err)
 		return err
 	}
 
-	slog.Debug("博文删除成功", "post_id", postID)
+	system.Logger.Debug("博文删除成功", "post_id", postID)
 	return nil
 }
 
@@ -170,7 +170,7 @@ func SearchPosts(req *SearchRequest) (*SearchResponse, error) {
 	}
 
 	if !system.IsESAvailable() {
-		slog.Warn("ES不可用，降级到数据库搜索")
+		system.Logger.Warn("ES不可用，降级到数据库搜索")
 		return searchPostsFromDB(req)
 	}
 
@@ -186,7 +186,7 @@ func SearchPosts(req *SearchRequest) (*SearchResponse, error) {
 	)
 
 	if err != nil {
-		slog.Error("ES搜索失败，降级到数据库搜索", "error", err)
+		system.Logger.Error("ES搜索失败，降级到数据库搜索", "error", err)
 		return searchPostsFromDB(req)
 	}
 	defer res.Body.Close()
@@ -313,19 +313,19 @@ func parseSearchResponse(res *esapi.Response) (*SearchResponse, error) {
 		// 从数据库获取完整的Post对象（确保数据一致性）
 		post, err := GetPostById(hit.Source.ID)
 		if err != nil {
-			slog.Warn("无法从数据库获取博文", "id", hit.Source.ID, "error", err)
+			system.Logger.Warn("无法从数据库获取博文", "id", hit.Source.ID, "error", err)
 			continue
 		}
 
 		// 加载关联数据
 		if err := LoadPostRelations(post); err != nil {
-			slog.Warn("加载博文关联数据失败", "id", post.ID, "error", err)
+			system.Logger.Warn("加载博文关联数据失败", "id", post.ID, "error", err)
 		}
 
 		// 添加高亮信息（如果需要的话）
 		if len(hit.Highlight) > 0 {
 			// 可以在这里处理高亮信息，比如设置到Post的某个字段
-			slog.Debug("搜索高亮", "post_id", post.ID, "highlights", hit.Highlight)
+			system.Logger.Debug("搜索高亮", "post_id", post.ID, "highlights", hit.Highlight)
 		}
 
 		posts = append(posts, post)
@@ -352,7 +352,7 @@ func searchPostsFromDB(req *SearchRequest) (*SearchResponse, error) {
 	if req.Query != "" {
 		searchPattern := "%" + req.Query + "%"
 		query = query.Where("title LIKE ? OR body LIKE ?", searchPattern, searchPattern)
-		slog.Info("数据库搜索", "keyword", req.Query, "pattern", searchPattern)
+		system.Logger.Info("数据库搜索", "keyword", req.Query, "pattern", searchPattern)
 		fmt.Printf("添加关键词搜索: pattern='%s'\n", searchPattern)
 	} else {
 		fmt.Printf("空关键词搜索，显示所有文章\n")
@@ -370,7 +370,7 @@ func searchPostsFromDB(req *SearchRequest) (*SearchResponse, error) {
 
 	// 计算总数
 	query.Count(&total)
-	slog.Info("搜索统计", "total", total, "query", req.Query)
+	system.Logger.Info("搜索统计", "total", total, "query", req.Query)
 	fmt.Printf("搜索统计: total=%d\n", total)
 
 	// 添加排序
@@ -398,7 +398,7 @@ func searchPostsFromDB(req *SearchRequest) (*SearchResponse, error) {
 	// 加载关联数据
 	for _, post := range posts {
 		if err := LoadPostRelations(post); err != nil {
-			slog.Warn("加载博文关联数据失败", "id", post.ID, "error", err)
+			system.Logger.Warn("加载博文关联数据失败", "id", post.ID, "error", err)
 		}
 	}
 
@@ -436,7 +436,7 @@ func GetSearchSuggestions(prefix string, limit int) ([]string, error) {
 		system.ESClient.Search.WithBody(strings.NewReader(string(queryJSON))),
 	)
 	if err != nil {
-		slog.Warn("ES建议查询失败，降级到数据库", "error", err)
+		system.Logger.Warn("ES建议查询失败，降级到数据库", "error", err)
 		return getSearchSuggestionsFromDB(prefix, limit)
 	}
 	defer res.Body.Close()
@@ -462,7 +462,7 @@ func getSearchSuggestionsFromDB(prefix string, limit int) ([]string, error) {
 // SyncAllPostsToES 将所有已发布的博文同步到ES
 func SyncAllPostsToES() error {
 	if !system.GetConfiguration().Elasticsearch.Enabled {
-		slog.Info("ES未启用，跳过数据同步")
+		system.Logger.Info("ES未启用，跳过数据同步")
 		return nil
 	}
 
@@ -476,7 +476,7 @@ func SyncAllPostsToES() error {
 		return fmt.Errorf("查询博文失败: %w", err)
 	}
 
-	slog.Info("开始批量同步博文到ES", "total_count", len(posts))
+	system.Logger.Info("开始批量同步博文到ES", "total_count", len(posts))
 
 	// 批量处理，每批100个
 	const batchSize = 100
@@ -491,11 +491,11 @@ func SyncAllPostsToES() error {
 
 		batch := posts[i:end]
 		if err := bulkIndexPosts(batch); err != nil {
-			slog.Error("批量同步失败", "batch_start", i, "batch_size", len(batch), "error", err)
+			system.Logger.Error("批量同步失败", "batch_start", i, "batch_size", len(batch), "error", err)
 			failCount += len(batch)
 		} else {
 			successCount += len(batch)
-			slog.Info("批量同步进度", "processed", end, "total", len(posts))
+			system.Logger.Info("批量同步进度", "processed", end, "total", len(posts))
 		}
 
 		// 避免过快请求，给ES一些处理时间
@@ -504,7 +504,7 @@ func SyncAllPostsToES() error {
 		}
 	}
 
-	slog.Info("博文批量同步完成",
+	system.Logger.Info("博文批量同步完成",
 		"total", len(posts),
 		"success", successCount,
 		"failed", failCount)
@@ -554,13 +554,13 @@ func bulkIndexPosts(posts []*Post) error {
 
 		actionJSON, err := json.Marshal(action)
 		if err != nil {
-			slog.Error("构建批量action失败", "post_id", post.ID, "error", err)
+			system.Logger.Error("构建批量action失败", "post_id", post.ID, "error", err)
 			continue
 		}
 
 		docJSON, err := json.Marshal(doc)
 		if err != nil {
-			slog.Error("序列化文档失败", "post_id", post.ID, "error", err)
+			system.Logger.Error("序列化文档失败", "post_id", post.ID, "error", err)
 			continue
 		}
 
@@ -598,14 +598,14 @@ func bulkIndexPosts(posts []*Post) error {
 
 	// 检查是否有错误
 	if errors, exists := bulkResp["errors"]; exists && errors.(bool) {
-		slog.Warn("批量操作中有部分失败", "batch_size", len(posts))
+		system.Logger.Warn("批量操作中有部分失败", "batch_size", len(posts))
 		// 可以进一步解析具体的错误信息
 		if items, exists := bulkResp["items"]; exists {
-			slog.Debug("批量操作详情", "items", items)
+			system.Logger.Debug("批量操作详情", "items", items)
 		}
 	}
 
-	slog.Debug("批量索引成功", "batch_size", len(posts))
+	system.Logger.Debug("批量索引成功", "batch_size", len(posts))
 	return nil
 }
 
@@ -639,7 +639,7 @@ func InitESTaskQueue() {
 	// 启动时进行增量同步检查
 	go performIncrementalSync()
 
-	slog.Info("ES批量任务队列已启动")
+	system.Logger.Info("ES批量任务队列已启动")
 }
 
 // StopESTaskQueue 停止ES任务队列
@@ -650,13 +650,13 @@ func StopESTaskQueue() {
 
 		// 处理剩余任务
 		esTaskQueue.processRemaining()
-		slog.Info("ES批量任务队列已停止")
+		system.Logger.Info("ES批量任务队列已停止")
 	}
 }
 
 // performIncrementalSync 执行增量同步
 func performIncrementalSync() {
-	slog.Info("开始ES增量同步检查...")
+	system.Logger.Info("开始ES增量同步检查...")
 
 	// 获取上次同步状态
 	var syncStatus ESSyncStatus
@@ -667,13 +667,13 @@ func performIncrementalSync() {
 
 	if result.Error != nil {
 		// 首次同步，获取所有发布的博文
-		slog.Info("首次ES同步，将索引所有已发布博文")
+		system.Logger.Info("首次ES同步，将索引所有已发布博文")
 		lastSyncTime = time.Time{} // 零值时间
 		lastPostID = 0
 	} else {
 		lastSyncTime = syncStatus.LastSyncTime
 		lastPostID = syncStatus.LastPostID
-		slog.Info("检测到上次同步记录",
+		system.Logger.Info("检测到上次同步记录",
 			"last_sync_time", lastSyncTime,
 			"last_post_id", lastPostID,
 			"total_synced", syncStatus.TotalSynced)
@@ -690,16 +690,16 @@ func performIncrementalSync() {
 	}
 
 	if err := query.Order("id asc").Find(&posts).Error; err != nil {
-		slog.Error("查询待同步博文失败", "error", err)
+		system.Logger.Error("查询待同步博文失败", "error", err)
 		return
 	}
 
 	if len(posts) == 0 {
-		slog.Info("没有需要同步的博文")
+		system.Logger.Info("没有需要同步的博文")
 		return
 	}
 
-	slog.Info("发现待同步博文", "count", len(posts))
+	system.Logger.Info("发现待同步博文", "count", len(posts))
 
 	// 批量同步到ES
 	batchSize := 50
@@ -713,12 +713,12 @@ func performIncrementalSync() {
 
 		batch := posts[i:end]
 		if err := bulkIndexPosts(batch); err != nil {
-			slog.Error("批量索引博文失败", "error", err, "batch_start", i, "batch_size", len(batch))
+			system.Logger.Error("批量索引博文失败", "error", err, "batch_start", i, "batch_size", len(batch))
 			continue
 		}
 
 		successCount += len(batch)
-		slog.Info("批量索引成功", "batch_size", len(batch), "total_success", successCount)
+		system.Logger.Info("批量索引成功", "batch_size", len(batch), "total_success", successCount)
 	}
 
 	// 更新同步状态
@@ -731,16 +731,16 @@ func performIncrementalSync() {
 	if result.Error != nil {
 		// 创建新记录
 		if err := DB.Create(&newSyncStatus).Error; err != nil {
-			slog.Error("创建同步状态记录失败", "error", err)
+			system.Logger.Error("创建同步状态记录失败", "error", err)
 		}
 	} else {
 		// 更新现有记录
 		if err := DB.Model(&syncStatus).Updates(&newSyncStatus).Error; err != nil {
-			slog.Error("更新同步状态记录失败", "error", err)
+			system.Logger.Error("更新同步状态记录失败", "error", err)
 		}
 	}
 
-	slog.Info("ES增量同步完成", "synced_count", successCount)
+	system.Logger.Info("ES增量同步完成", "synced_count", successCount)
 }
 
 // GetESIndexStatus 获取ES索引状态
@@ -755,11 +755,11 @@ func GetESIndexStatus() (*ESSyncStatus, error) {
 
 // ForceFullReindex 强制全量重建索引
 func ForceFullReindex() error {
-	slog.Info("开始强制全量重建ES索引...")
+	system.Logger.Info("开始强制全量重建ES索引...")
 
 	// 删除现有索引
 	if err := DeleteESIndex(); err != nil {
-		slog.Error("删除ES索引失败", "error", err)
+		system.Logger.Error("删除ES索引失败", "error", err)
 		// 继续执行，可能索引不存在
 	}
 
@@ -770,7 +770,7 @@ func ForceFullReindex() error {
 
 	// 清除同步状态
 	if err := DB.Where("1 = 1").Delete(&ESSyncStatus{}).Error; err != nil {
-		slog.Error("清除同步状态失败", "error", err)
+		system.Logger.Error("清除同步状态失败", "error", err)
 	}
 
 	// 重新执行增量同步（此时会变成全量同步）
@@ -787,7 +787,7 @@ func CreateESIndex() error {
 
 	// 这里应该调用system包中的创建索引函数
 	// 或者实现具体的索引创建逻辑
-	slog.Info("创建ES索引")
+	system.Logger.Info("创建ES索引")
 	return nil
 }
 
@@ -799,7 +799,7 @@ func DeleteESIndex() error {
 
 	// 这里应该调用system包中的删除索引函数
 	// 或者实现具体的索引删除逻辑
-	slog.Info("删除ES索引")
+	system.Logger.Info("删除ES索引")
 	return nil
 }
 
@@ -868,18 +868,18 @@ func (q *ESTaskQueue) processBatch() {
 	// 批量处理索引任务
 	if len(indexTasks) > 0 {
 		if err := bulkIndexPosts(indexTasks); err != nil {
-			slog.Error("批量索引任务失败", "count", len(indexTasks), "error", err)
+			system.Logger.Error("批量索引任务失败", "count", len(indexTasks), "error", err)
 		} else {
-			slog.Debug("批量索引任务完成", "count", len(indexTasks))
+			system.Logger.Debug("批量索引任务完成", "count", len(indexTasks))
 		}
 	}
 
 	// 批量处理删除任务
 	if len(deleteTasks) > 0 {
 		if err := bulkDeletePosts(deleteTasks); err != nil {
-			slog.Error("批量删除任务失败", "count", len(deleteTasks), "error", err)
+			system.Logger.Error("批量删除任务失败", "count", len(deleteTasks), "error", err)
 		} else {
-			slog.Debug("批量删除任务完成", "count", len(deleteTasks))
+			system.Logger.Debug("批量删除任务完成", "count", len(deleteTasks))
 		}
 	}
 }
@@ -895,12 +895,12 @@ func processSingleTask(task ESTask) {
 	case "index":
 		if task.Post != nil {
 			if err := IndexPost(task.Post); err != nil {
-				slog.Error("同步索引失败", "post_id", task.PostID, "error", err)
+				system.Logger.Error("同步索引失败", "post_id", task.PostID, "error", err)
 			}
 		}
 	case "delete":
 		if err := DeletePostFromIndex(task.PostID); err != nil {
-			slog.Error("同步删除失败", "post_id", task.PostID, "error", err)
+			system.Logger.Error("同步删除失败", "post_id", task.PostID, "error", err)
 		}
 	}
 }
@@ -925,7 +925,7 @@ func bulkDeletePosts(postIDs []uint) error {
 
 		actionJSON, err := json.Marshal(action)
 		if err != nil {
-			slog.Error("构建删除action失败", "post_id", postID, "error", err)
+			system.Logger.Error("构建删除action失败", "post_id", postID, "error", err)
 			continue
 		}
 
@@ -952,14 +952,14 @@ func bulkDeletePosts(postIDs []uint) error {
 		return fmt.Errorf("批量删除响应错误: %s", res.String())
 	}
 
-	slog.Debug("批量删除成功", "count", len(postIDs))
+	system.Logger.Debug("批量删除成功", "count", len(postIDs))
 	return nil
 }
 
 // ReindexAllPosts 重建所有博文的ES索引
 func ReindexAllPosts() error {
 	if !system.GetConfiguration().Elasticsearch.Enabled {
-		slog.Info("ES未启用，跳过重建索引")
+		system.Logger.Info("ES未启用，跳过重建索引")
 		return nil
 	}
 
@@ -967,13 +967,13 @@ func ReindexAllPosts() error {
 		return fmt.Errorf("ES不可用")
 	}
 
-	slog.Info("开始重建ES索引")
+	system.Logger.Info("开始重建ES索引")
 
 	// 先删除现有索引
 	indexName := system.GetConfiguration().GetElasticsearchIndexName()
 	_, err := system.ESClient.Indices.Delete([]string{indexName})
 	if err != nil {
-		slog.Warn("删除现有索引失败", "error", err)
+		system.Logger.Warn("删除现有索引失败", "error", err)
 	}
 
 	// 重新创建索引

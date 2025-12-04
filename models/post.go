@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-	"log/slog"
+	
 	"math/rand"
 	"time"
 
@@ -42,7 +42,7 @@ func (post *Post) Insert() error {
 	// 清除可能存在的空值缓存
 	go func() {
 		if err := DeleteNullCache(post.ID); err != nil {
-			slog.Error("Failed to delete null cache after insert", "id", post.ID, "error", err)
+			system.Logger.Error("Failed to delete null cache after insert", "id", post.ID, "error", err)
 		}
 	}()
 
@@ -64,7 +64,7 @@ func (post *Post) Insert() error {
 func (post *Post) Update() error {
 	// 延迟双删策略：第一步 - 先删除缓存
 	if err := post.DelayedDoubleDel(); err != nil {
-		slog.Error("Failed to initiate delayed double delete", "id", post.ID, "error", err)
+		system.Logger.Error("Failed to initiate delayed double delete", "id", post.ID, "error", err)
 	}
 
 	// 更新数据库
@@ -171,7 +171,7 @@ func GetPostFromCache(id uint) (*Post, error) {
 		return nil, err
 	}
 
-	slog.Debug("Post loaded from cache", "id", id, "title", post.Title)
+	system.Logger.Debug("Post loaded from cache", "id", id, "title", post.Title)
 	return &post, nil
 }
 
@@ -186,11 +186,11 @@ func (post *Post) SetCache() error {
 	randomExpiration := getRandomExpiration(PostCacheExpiration, PostCacheRandomOffset)
 	err := system.Redis.Set(key, post, randomExpiration)
 	if err != nil {
-		slog.Error("Failed to cache post", "id", post.ID, "error", err)
+		system.Logger.Error("Failed to cache post", "id", post.ID, "error", err)
 		return err
 	}
 
-	slog.Debug("Post cached successfully", "id", post.ID, "title", post.Title, "expiration", randomExpiration)
+	system.Logger.Debug("Post cached successfully", "id", post.ID, "title", post.Title, "expiration", randomExpiration)
 	return nil
 }
 
@@ -203,11 +203,11 @@ func (post *Post) DelCache() error {
 	key := post.CacheKey()
 	err := system.Redis.Del(key)
 	if err != nil {
-		slog.Error("Failed to delete post cache", "id", post.ID, "error", err)
+		system.Logger.Error("Failed to delete post cache", "id", post.ID, "error", err)
 		return err
 	}
 
-	slog.Debug("Post cache deleted", "id", post.ID)
+	system.Logger.Debug("Post cache deleted", "id", post.ID)
 	return nil
 }
 
@@ -219,7 +219,7 @@ func (post *Post) ClearRelatedCache() error {
 
 	// 清除自身缓存
 	if err := post.DelCache(); err != nil {
-		slog.Error("Failed to clear post cache", "id", post.ID, "error", err)
+		system.Logger.Error("Failed to clear post cache", "id", post.ID, "error", err)
 	}
 
 	// 清除列表缓存（影响首页、归档等）
@@ -231,11 +231,11 @@ func (post *Post) ClearRelatedCache() error {
 
 	for _, pattern := range patterns {
 		if err := system.Redis.DelPattern(pattern); err != nil {
-			slog.Error("Failed to clear cache pattern", "pattern", pattern, "error", err)
+			system.Logger.Error("Failed to clear cache pattern", "pattern", pattern, "error", err)
 		}
 	}
 
-	slog.Debug("Related cache cleared for post", "id", post.ID)
+	system.Logger.Debug("Related cache cleared for post", "id", post.ID)
 	return nil
 }
 
@@ -261,7 +261,7 @@ func (post *Post) DelayedDoubleDel() error {
 	for _, pattern := range patterns {
 		matchedKeys, err := system.Redis.GetKeysByPattern(pattern)
 		if err != nil {
-			slog.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
+			system.Logger.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
 			continue
 		}
 		keys = append(keys, matchedKeys...)
@@ -276,7 +276,7 @@ func (post *Post) DelayedDoubleDel() error {
 func GetPostByIdWithCache(id uint) (*Post, error) {
 	// 1. 检查空值缓存：如果之前确认不存在，直接返回
 	if IsNullCached(id) {
-		slog.Debug("Null cache hit", "post_id", id)
+		system.Logger.Debug("Null cache hit", "post_id", id)
 		return nil, fmt.Errorf("post not found")
 	}
 
@@ -284,7 +284,7 @@ func GetPostByIdWithCache(id uint) (*Post, error) {
 	if post, err := GetPostFromCache(id); err == nil {
 		// 补充关联数据（Tags, Comments等）
 		if err := LoadPostRelations(post); err != nil {
-			slog.Error("Failed to load post relations from cache", "id", id, "error", err)
+			system.Logger.Error("Failed to load post relations from cache", "id", id, "error", err)
 		}
 		return post, nil
 	}
@@ -292,35 +292,35 @@ func GetPostByIdWithCache(id uint) (*Post, error) {
 	// 3. 缓存未命中，尝试获取分布式锁（防击穿）
 	locked, err := TryLock(id)
 	if err != nil {
-		slog.Error("Failed to try lock", "post_id", id, "error", err)
+		system.Logger.Error("Failed to try lock", "post_id", id, "error", err)
 		// 锁操作失败，降级为直接查询数据库
 		return fallbackGetPost(id)
 	}
 
 	if !locked {
 		// 未获得锁，说明其他线程正在重建缓存，等待缓存重建完成
-		slog.Debug("Lock held by other thread, waiting", "post_id", id)
+		system.Logger.Debug("Lock held by other thread, waiting", "post_id", id)
 		if post, err := WaitForLockRelease(id); err == nil {
 			// 等待成功，其他线程已重建缓存
 			if err := LoadPostRelations(post); err != nil {
-				slog.Error("Failed to load post relations after wait", "id", id, "error", err)
+				system.Logger.Error("Failed to load post relations after wait", "id", id, "error", err)
 			}
 			return post, nil
 		}
 		// 等待超时，降级为直接查询数据库
-		slog.Debug("Wait timeout, fallback to direct query", "post_id", id)
+		system.Logger.Debug("Wait timeout, fallback to direct query", "post_id", id)
 		return fallbackGetPost(id)
 	}
 
 	// 4. 获得锁，负责重建缓存
-	slog.Debug("Got lock, rebuilding cache", "post_id", id)
+	system.Logger.Debug("Got lock, rebuilding cache", "post_id", id)
 	defer ReleaseLock(id) // 确保锁被释放
 
 	// 再次检查缓存（双重检查模式）
 	if post, err := GetPostFromCache(id); err == nil {
-		slog.Debug("Cache rebuilt by other thread (double check)", "post_id", id)
+		system.Logger.Debug("Cache rebuilt by other thread (double check)", "post_id", id)
 		if err := LoadPostRelations(post); err != nil {
-			slog.Error("Failed to load post relations from double check", "id", id, "error", err)
+			system.Logger.Error("Failed to load post relations from double check", "id", id, "error", err)
 		}
 		return post, nil
 	}
@@ -337,7 +337,7 @@ func fallbackGetPost(id uint) (*Post, error) {
 	}
 
 	if err := LoadPostRelations(post); err != nil {
-		slog.Error("Failed to load post relations in fallback", "id", id, "error", err)
+		system.Logger.Error("Failed to load post relations in fallback", "id", id, "error", err)
 	}
 
 	return post, nil
@@ -350,7 +350,7 @@ func rebuildCacheAndReturn(id uint) (*Post, error) {
 		// 数据库中也不存在，设置空值缓存（避免重复查询）
 		go func() {
 			if err := SetNullCache(id); err != nil {
-				slog.Error("Failed to set null cache async", "id", id, "error", err)
+				system.Logger.Error("Failed to set null cache async", "id", id, "error", err)
 			}
 		}()
 		return nil, err
@@ -358,16 +358,16 @@ func rebuildCacheAndReturn(id uint) (*Post, error) {
 
 	// 同步写入缓存（因为我们持有锁）
 	if err := post.SetCache(); err != nil {
-		slog.Error("Failed to set post cache sync", "id", id, "error", err)
+		system.Logger.Error("Failed to set post cache sync", "id", id, "error", err)
 		// 缓存写入失败不影响返回数据
 	}
 
 	// 加载关联数据
 	if err := LoadPostRelations(post); err != nil {
-		slog.Error("Failed to load post relations after rebuild", "id", id, "error", err)
+		system.Logger.Error("Failed to load post relations after rebuild", "id", id, "error", err)
 	}
 
-	slog.Debug("Cache rebuilt successfully", "post_id", id)
+	system.Logger.Debug("Cache rebuilt successfully", "post_id", id)
 	return post, nil
 }
 
@@ -577,11 +577,11 @@ func SetListCache(key string, data interface{}) error {
 	randomExpiration := getRandomExpiration(PostListCacheExpiration, PostListCacheRandomOffset)
 	err := system.Redis.Set(key, data, randomExpiration)
 	if err != nil {
-		slog.Error("Failed to cache list data", "key", key, "error", err)
+		system.Logger.Error("Failed to cache list data", "key", key, "error", err)
 		return err
 	}
 
-	slog.Debug("List cache set successfully", "key", key, "expiration", randomExpiration)
+	system.Logger.Debug("List cache set successfully", "key", key, "expiration", randomExpiration)
 	return nil
 }
 
@@ -596,7 +596,7 @@ func GetListCache(key string, dest interface{}) error {
 		return err
 	}
 
-	slog.Debug("List cache hit", "key", key)
+	system.Logger.Debug("List cache hit", "key", key)
 	return nil
 }
 
@@ -622,11 +622,11 @@ func SetNullCache(postID uint) error {
 	// 缓存一个简单的标记，表示该ID不存在
 	err := system.Redis.Set(key, "null", NullCacheExpiration)
 	if err != nil {
-		slog.Error("Failed to set null cache", "post_id", postID, "error", err)
+		system.Logger.Error("Failed to set null cache", "post_id", postID, "error", err)
 		return err
 	}
 
-	slog.Debug("Null cache set", "post_id", postID, "expiration", NullCacheExpiration)
+	system.Logger.Debug("Null cache set", "post_id", postID, "expiration", NullCacheExpiration)
 	return nil
 }
 
@@ -639,11 +639,11 @@ func DeleteNullCache(postID uint) error {
 	key := system.GenerateKey(NullCachePrefix, postID)
 	err := system.Redis.Del(key)
 	if err != nil {
-		slog.Error("Failed to delete null cache", "post_id", postID, "error", err)
+		system.Logger.Error("Failed to delete null cache", "post_id", postID, "error", err)
 		return err
 	}
 
-	slog.Debug("Null cache deleted", "post_id", postID)
+	system.Logger.Debug("Null cache deleted", "post_id", postID)
 	return nil
 }
 
@@ -670,11 +670,11 @@ func ReleaseLock(postID uint) error {
 	key := system.GenerateKey(LockCachePrefix, postID)
 	err := system.Redis.Del(key)
 	if err != nil {
-		slog.Error("Failed to release lock", "post_id", postID, "error", err)
+		system.Logger.Error("Failed to release lock", "post_id", postID, "error", err)
 		return err
 	}
 
-	slog.Debug("Lock released", "post_id", postID)
+	system.Logger.Debug("Lock released", "post_id", postID)
 	return nil
 }
 
@@ -685,7 +685,7 @@ func WaitForLockRelease(postID uint) (*Post, error) {
 
 		// 尝试从缓存获取数据（其他线程可能已经重建了缓存）
 		if post, err := GetPostFromCache(postID); err == nil {
-			slog.Debug("Cache rebuilt by other thread", "post_id", postID)
+			system.Logger.Debug("Cache rebuilt by other thread", "post_id", postID)
 			return post, nil
 		}
 	}

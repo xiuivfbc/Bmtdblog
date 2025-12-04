@@ -189,7 +189,7 @@ func InitRedis() error {
 	cfg := GetConfiguration()
 
 	if !cfg.Redis.Enabled {
-		slog.Info("Redis is disabled")
+		Logger.Info("Redis is disabled")
 		return nil
 	}
 
@@ -204,7 +204,7 @@ func InitRedis() error {
 	ctx := context.Background()
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
-		slog.Error("Failed to connect to Redis", "error", err)
+		Logger.Error("Failed to connect to Redis", "error", err)
 		return err
 	}
 
@@ -213,7 +213,7 @@ func InitRedis() error {
 		ctx:    ctx,
 	}
 
-	slog.Info("Redis connected successfully",
+	Logger.Info("Redis connected successfully",
 		"addr", cfg.Redis.Addr,
 		"db", cfg.Redis.DB)
 
@@ -238,11 +238,11 @@ func (r *RedisCacheClient) Set(key string, value interface{}, expiration time.Du
 
 	err = r.client.Set(r.ctx, key, jsonValue, expiration).Err()
 	if err != nil {
-		slog.Error("Failed to set cache", "key", key, "error", err)
+		Logger.Error("Failed to set cache", "key", key, "error", err)
 		return err
 	}
 
-	slog.Debug("Cache set successfully", "key", key, "expiration", expiration)
+	Logger.Debug("Cache set successfully", "key", key, "expiration", expiration)
 	return nil
 }
 
@@ -257,17 +257,17 @@ func (r *RedisCacheClient) Get(key string, dest interface{}) error {
 		if err == redis.Nil {
 			return fmt.Errorf("cache miss")
 		}
-		slog.Error("Failed to get cache", "key", key, "error", err)
+		Logger.Error("Failed to get cache", "key", key, "error", err)
 		return err
 	}
 
 	err = json.Unmarshal([]byte(val), dest)
 	if err != nil {
-		slog.Error("Failed to unmarshal cache", "key", key, "error", err)
+		Logger.Error("Failed to unmarshal cache", "key", key, "error", err)
 		return err
 	}
 
-	slog.Debug("Cache hit", "key", key)
+	Logger.Debug("Cache hit", "key", key)
 	return nil
 }
 
@@ -279,11 +279,11 @@ func (r *RedisCacheClient) Del(keys ...string) error {
 
 	err := r.client.Del(r.ctx, keys...).Err()
 	if err != nil {
-		slog.Error("Failed to delete cache", "keys", keys, "error", err)
+		Logger.Error("Failed to delete cache", "keys", keys, "error", err)
 		return err
 	}
 
-	slog.Debug("Cache deleted successfully", "keys", keys)
+	Logger.Debug("Cache deleted successfully", "keys", keys)
 	return nil
 }
 
@@ -296,7 +296,7 @@ func (r *RedisCacheClient) DelayedDoubleDelete(keys []string, delay time.Duratio
 	// 第一次删除：删除缓存
 	err := r.Del(keys...)
 	if err != nil {
-		slog.Error("Failed to delete cache in first phase", "keys", keys, "error", err)
+		Logger.Error("Failed to delete cache in first phase", "keys", keys, "error", err)
 		return err
 	}
 
@@ -304,13 +304,13 @@ func (r *RedisCacheClient) DelayedDoubleDelete(keys []string, delay time.Duratio
 	go func() {
 		time.Sleep(delay)
 		if delErr := r.Del(keys...); delErr != nil {
-			slog.Error("Failed to delete cache in second phase", "keys", keys, "error", delErr)
+			Logger.Error("Failed to delete cache in second phase", "keys", keys, "error", delErr)
 		} else {
-			slog.Debug("Delayed double delete completed", "keys", keys, "delay", delay)
+			Logger.Debug("Delayed double delete completed", "keys", keys, "delay", delay)
 		}
 	}()
 
-	slog.Debug("Delayed double delete initiated", "keys", keys, "delay", delay)
+	Logger.Debug("Delayed double delete initiated", "keys", keys, "delay", delay)
 	return nil
 }
 
@@ -322,7 +322,7 @@ func (r *RedisCacheClient) GetKeysByPattern(pattern string) ([]string, error) {
 
 	keys, err := r.client.Keys(r.ctx, pattern).Result()
 	if err != nil {
-		slog.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
+		Logger.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
 		return nil, err
 	}
 
@@ -337,7 +337,7 @@ func (r *RedisCacheClient) Exists(key string) bool {
 
 	result, err := r.client.Exists(r.ctx, key).Result()
 	if err != nil {
-		slog.Error("Failed to check cache existence", "key", key, "error", err)
+		Logger.Error("Failed to check cache existence", "key", key, "error", err)
 		return false
 	}
 
@@ -352,14 +352,14 @@ func (r *RedisCacheClient) SetNX(key string, value interface{}, expiration time.
 
 	result, err := r.client.SetNX(r.ctx, key, value, expiration).Result()
 	if err != nil {
-		slog.Error("Failed to setnx", "key", key, "error", err)
+		Logger.Error("Failed to setnx", "key", key, "error", err)
 		return false, err
 	}
 
 	if result {
-		slog.Debug("SetNX successful", "key", key, "expiration", expiration)
+		Logger.Debug("SetNX successful", "key", key, "expiration", expiration)
 	} else {
-		slog.Debug("SetNX failed, key already exists", "key", key)
+		Logger.Debug("SetNX failed, key already exists", "key", key)
 	}
 
 	return result, nil
@@ -373,7 +373,7 @@ func (r *RedisCacheClient) Expire(key string, expiration time.Duration) error {
 
 	err := r.client.Expire(r.ctx, key, expiration).Err()
 	if err != nil {
-		slog.Error("Failed to set expiration", "key", key, "error", err)
+		Logger.Error("Failed to set expiration", "key", key, "error", err)
 		return err
 	}
 
@@ -388,7 +388,7 @@ func (r *RedisCacheClient) TTL(key string) (time.Duration, error) {
 
 	ttl, err := r.client.TTL(r.ctx, key).Result()
 	if err != nil {
-		slog.Error("Failed to get TTL", "key", key, "error", err)
+		Logger.Error("Failed to get TTL", "key", key, "error", err)
 		return 0, err
 	}
 
@@ -403,11 +403,11 @@ func (r *RedisCacheClient) FlushAll() error {
 
 	err := r.client.FlushAll(r.ctx).Err()
 	if err != nil {
-		slog.Error("Failed to flush all cache", "error", err)
+		Logger.Error("Failed to flush all cache", "error", err)
 		return err
 	}
 
-	slog.Info("All cache flushed successfully")
+	Logger.Info("All cache flushed successfully")
 	return nil
 }
 
@@ -435,22 +435,22 @@ func (r *RedisCacheClient) DelPattern(pattern string) error {
 
 	keys, err := r.client.Keys(r.ctx, pattern).Result()
 	if err != nil {
-		slog.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
+		Logger.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
 		return err
 	}
 
 	if len(keys) == 0 {
-		slog.Debug("No keys found for pattern", "pattern", pattern)
+		Logger.Debug("No keys found for pattern", "pattern", pattern)
 		return nil
 	}
 
 	err = r.client.Del(r.ctx, keys...).Err()
 	if err != nil {
-		slog.Error("Failed to delete keys by pattern", "pattern", pattern, "error", err)
+		Logger.Error("Failed to delete keys by pattern", "pattern", pattern, "error", err)
 		return err
 	}
 
-	slog.Debug("Keys deleted by pattern", "pattern", pattern, "count", len(keys))
+	Logger.Debug("Keys deleted by pattern", "pattern", pattern, "count", len(keys))
 	return nil
 }
 
@@ -480,7 +480,7 @@ func InitElasticsearch() error {
 	}
 	defer res.Body.Close()
 
-	slog.Info("ElasticSearch连接成功")
+	Logger.Info("ElasticSearch连接成功")
 
 	// 创建索引
 	if err := createPostIndex(); err != nil {
@@ -503,7 +503,7 @@ func createPostIndex() error {
 
 	// 如果索引已存在，跳过创建
 	if res.StatusCode == 200 {
-		slog.Info("索引已存在", "index", indexName)
+		Logger.Info("索引已存在", "index", indexName)
 		return nil
 	}
 
@@ -570,7 +570,7 @@ func createPostIndex() error {
 		return fmt.Errorf("创建索引失败: %s", res.String())
 	}
 
-	slog.Info("索引创建成功", "index", indexName)
+	Logger.Info("索引创建成功", "index", indexName)
 	return nil
 }
 

@@ -40,10 +40,10 @@ func SearchGet(c *gin.Context) {
 
 	// 执行搜索
 	fmt.Printf("开始搜索: keyword=%s, page=%d, sort=%s\n", keyword, page, sortBy)
-	system.Logger.Info("开始搜索", "keyword", keyword, "page", page, "sort", sortBy)
+	system.LogInfo(c, "开始搜索", "keyword", keyword, "page", page, "sort", sortBy)
 	searchResp, err := models.SearchPosts(req)
 	if err != nil {
-		system.Logger.Error("搜索失败", "error", err, "keyword", keyword)
+		system.LogError(c, "搜索失败", "error", err, "keyword", keyword)
 		c.HTML(http.StatusOK, "search/results.html", gin.H{
 			"keyword": keyword,
 			"error":   "搜索服务暂时不可用，请稍后重试",
@@ -56,7 +56,7 @@ func SearchGet(c *gin.Context) {
 	// 记录搜索日志（用于分析热门搜索词）
 	go recordSearchLog(keyword, int(searchResp.Total))
 
-	system.Logger.Info("搜索完成", "keyword", keyword, "results", len(searchResp.Posts), "total", searchResp.Total)
+	system.LogInfo(c, "搜索完成", "keyword", keyword, "results", len(searchResp.Posts), "total", searchResp.Total)
 
 	user, _ := c.Get(ContextUserKey)
 	c.HTML(http.StatusOK, "search/results.html", gin.H{
@@ -101,7 +101,7 @@ func SearchSuggestionsAPI(c *gin.Context) {
 
 	suggestions, err := models.GetSearchSuggestions(prefix, 10)
 	if err != nil {
-		system.Logger.Error("获取搜索建议失败", "error", err, "prefix", prefix)
+		system.LogError(c, "获取搜索建议失败", "error", err, "prefix", prefix)
 		c.JSON(http.StatusOK, gin.H{"suggestions": []string{}})
 		return
 	}

@@ -24,7 +24,7 @@ func BackupPost(c *gin.Context) {
 		res = gin.H{}
 	)
 	defer writeJSON(c, res)
-	err = Backup()
+	err = Backup(c)
 	if err != nil {
 		res["message"] = err.Error()
 	} else {
@@ -81,7 +81,7 @@ func RestorePost(c *gin.Context) {
 	res["succeed"] = true
 }
 
-func Backup() (err error) {
+func Backup(c ...*gin.Context) (err error) {
 	var (
 		ret       PutRet
 		bodyBytes []byte
@@ -91,7 +91,14 @@ func Backup() (err error) {
 		err = errors.New("backup or qiniu not enabled")
 		return
 	}
-	system.Logger.Debug("start backup...")
+
+	// 日志输出（支持有无上下文）
+	if len(c) > 0 && c[0] != nil {
+		system.LogDebug(c[0], "start backup...")
+	} else {
+		system.Logger.Debug("start backup...")
+	}
+
 	dsn := cfg.Database.DSN
 	host, port, username, password, database, err := parseMySQLDSN(dsn)
 	if err != nil {

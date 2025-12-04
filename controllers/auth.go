@@ -54,7 +54,7 @@ func Oauth2Callback(c *gin.Context) {
 	session.Save()
 	token, err := exchangeTokenByCode(code)
 	if err != nil {
-		system.Logger.Error("exchangeTokenByCode error", "err", err)
+		system.LogError(c, "exchangeTokenByCode error", "err", err)
 		c.Redirect(http.StatusMovedPermanently, "/signin")
 		return
 	}
@@ -62,7 +62,7 @@ func Oauth2Callback(c *gin.Context) {
 	userInfo, err = getGithubUserInfoByAccessToken(token)
 	fmt.Println(userInfo)
 	if err != nil {
-		system.Logger.Error("getGithubUserInfoByAccessToken error", "err", err)
+		system.LogError(c, "getGithubUserInfoByAccessToken error", "err", err)
 		c.Redirect(http.StatusMovedPermanently, "/signin")
 		return
 	}
