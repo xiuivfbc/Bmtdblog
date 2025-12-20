@@ -14,10 +14,11 @@ import (
 
 	"github.com/claudiu/gocron"
 	"github.com/gin-gonic/gin"
-	"github.com/xiuivfbc/bmtdblog/controllers"
-	"github.com/xiuivfbc/bmtdblog/helpers"
-	"github.com/xiuivfbc/bmtdblog/models"
-	"github.com/xiuivfbc/bmtdblog/system"
+	r "github.com/xiuivfbc/bmtdblog/internal/api/router"
+	s "github.com/xiuivfbc/bmtdblog/internal/api/system"
+	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"github.com/xiuivfbc/bmtdblog/internal/system"
 	"gorm.io/gorm"
 )
 
@@ -51,7 +52,7 @@ func main() {
 	slog.SetDefault(system.Logger)
 
 	//configuration
-	configFilePath := flag.String("C", "conf/conf_mine.toml", "config file path")
+	configFilePath := flag.String("C", "configs/conf_mine.toml", "config file path")
 	flag.Parse()
 	if err := system.LoadConfiguration(*configFilePath); err != nil {
 		system.Logger.Error("err parsing config log file", "err", err)
@@ -93,10 +94,10 @@ func main() {
 		// 邮件队列失败不退出程序，允许降级运行
 	} else {
 		// 设置邮件发送回调函数
-		system.SetEmailSender(helpers.SendMail)
+		system.SetEmailSender(common.SendMail)
 	}
 
-	router = controllers.DefineRouter()
+	router = r.DefineRouter()
 
 	// 启动定时任务
 	setupPeriodicTasks()
@@ -124,8 +125,8 @@ func main() {
 
 // setupPeriodicTasks 设置定时任务
 func setupPeriodicTasks() {
-	gocron.Every(1).Day().Do(controllers.CreateXMLSitemap)
-	gocron.Every(7).Days().Do(controllers.Backup)
+	gocron.Every(1).Day().Do(common.CreateXMLSitemap)
+	gocron.Every(7).Days().Do(s.Backup)
 	gocron.Start()
 }
 
