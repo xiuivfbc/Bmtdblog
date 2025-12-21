@@ -10,7 +10,8 @@ import (
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
 type Post struct {
@@ -42,7 +43,7 @@ func (post *Post) Insert() error {
 	// 清除可能存在的空值缓存
 	go func() {
 		if err := DeleteNullCache(post.ID); err != nil {
-			system.Logger.Error("Failed to delete null cache after insert", "id", post.ID, "error", err)
+			config.Logger.Error("Failed to delete null cache after insert", "id", post.ID, "error", err)
 		}
 	}()
 
@@ -64,7 +65,7 @@ func (post *Post) Insert() error {
 func (post *Post) Update() error {
 	// 延迟双删策略：第一步 - 先删除缓存
 	if err := post.DelayedDoubleDel(); err != nil {
-		system.Logger.Error("Failed to initiate delayed double delete", "id", post.ID, "error", err)
+		config.Logger.Error("Failed to initiate delayed double delete", "id", post.ID, "error", err)
 	}
 
 	// 更新数据库
@@ -146,7 +147,7 @@ const (
 
 // 生成博文缓存key
 func (post *Post) CacheKey() string {
-	return system.GenerateKey(PostCachePrefix, post.ID)
+	return dao.GenerateKey(PostCachePrefix, post.ID)
 }
 
 // 生成随机过期时间（防缓存雪崩）
@@ -159,67 +160,74 @@ func getRandomExpiration(baseExpiration time.Duration, randomOffset time.Duratio
 
 // 从缓存获取博文
 func GetPostFromCache(id uint) (*Post, error) {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil, fmt.Errorf("cache not available")
 	}
 
-	key := system.GenerateKey(PostCachePrefix, id)
+	key := dao.GenerateKey(PostCachePrefix, id)
 	var post Post
 
-	err := system.Redis.Get(key, &post)
+	err := Redis.Get(key, &post)
 	if err != nil {
 		return nil, err
 	}
 
-	system.Logger.Debug("Post loaded from cache", "id", id, "title", post.Title)
+	config.Logger.Debug("Post loaded from cache", "id", id, "title", post.Title)
 	return &post, nil
 }
 
 // 将博文存入缓存
 func (post *Post) SetCache() error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil // 缓存不可用时不报错，静默失败
 	}
 
 	key := post.CacheKey()
 	// 使用随机过期时间防止缓存雪崩
 	randomExpiration := getRandomExpiration(PostCacheExpiration, PostCacheRandomOffset)
-	err := system.Redis.Set(key, post, randomExpiration)
+	err := Redis.Set(key, post, randomExpiration)
 	if err != nil {
-		system.Logger.Error("Failed to cache post", "id", post.ID, "error", err)
+		config.Logger.Error("Failed to cache post", "id", post.ID, "error", err)
 		return err
 	}
 
-	system.Logger.Debug("Post cached successfully", "id", post.ID, "title", post.Title, "expiration", randomExpiration)
+	config.Logger.Debug("Post cached successfully", "id", post.ID, "title", post.Title, "expiration", randomExpiration)
 	return nil
 }
 
 // 删除博文缓存
 func (post *Post) DelCache() error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil
 	}
 
 	key := post.CacheKey()
-	err := system.Redis.Del(key)
+	err := Redis.Del(key)
 	if err != nil {
-		system.Logger.Error("Failed to delete post cache", "id", post.ID, "error", err)
+		config.Logger.Error("Failed to delete post cache", "id", post.ID, "error", err)
 		return err
 	}
 
-	system.Logger.Debug("Post cache deleted", "id", post.ID)
+	config.Logger.Debug("Post cache deleted", "id", post.ID)
 	return nil
 }
 
 // 清除所有相关缓存（博文增删改时调用）
 func (post *Post) ClearRelatedCache() error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil
 	}
 
 	// 清除自身缓存
 	if err := post.DelCache(); err != nil {
-		system.Logger.Error("Failed to clear post cache", "id", post.ID, "error", err)
+		config.Logger.Error("Failed to clear post cache", "id", post.ID, "error", err)
 	}
 
 	// 清除列表缓存（影响首页、归档等）
@@ -230,18 +238,20 @@ func (post *Post) ClearRelatedCache() error {
 	}
 
 	for _, pattern := range patterns {
-		if err := system.Redis.DelPattern(pattern); err != nil {
-			system.Logger.Error("Failed to clear cache pattern", "pattern", pattern, "error", err)
+		if err := Redis.DelPattern(pattern); err != nil {
+			config.Logger.Error("Failed to clear cache pattern", "pattern", pattern, "error", err)
 		}
 	}
 
-	system.Logger.Debug("Related cache cleared for post", "id", post.ID)
+	config.Logger.Debug("Related cache cleared for post", "id", post.ID)
 	return nil
 }
 
 // 延迟双删策略：解决缓存一致性问题
 func (post *Post) DelayedDoubleDel() error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil
 	}
 
@@ -259,9 +269,9 @@ func (post *Post) DelayedDoubleDel() error {
 
 	// 获取匹配模式的具体键名
 	for _, pattern := range patterns {
-		matchedKeys, err := system.Redis.GetKeysByPattern(pattern)
+		matchedKeys, err := Redis.GetKeysByPattern(pattern)
 		if err != nil {
-			system.Logger.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
+			config.Logger.Error("Failed to get keys by pattern", "pattern", pattern, "error", err)
 			continue
 		}
 		keys = append(keys, matchedKeys...)
@@ -269,14 +279,14 @@ func (post *Post) DelayedDoubleDel() error {
 
 	// 执行延迟双删，延迟500ms
 	delay := 500 * time.Millisecond
-	return system.Redis.DelayedDoubleDelete(keys, delay)
+	return Redis.DelayedDoubleDelete(keys, delay)
 }
 
 // 带缓存的获取博文方法（防穿透+防击穿）
 func GetPostByIdWithCache(id uint) (*Post, error) {
 	// 1. 检查空值缓存：如果之前确认不存在，直接返回
 	if IsNullCached(id) {
-		system.Logger.Debug("Null cache hit", "post_id", id)
+		config.Logger.Debug("Null cache hit", "post_id", id)
 		return nil, fmt.Errorf("post not found")
 	}
 
@@ -284,7 +294,7 @@ func GetPostByIdWithCache(id uint) (*Post, error) {
 	if post, err := GetPostFromCache(id); err == nil {
 		// 补充关联数据（Tags, Comments等）
 		if err := LoadPostRelations(post); err != nil {
-			system.Logger.Error("Failed to load post relations from cache", "id", id, "error", err)
+			config.Logger.Error("Failed to load post relations from cache", "id", id, "error", err)
 		}
 		return post, nil
 	}
@@ -292,35 +302,35 @@ func GetPostByIdWithCache(id uint) (*Post, error) {
 	// 3. 缓存未命中，尝试获取分布式锁（防击穿）
 	locked, err := TryLock(id)
 	if err != nil {
-		system.Logger.Error("Failed to try lock", "post_id", id, "error", err)
+		config.Logger.Error("Failed to try lock", "post_id", id, "error", err)
 		// 锁操作失败，降级为直接查询数据库
 		return fallbackGetPost(id)
 	}
 
 	if !locked {
 		// 未获得锁，说明其他线程正在重建缓存，等待缓存重建完成
-		system.Logger.Debug("Lock held by other thread, waiting", "post_id", id)
+		config.Logger.Debug("Lock held by other thread, waiting", "post_id", id)
 		if post, err := WaitForLockRelease(id); err == nil {
 			// 等待成功，其他线程已重建缓存
 			if err := LoadPostRelations(post); err != nil {
-				system.Logger.Error("Failed to load post relations after wait", "id", id, "error", err)
+				config.Logger.Error("Failed to load post relations after wait", "id", id, "error", err)
 			}
 			return post, nil
 		}
 		// 等待超时，降级为直接查询数据库
-		system.Logger.Debug("Wait timeout, fallback to direct query", "post_id", id)
+		config.Logger.Debug("Wait timeout, fallback to direct query", "post_id", id)
 		return fallbackGetPost(id)
 	}
 
 	// 4. 获得锁，负责重建缓存
-	system.Logger.Debug("Got lock, rebuilding cache", "post_id", id)
+	config.Logger.Debug("Got lock, rebuilding cache", "post_id", id)
 	defer ReleaseLock(id) // 确保锁被释放
 
 	// 再次检查缓存（双重检查模式）
 	if post, err := GetPostFromCache(id); err == nil {
-		system.Logger.Debug("Cache rebuilt by other thread (double check)", "post_id", id)
+		config.Logger.Debug("Cache rebuilt by other thread (double check)", "post_id", id)
 		if err := LoadPostRelations(post); err != nil {
-			system.Logger.Error("Failed to load post relations from double check", "id", id, "error", err)
+			config.Logger.Error("Failed to load post relations from double check", "id", id, "error", err)
 		}
 		return post, nil
 	}
@@ -337,7 +347,7 @@ func fallbackGetPost(id uint) (*Post, error) {
 	}
 
 	if err := LoadPostRelations(post); err != nil {
-		system.Logger.Error("Failed to load post relations in fallback", "id", id, "error", err)
+		config.Logger.Error("Failed to load post relations in fallback", "id", id, "error", err)
 	}
 
 	return post, nil
@@ -350,7 +360,7 @@ func rebuildCacheAndReturn(id uint) (*Post, error) {
 		// 数据库中也不存在，设置空值缓存（避免重复查询）
 		go func() {
 			if err := SetNullCache(id); err != nil {
-				system.Logger.Error("Failed to set null cache async", "id", id, "error", err)
+				config.Logger.Error("Failed to set null cache async", "id", id, "error", err)
 			}
 		}()
 		return nil, err
@@ -358,16 +368,16 @@ func rebuildCacheAndReturn(id uint) (*Post, error) {
 
 	// 同步写入缓存（因为我们持有锁）
 	if err := post.SetCache(); err != nil {
-		system.Logger.Error("Failed to set post cache sync", "id", id, "error", err)
+		config.Logger.Error("Failed to set post cache sync", "id", id, "error", err)
 		// 缓存写入失败不影响返回数据
 	}
 
 	// 加载关联数据
 	if err := LoadPostRelations(post); err != nil {
-		system.Logger.Error("Failed to load post relations after rebuild", "id", id, "error", err)
+		config.Logger.Error("Failed to load post relations after rebuild", "id", id, "error", err)
 	}
 
-	system.Logger.Debug("Cache rebuilt successfully", "post_id", id)
+	config.Logger.Debug("Cache rebuilt successfully", "post_id", id)
 	return post, nil
 }
 
@@ -569,34 +579,38 @@ func CountPostByArchive(year, month string) (count int, err error) {
 
 // 缓存辅助方法：为列表数据设置缓存（使用随机过期时间）
 func SetListCache(key string, data interface{}) error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil // 缓存不可用时不报错，静默失败
 	}
 
 	// 使用随机过期时间防止缓存雪崩
 	randomExpiration := getRandomExpiration(PostListCacheExpiration, PostListCacheRandomOffset)
-	err := system.Redis.Set(key, data, randomExpiration)
+	err := Redis.Set(key, data, randomExpiration)
 	if err != nil {
-		system.Logger.Error("Failed to cache list data", "key", key, "error", err)
+		config.Logger.Error("Failed to cache list data", "key", key, "error", err)
 		return err
 	}
 
-	system.Logger.Debug("List cache set successfully", "key", key, "expiration", randomExpiration)
+	config.Logger.Debug("List cache set successfully", "key", key, "expiration", randomExpiration)
 	return nil
 }
 
 // 缓存辅助方法：获取列表缓存数据
 func GetListCache(key string, dest interface{}) error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return fmt.Errorf("cache not available")
 	}
 
-	err := system.Redis.Get(key, dest)
+	err := Redis.Get(key, dest)
 	if err != nil {
 		return err
 	}
 
-	system.Logger.Debug("List cache hit", "key", key)
+	config.Logger.Debug("List cache hit", "key", key)
 	return nil
 }
 
@@ -604,46 +618,52 @@ func GetListCache(key string, dest interface{}) error {
 
 // IsNullCached 检查是否已缓存为空值
 func IsNullCached(postID uint) bool {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return false
 	}
 
-	key := system.GenerateKey(NullCachePrefix, postID)
-	return system.Redis.Exists(key)
+	key := dao.GenerateKey(NullCachePrefix, postID)
+	return Redis.Exists(key)
 }
 
 // SetNullCache 设置空值缓存
 func SetNullCache(postID uint) error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil
 	}
 
-	key := system.GenerateKey(NullCachePrefix, postID)
+	key := dao.GenerateKey(NullCachePrefix, postID)
 	// 缓存一个简单的标记，表示该ID不存在
-	err := system.Redis.Set(key, "null", NullCacheExpiration)
+	err := Redis.Set(key, "null", NullCacheExpiration)
 	if err != nil {
-		system.Logger.Error("Failed to set null cache", "post_id", postID, "error", err)
+		config.Logger.Error("Failed to set null cache", "post_id", postID, "error", err)
 		return err
 	}
 
-	system.Logger.Debug("Null cache set", "post_id", postID, "expiration", NullCacheExpiration)
+	config.Logger.Debug("Null cache set", "post_id", postID, "expiration", NullCacheExpiration)
 	return nil
 }
 
 // DeleteNullCache 删除空值缓存（当博文被创建时调用）
 func DeleteNullCache(postID uint) error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil
 	}
 
-	key := system.GenerateKey(NullCachePrefix, postID)
-	err := system.Redis.Del(key)
+	key := dao.GenerateKey(NullCachePrefix, postID)
+	err := Redis.Del(key)
 	if err != nil {
-		system.Logger.Error("Failed to delete null cache", "post_id", postID, "error", err)
+		config.Logger.Error("Failed to delete null cache", "post_id", postID, "error", err)
 		return err
 	}
 
-	system.Logger.Debug("Null cache deleted", "post_id", postID)
+	config.Logger.Debug("Null cache deleted", "post_id", postID)
 	return nil
 }
 
@@ -651,30 +671,34 @@ func DeleteNullCache(postID uint) error {
 
 // TryLock 尝试获取分布式锁
 func TryLock(postID uint) (bool, error) {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return false, fmt.Errorf("redis not available")
 	}
 
-	key := system.GenerateKey(LockCachePrefix, postID)
+	key := dao.GenerateKey(LockCachePrefix, postID)
 	// 使用 SETNX 设置锁，如果key已存在则失败
 	// 同时设置过期时间防止死锁
-	return system.Redis.SetNX(key, "locked", LockCacheTimeout)
+	return Redis.SetNX(key, "locked", LockCacheTimeout)
 }
 
 // ReleaseLock 释放分布式锁
 func ReleaseLock(postID uint) error {
-	if system.Redis == nil || !system.Redis.IsAvailable() {
+	Redis := dao.GetRedis()
+
+	if Redis == nil || !Redis.IsAvailable() {
 		return nil
 	}
 
-	key := system.GenerateKey(LockCachePrefix, postID)
-	err := system.Redis.Del(key)
+	key := dao.GenerateKey(LockCachePrefix, postID)
+	err := Redis.Del(key)
 	if err != nil {
-		system.Logger.Error("Failed to release lock", "post_id", postID, "error", err)
+		config.Logger.Error("Failed to release lock", "post_id", postID, "error", err)
 		return err
 	}
 
-	system.Logger.Debug("Lock released", "post_id", postID)
+	config.Logger.Debug("Lock released", "post_id", postID)
 	return nil
 }
 
@@ -685,7 +709,7 @@ func WaitForLockRelease(postID uint) (*Post, error) {
 
 		// 尝试从缓存获取数据（其他线程可能已经重建了缓存）
 		if post, err := GetPostFromCache(postID); err == nil {
-			system.Logger.Debug("Cache rebuilt by other thread", "post_id", postID)
+			config.Logger.Debug("Cache rebuilt by other thread", "post_id", postID)
 			return post, nil
 		}
 	}

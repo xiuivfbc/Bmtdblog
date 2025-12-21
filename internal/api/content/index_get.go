@@ -9,14 +9,14 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func IndexGet(c *gin.Context) {
 	var (
 		pageIndex int
-		pageSize  = system.GetConfiguration().PageSize
+		pageSize  = config.GetConfiguration().PageSize
 		total     int
 		page      string
 		err       error
@@ -30,13 +30,13 @@ func IndexGet(c *gin.Context) {
 	}
 	posts, err = models.ListPublishedPost("", pageIndex, pageSize)
 	if err != nil {
-		system.Logger.Error("models.ListPublishedPost error", "err", err)
+		config.Logger.Error("models.ListPublishedPost error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	total, err = models.CountPostByTag("")
 	if err != nil {
-		system.Logger.Error("models.CountPostByTag error", "err", err)
+		config.Logger.Error("models.CountPostByTag error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -58,6 +58,6 @@ func IndexGet(c *gin.Context) {
 		"path":            c.Request.URL.Path,
 		"maxReadPosts":    models.MustListMaxReadPost(),
 		"maxCommentPosts": models.MustListMaxCommentPost(),
-		"cfg":             system.GetConfiguration(),
+		"cfg":             config.GetConfiguration(),
 	})
 }

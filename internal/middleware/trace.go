@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
 // 定义上下文键
@@ -42,7 +42,7 @@ func TraceMiddleware() gin.HandlerFunc {
 		method := c.Request.Method
 
 		// 请求开始日志
-		system.Logger.Info("Request started",
+		config.Logger.Info("Request started",
 			"trace_id", traceID,
 			"method", method,
 			"path", path,
@@ -55,7 +55,7 @@ func TraceMiddleware() gin.HandlerFunc {
 		latency := time.Since(start)
 		status := c.Writer.Status()
 
-		system.Logger.Info("Request completed",
+		config.Logger.Info("Request completed",
 			"trace_id", traceID,
 			"method", method,
 			"path", path,
@@ -99,18 +99,18 @@ func ContextFromGin(c *gin.Context) context.Context {
 func LogWithTrace(c *gin.Context) *slog.Logger {
 	traceID := GetTraceID(c)
 	if traceID == "" {
-		return system.Logger
+		return config.Logger
 	}
-	return system.Logger.With("trace_id", traceID)
+	return config.Logger.With("trace_id", traceID)
 }
 
 // LogWithContext 从标准 context 获取带 trace_id 的日志记录器
 func LogWithContext(ctx context.Context) *slog.Logger {
 	traceID := GetTraceIDFromContext(ctx)
 	if traceID == "" {
-		return system.Logger
+		return config.Logger
 	}
-	return system.Logger.With("trace_id", traceID)
+	return config.Logger.With("trace_id", traceID)
 }
 
 // getCallerInfo 获取调用者信息（文件路径、函数名、行号）

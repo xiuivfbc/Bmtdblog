@@ -9,8 +9,8 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func ArchiveGet(c *gin.Context) {
@@ -19,7 +19,7 @@ func ArchiveGet(c *gin.Context) {
 		month     string
 		page      string
 		pageIndex int
-		pageSize  = system.GetConfiguration().PageSize
+		pageSize  = config.GetConfiguration().PageSize
 		total     int
 		err       error
 		posts     []*models.Post
@@ -34,13 +34,13 @@ func ArchiveGet(c *gin.Context) {
 	}
 	posts, err = models.ListPostByArchive(year, month, pageIndex, pageSize)
 	if err != nil {
-		system.Logger.Error("models.ListPostByArchive err", "err", err)
+		config.Logger.Error("models.ListPostByArchive err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	total, err = models.CountPostByArchive(year, month)
 	if err != nil {
-		system.Logger.Error("models.CountPostByArchive err", "err", err)
+		config.Logger.Error("models.CountPostByArchive err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -61,7 +61,7 @@ func ArchiveGet(c *gin.Context) {
 		"maxReadPosts":    models.MustListMaxReadPost(),
 		"maxCommentPosts": models.MustListMaxCommentPost(),
 		"user":            user,
-		"cfg":             system.GetConfiguration(),
+		"cfg":             config.GetConfiguration(),
 	})
 
 }

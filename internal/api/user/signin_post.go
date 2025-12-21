@@ -6,8 +6,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func SigninPost(c *gin.Context) {
@@ -20,7 +20,7 @@ func SigninPost(c *gin.Context) {
 	if username == "" || password == "" {
 		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
 			"message": "username or password cannot be null",
-			"cfg":     system.GetConfiguration(),
+			"cfg":     config.GetConfiguration(),
 		})
 		return
 	}
@@ -30,7 +30,7 @@ func SigninPost(c *gin.Context) {
 	if err != nil {
 		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
 			"message": "invalid username or password",
-			"cfg":     system.GetConfiguration(),
+			"cfg":     config.GetConfiguration(),
 		})
 		return
 	}
@@ -39,14 +39,14 @@ func SigninPost(c *gin.Context) {
 	if common.CheckPassword(password, user.Password) != nil {
 		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
 			"message": "invalid username or password",
-			"cfg":     system.GetConfiguration(),
+			"cfg":     config.GetConfiguration(),
 		})
 		return
 	}
 	if user.LockState {
 		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
 			"message": "Your account have been locked",
-			"cfg":     system.GetConfiguration(),
+			"cfg":     config.GetConfiguration(),
 		})
 		return
 	}

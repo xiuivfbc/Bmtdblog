@@ -8,7 +8,7 @@ import (
 
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
 // 获取文件大小的接口
@@ -34,7 +34,7 @@ func (u QiniuUploader) upload(file multipart.File, _ *multipart.FileHeader) (url
 	var (
 		ret  PutRet
 		size int64
-		cfg  = system.GetConfiguration()
+		cfg  = config.GetConfiguration()
 	)
 	if statInterface, ok := file.(Stat); ok {
 		fileInfo, _ := statInterface.Stat()
@@ -47,7 +47,7 @@ func (u QiniuUploader) upload(file multipart.File, _ *multipart.FileHeader) (url
 	putPolicy := storage.PutPolicy{
 		Scope: cfg.Qiniu.Bucket,
 	}
-	mac := qbox.NewMac(cfg.Qiniu.AccessKey, cfg.Qiniu.SecretKey)
+	mac := qbox.NewMac(cfg.Qiniu.Accesskey, cfg.Qiniu.Secretkey)
 	token := putPolicy.UploadToken(mac)
 	uploader := storage.NewFormUploader(&storage.Config{})
 	putExtra := storage.PutExtra{}

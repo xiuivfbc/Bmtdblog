@@ -19,7 +19,7 @@
             <ul class="nav navbar-nav">
                 {{range $item := .cfg.Navigators}}
                 <li>
-                    <a href="{{$item.Url}}" {{if gt (len $item.Target) 0}}target="{{$item.Target}}" {{end}}>
+                    <a href="{{$item.URL}}" {{if gt (len $item.Target) 0}}target="{{$item.Target}}" {{end}}>
                         <i class="fas fa-link" style="margin-right: 5px; opacity: 0.7;"></i>{{$item.Title}}
                     </a>
                 </li>

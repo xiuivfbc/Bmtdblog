@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func UserIndex(c *gin.Context) {
@@ -15,6 +15,6 @@ func UserIndex(c *gin.Context) {
 		"users":    users,
 		"user":     c.MustGet(common.ContextUserKey),
 		"comments": models.MustListUnreadComment(),
-		"cfg":      system.GetConfiguration(),
+		"cfg":      config.GetConfiguration(),
 	})
 }

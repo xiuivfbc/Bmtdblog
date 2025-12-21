@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func PostEdit(c *gin.Context) {
@@ -23,6 +23,6 @@ func PostEdit(c *gin.Context) {
 	c.HTML(http.StatusOK, "post/modify.html", gin.H{
 		"post": post,
 		"user": c.MustGet(common.ContextUserKey),
-		"cfg":  system.GetConfiguration(),
+		"cfg":  config.GetConfiguration(),
 	})
 }

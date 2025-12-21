@@ -9,8 +9,8 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func TagGet(c *gin.Context) {
@@ -18,7 +18,7 @@ func TagGet(c *gin.Context) {
 		tagName   string
 		page      string
 		pageIndex int
-		pageSize  = system.GetConfiguration().PageSize
+		pageSize  = config.GetConfiguration().PageSize
 		total     int
 		err       error
 		policy    *bluemonday.Policy
@@ -32,13 +32,13 @@ func TagGet(c *gin.Context) {
 	}
 	posts, err = models.ListPublishedPost(tagName, pageIndex, pageSize)
 	if err != nil {
-		system.Logger.Error("models.ListPublishedPost error", "err", err)
+		config.Logger.Error("models.ListPublishedPost error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	total, err = models.CountPostByTag(tagName)
 	if err != nil {
-		system.Logger.Error("models.CountPostByTag error", "err", err)
+		config.Logger.Error("models.CountPostByTag error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -59,6 +59,6 @@ func TagGet(c *gin.Context) {
 		"maxReadPosts":    models.MustListMaxReadPost(),
 		"maxCommentPosts": models.MustListMaxCommentPost(),
 		"user":            user,
-		"cfg":             system.GetConfiguration(),
+		"cfg":             config.GetConfiguration(),
 	})
 }

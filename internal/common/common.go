@@ -11,8 +11,9 @@ import (
 
 	"github.com/denisbakhtin/sitemap"
 	"github.com/gin-gonic/gin"
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 	"golang.org/x/oauth2"
 )
 
@@ -32,20 +33,20 @@ func HandleMessage(c *gin.Context, message string) {
 	c.HTML(http.StatusNotFound, "errors/error.html", gin.H{
 		"message": message,
 		"user":    user,
-		"cfg":     system.GetConfiguration(),
+		"cfg":     config.GetConfiguration(),
 	})
 }
 
 func sendMail(to, subject, body string) error {
-	cfg := system.GetConfiguration()
+	cfg := config.GetConfiguration()
 	if !cfg.Smtp.Enabled {
 		return nil
 	}
 
 	// 尝试使用邮件队列异步发送
-	if err := system.PushEmailTask(to, subject, body); err != nil {
+	if err := dao.PushEmailTask(to, subject, body); err != nil {
 		// 队列失败时降级到同步发送
-		system.Logger.Warn("邮件队列发送失败，降级到同步发送", "err", err)
+		config.Logger.Warn("邮件队列发送失败，降级到同步发送", "err", err)
 		return SendToMail(cfg.Smtp.Username, cfg.Smtp.Password, cfg.Smtp.Host, to, subject, body, "html")
 	}
 
@@ -53,7 +54,7 @@ func sendMail(to, subject, body string) error {
 }
 
 func NotifyEmail(subject, body string) error {
-	notifyEmailsStr := system.GetConfiguration().NotifyEmails
+	notifyEmailsStr := config.GetConfiguration().NotifyEmails
 	if notifyEmailsStr != "" {
 		notifyEmails := strings.Split(notifyEmailsStr, ";")
 		emails := make([]string, 0)
@@ -70,11 +71,11 @@ func NotifyEmail(subject, body string) error {
 }
 
 func CreateXMLSitemap() (err error) {
-	cfg := system.GetConfiguration()
+	cfg := config.GetConfiguration()
 	folder := path.Join(GetCurrentDirectory(), cfg.PublicDir, "sitemap")
 	err = os.MkdirAll(folder, os.ModePerm)
 	if err != nil {
-		system.Logger.Error("create folder error", "err", err)
+		config.Logger.Error("create folder error", "err", err)
 		return
 	}
 	domain := cfg.Domain
@@ -90,7 +91,7 @@ func CreateXMLSitemap() (err error) {
 
 	posts, err := models.ListPublishedPost("", 0, 0)
 	if err != nil {
-		system.Logger.Error("models.ListPublishedPost error", "err", err)
+		config.Logger.Error("models.ListPublishedPost error", "err", err)
 		return
 	}
 	for _, post := range posts {
@@ -104,7 +105,7 @@ func CreateXMLSitemap() (err error) {
 
 	pages, err := models.ListPublishedPage()
 	if err != nil {
-		system.Logger.Error("models.ListPublishedPage error", "err", err)
+		config.Logger.Error("models.ListPublishedPage error", "err", err)
 		return
 	}
 	for _, page := range pages {
@@ -118,12 +119,12 @@ func CreateXMLSitemap() (err error) {
 
 	err = sitemap.SiteMap(path.Join(folder, "sitemap1.xml.gz"), items)
 	if err != nil {
-		system.Logger.Error("sitemap.SiteMap error", "err", err)
+		config.Logger.Error("sitemap.SiteMap error", "err", err)
 		return
 	}
 	err = sitemap.SiteMapIndex(folder, "sitemap_index.xml", domain+"/static/sitemap/")
 	if err != nil {
-		system.Logger.Error("sitemap.SiteMapIndex error", "err", err)
+		config.Logger.Error("sitemap.SiteMapIndex error", "err", err)
 		return
 	}
 	return

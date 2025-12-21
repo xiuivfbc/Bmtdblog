@@ -6,8 +6,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 // SharedData 共享数据中间件，将用户信息和配置等共享到上下文
@@ -20,7 +20,7 @@ func SharedData() gin.HandlerFunc {
 				c.Set(common.ContextUserKey, user)
 			}
 		}
-		if system.GetConfiguration().SignupEnabled {
+		if config.GetConfiguration().SignupEnabled {
 			c.Set("SignupEnabled", true)
 		}
 		c.Next()
@@ -37,7 +37,7 @@ func AuthRequired(adminScope bool) gin.HandlerFunc {
 				return
 			}
 		}
-		system.LogWarn(c, "User not authorized to visit", "uri", c.Request.RequestURI)
+		config.Logger.Warn("User not authorized to visit", "uri", c.Request.RequestURI)
 		c.HTML(http.StatusForbidden, "errors/error.html", gin.H{
 			"message": "Forbidden!",
 		})

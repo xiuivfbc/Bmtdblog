@@ -32,11 +32,13 @@ import (
 
 	"github.com/claudiu/gocron"
 	"github.com/gin-gonic/gin"
+	"github.com/xiuivfbc/bmtdblog/internal/api/backup"
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
 	r "github.com/xiuivfbc/bmtdblog/internal/api/router"
-	s "github.com/xiuivfbc/bmtdblog/internal/api/system"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
+	"github.com/xiuivfbc/bmtdblog/internal/server"
 	"gorm.io/gorm"
 )
 
@@ -50,7 +52,7 @@ var (
 )
 
 func main() {
-	// system.logger
+	// 设置日志
 	logDir := "slog"
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		panic(err)
@@ -66,14 +68,15 @@ func main() {
 	opts = &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}
-	system.Logger = slog.New(slog.NewJSONHandler(f, opts))
-	slog.SetDefault(system.Logger)
+	logger := slog.New(slog.NewJSONHandler(f, opts))
+	slog.SetDefault(logger)
+	config.SetLogger(logger)
 
 	//configuration
 	configFilePath := flag.String("C", "configs/conf_mine.toml", "config file path")
 	flag.Parse()
-	if err := system.LoadConfiguration(*configFilePath); err != nil {
-		system.Logger.Error("err parsing config log file", "err", err)
+	if err := config.LoadConfiguration(*configFilePath); err != nil {
+		config.Logger.Error("err parsing config log file", "err", err)
 		f.Close()
 		os.Exit(1)
 	}
@@ -81,38 +84,38 @@ func main() {
 	//database
 	db, err = models.InitDB()
 	if err != nil {
-		system.Logger.Error("err open databases", "err", err)
+		config.Logger.Error("err open databases", "err", err)
 		f.Close()
 		os.Exit(1)
 	}
 
 	// Redis缓存初始化
-	if err := system.InitRedis(); err != nil {
-		system.Logger.Error("Redis initialization failed", "err", err)
+	if err := dao.InitRedis(); err != nil {
+		config.Logger.Error("Redis initialization failed", "err", err)
 		// Redis失败不退出程序，允许降级运行
 	}
 
 	// ElasticSearch搜索初始化
-	if system.GetConfiguration().Elasticsearch.Enabled {
-		if err := system.InitElasticsearch(); err != nil {
-			system.Logger.Error("ElasticSearch initialization failed", "err", err)
+	if config.GetConfiguration().Elasticsearch.Enabled {
+		if err := dao.InitElasticsearch(); err != nil {
+			config.Logger.Error("ElasticSearch initialization failed", "err", err)
 			// ES失败不退出程序，允许降级运行
 		} else {
 			// 启动ES批量任务队列
 			models.InitESTaskQueue()
 		}
 	} else {
-		system.Logger.Info("ElasticSearch功能已禁用")
+		config.Logger.Info("ElasticSearch功能已禁用")
 	}
 
 	// 邮件队列初始化
 	workerCount := 3 // 启动3个邮件工作者
-	if err := system.InitEmailQueue(workerCount); err != nil {
-		system.Logger.Error("EmailQueue initialization failed", "err", err)
+	if err := dao.InitEmailQueue(workerCount); err != nil {
+		config.Logger.Error("EmailQueue initialization failed", "err", err)
 		// 邮件队列失败不退出程序，允许降级运行
 	} else {
 		// 设置邮件发送回调函数
-		system.SetEmailSender(common.SendMail)
+		dao.SetEmailSender(common.SendMail)
 	}
 
 	router = r.DefineRouter()
@@ -126,15 +129,15 @@ func main() {
 	setupGracefulShutdown()
 
 	// 创建并启动服务器
-	cfg := system.GetConfiguration()
+	cfg := config.GetConfiguration()
 	srv = &http.Server{
 		Addr:    cfg.Addr,
 		Handler: router,
 	}
 
 	// 启动服务器
-	if err := system.StartServer(srv); err != nil && err != http.ErrServerClosed {
-		system.Logger.Error("Server error", "err", err)
+	if err := server.StartServer(srv); err != nil && err != http.ErrServerClosed {
+		config.Logger.Error("Server error", "err", err)
 	}
 
 	// 清理资源
@@ -144,7 +147,7 @@ func main() {
 // setupPeriodicTasks 设置定时任务
 func setupPeriodicTasks() {
 	gocron.Every(1).Day().Do(common.CreateXMLSitemap)
-	gocron.Every(7).Days().Do(s.Backup)
+	gocron.Every(7).Days().Do(backup.Backup)
 	gocron.Start()
 }
 
@@ -159,11 +162,11 @@ func setupGracefulShutdown() {
 		models.StopESTaskQueue()
 
 		// 停止邮件队列
-		system.StopEmailQueue()
+		dao.StopEmailQueue()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		if err := srv.Shutdown(ctx); err != nil {
-			system.Logger.Error("HTTP server shutdown error", "err", err)
+			config.Logger.Error("HTTP server shutdown error", "err", err)
 		}
 		gocron.Clear()
 		dbInstance, _ := db.DB()

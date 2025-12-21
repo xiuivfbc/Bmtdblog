@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func PageCreate(c *gin.Context) {
@@ -26,7 +26,7 @@ func PageCreate(c *gin.Context) {
 			"message": err.Error(),
 			"page":    page,
 			"user":    c.MustGet(common.ContextUserKey),
-			"cfg":     system.GetConfiguration(),
+			"cfg":     config.GetConfiguration(),
 		})
 		return
 	}

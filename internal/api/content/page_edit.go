@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func PageEdit(c *gin.Context) {
@@ -23,6 +23,6 @@ func PageEdit(c *gin.Context) {
 	c.HTML(http.StatusOK, "page/modify.html", gin.H{
 		"page": page,
 		"user": c.MustGet(common.ContextUserKey),
-		"cfg":  system.GetConfiguration(),
+		"cfg":  config.GetConfiguration(),
 	})
 }

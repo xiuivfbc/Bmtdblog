@@ -7,14 +7,18 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/xiuivfbc/bmtdblog/docs" // 导入生成的docs包
+	"github.com/xiuivfbc/bmtdblog/internal/api/backup"
+	"github.com/xiuivfbc/bmtdblog/internal/api/comment"
 	"github.com/xiuivfbc/bmtdblog/internal/api/content"
-	"github.com/xiuivfbc/bmtdblog/internal/api/interaction"
-	s "github.com/xiuivfbc/bmtdblog/internal/api/system"
+	"github.com/xiuivfbc/bmtdblog/internal/api/email"
+	"github.com/xiuivfbc/bmtdblog/internal/api/link"
+	"github.com/xiuivfbc/bmtdblog/internal/api/queue"
+	"github.com/xiuivfbc/bmtdblog/internal/api/subscribe"
 	"github.com/xiuivfbc/bmtdblog/internal/api/upload"
 	"github.com/xiuivfbc/bmtdblog/internal/api/user"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/middleware" // 导入新的中间件包
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func DefineRouter() *gin.Engine {
@@ -37,9 +41,9 @@ func DefineRouter() *gin.Engine {
 	// ------------------------------
 	// 静态资源处理
 	// ------------------------------
-	router.Static("/static", filepath.Join(common.GetCurrentDirectory(), system.GetConfiguration().PublicDir))
+	router.Static("/static", filepath.Join(common.GetCurrentDirectory(), config.GetConfiguration().PublicDir))
 	router.GET("/favicon.ico", func(c *gin.Context) {
-		c.File(filepath.Join(common.GetCurrentDirectory(), system.GetConfiguration().PublicDir, "favicon.ico"))
+		c.File(filepath.Join(common.GetCurrentDirectory(), config.GetConfiguration().PublicDir, "favicon.ico"))
 	})
 
 	// ------------------------------
@@ -58,7 +62,7 @@ func DefineRouter() *gin.Engine {
 	// ------------------------------
 	// 用户认证路由
 	// ------------------------------
-	if system.GetConfiguration().SignupEnabled {
+	if config.GetConfiguration().SignupEnabled {
 		router.GET("/signup", user.SignupGet)
 		router.POST("/signup", user.SignupPost)
 	}
@@ -76,14 +80,17 @@ func DefineRouter() *gin.Engine {
 	router.GET("/post/:id", content.PostGet)                 // 文章详情
 	router.GET("/tag/:tag", content.TagGet)                  // 标签页
 	router.GET("/archives/:year/:month", content.ArchiveGet) // 归档页
-	router.GET("/link/:id", s.LinkGet)                       // 友情链接详情
+	router.GET("/link/:id", link.LinkGet)                    // 友情链接详情
 
 	// ------------------------------
 	// 搜索功能路由
 	// ------------------------------
 	router.GET("/search", content.SearchGet)
 	router.GET("/search/index", content.SearchIndexGet)
-	router.GET("/api/search/suggestions", content.SearchSuggestionsAPI) // 搜索建议API
+	// 搜索建议API（旧版本，建议使用新版本）
+	router.GET("/api/search/suggestions", content.SearchSuggestionsAPI)
+	// 搜索建议API（新版本，添加版本控制）
+	router.GET("/api/v1/search/suggestions", content.SearchSuggestionsAPI)
 
 	// ------------------------------
 	// 交互功能路由
@@ -92,15 +99,15 @@ func DefineRouter() *gin.Engine {
 	visitor := router.Group("/visitor")
 	visitor.Use(middleware.AuthRequired(false))
 	{
-		visitor.POST("/new_comment", interaction.CommentPost)          // 发表评论
-		visitor.POST("/comment/:id/delete", interaction.CommentDelete) // 删除自己的评论
+		visitor.POST("/new_comment", comment.CommentPost)          // 发表评论
+		visitor.POST("/comment/:id/delete", comment.CommentDelete) // 删除自己的评论
 	}
 
 	// 订阅相关
-	router.GET("/subscribe", interaction.SubscribeGet)  // 订阅页面
-	router.POST("/subscribe", interaction.Subscribe)    // 提交订阅
-	router.GET("/active", interaction.ActiveSubscriber) // 激活订阅者（暂未使用）
-	router.GET("/unsubscribe", interaction.UnSubscribe) // 取消订阅
+	router.GET("/subscribe", subscribe.SubscribeGet)  // 订阅页面
+	router.POST("/subscribe", subscribe.Subscribe)    // 提交订阅
+	router.GET("/active", subscribe.ActiveSubscriber) // 激活订阅者（暂未使用）
+	router.GET("/unsubscribe", subscribe.UnSubscribe) // 取消订阅
 
 	// ------------------------------
 	// 管理后台路由（需要管理员权限）
@@ -142,33 +149,33 @@ func DefineRouter() *gin.Engine {
 		admin.POST("/profile/github/unbind", user.UnbindGithub) // 解绑Github
 
 		// 订阅者管理
-		admin.GET("/subscriber", interaction.SubscriberIndex) // 订阅者列表
-		admin.POST("/subscriber", interaction.SubscriberPost) // 提交订阅者
-		admin.POST("/unsubscribe", interaction.UnSubscribe)   // 取消订阅
+		admin.GET("/subscriber", subscribe.SubscriberIndex) // 订阅者列表
+		admin.POST("/subscriber", subscribe.SubscriberPost) // 提交订阅者
+		admin.POST("/unsubscribe", subscribe.UnSubscribe)   // 取消订阅
 
 		// 友情链接管理
-		admin.GET("/link", s.LinkIndex)              // 友情链接列表
-		admin.POST("/new_link", s.LinkCreate)        // 创建友情链接
-		admin.POST("/link/:id/edit", s.LinkUpdate)   // 更新友情链接
-		admin.POST("/link/:id/delete", s.LinkDelete) // 删除友情链接
+		admin.GET("/link", link.LinkIndex)              // 友情链接列表
+		admin.POST("/new_link", link.LinkCreate)        // 创建友情链接
+		admin.POST("/link/:id/edit", link.LinkUpdate)   // 更新友情链接
+		admin.POST("/link/:id/delete", link.LinkDelete) // 删除友情链接
 
 		// 评论管理
-		admin.POST("/comment/:id", interaction.CommentRead) // 标记评论为已读
-		admin.POST("/read_all", interaction.CommentReadAll) // 标记所有评论为已读
+		admin.POST("/comment/:id", comment.CommentRead) // 标记评论为已读
+		admin.POST("/read_all", comment.CommentReadAll) // 标记所有评论为已读
 
 		// 备份与恢复
-		admin.GET("/backup", s.BackupPost)    // 备份数据
-		admin.POST("/restore", s.RestorePost) // 恢复数据
+		admin.GET("/backup", backup.BackupPost)    // 备份数据
+		admin.POST("/restore", backup.RestorePost) // 恢复数据
 
 		// 邮件管理
-		admin.POST("/new_mail", s.SendMail)           // 发送单封邮件
-		admin.POST("/new_batchmail", s.SendBatchMail) // 发送批量邮件
+		admin.POST("/new_mail", email.SendMail)           // 发送单封邮件
+		admin.POST("/new_batchmail", email.SendBatchMail) // 发送批量邮件
 
 		// 邮件队列管理
-		admin.GET("/email-queue", s.EmailQueueManage)         // 邮件队列管理页面
-		admin.GET("/email-queue/status", s.EmailQueueStatus)  // 邮件队列状态
-		admin.POST("/email-queue/retry", s.RetryFailedEmails) // 重试失败邮件
-		admin.POST("/email-queue/clear", s.ClearFailedEmails) // 清除失败邮件
+		admin.GET("/email-queue", queue.EmailQueueManage)         // 邮件队列管理页面
+		admin.GET("/email-queue/status", queue.EmailQueueStatus)  // 邮件队列状态
+		admin.POST("/email-queue/retry", queue.RetryFailedEmails) // 重试失败邮件
+		admin.POST("/email-queue/clear", queue.ClearFailedEmails) // 清除失败邮件
 
 		// 上传管理
 		admin.POST("/upload", upload.Upload) // 上传文件

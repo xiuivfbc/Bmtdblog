@@ -7,8 +7,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func SignupPost(c *gin.Context) {
@@ -24,7 +24,7 @@ func SignupPost(c *gin.Context) {
 	if len(email) == 0 || len(password) == 0 {
 		c.HTML(http.StatusOK, "auth/signup.html", gin.H{
 			"message":   "邮箱或密码不能为空",
-			"cfg":       system.GetConfiguration(),
+			"cfg":       config.GetConfiguration(),
 			"email":     email,
 			"telephone": telephone,
 		})
@@ -37,7 +37,7 @@ func SignupPost(c *gin.Context) {
 	if captchaId == nil {
 		c.HTML(http.StatusOK, "auth/signup.html", gin.H{
 			"message":   "请先获取验证码",
-			"cfg":       system.GetConfiguration(),
+			"cfg":       config.GetConfiguration(),
 			"email":     email,
 			"telephone": telephone,
 		})
@@ -47,7 +47,7 @@ func SignupPost(c *gin.Context) {
 	if !captcha.VerifyString(captchaId.(string), verifyCode) {
 		c.HTML(http.StatusOK, "auth/signup.html", gin.H{
 			"message":   "验证码错误",
-			"cfg":       system.GetConfiguration(),
+			"cfg":       config.GetConfiguration(),
 			"email":     email,
 			"telephone": telephone,
 		})
@@ -63,7 +63,7 @@ func SignupPost(c *gin.Context) {
 	if err != nil {
 		c.HTML(http.StatusOK, "auth/signup.html", gin.H{
 			"message":   "密码处理失败",
-			"cfg":       system.GetConfiguration(),
+			"cfg":       config.GetConfiguration(),
 			"email":     email,
 			"telephone": telephone,
 		})
@@ -80,7 +80,7 @@ func SignupPost(c *gin.Context) {
 	if err != nil {
 		c.HTML(http.StatusOK, "auth/signup.html", gin.H{
 			"message":   "email already exists",
-			"cfg":       system.GetConfiguration(),
+			"cfg":       config.GetConfiguration(),
 			"email":     email,
 			"telephone": telephone,
 		})

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
 func AuthGet(c *gin.Context) {
@@ -19,7 +19,7 @@ func AuthGet(c *gin.Context) {
 	session.Set(common.SessionGithubState, uuid)
 	session.Save()
 
-	cfg := system.GetConfiguration()
+	cfg := config.GetConfiguration()
 
 	authurl := "/signin"
 	switch authType {

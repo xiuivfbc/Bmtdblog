@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func PageGet(c *gin.Context) {
@@ -26,6 +26,6 @@ func PageGet(c *gin.Context) {
 	c.HTML(http.StatusOK, "page/display.html", gin.H{
 		"page": page,
 		"user": user,
-		"cfg":  system.GetConfiguration(),
+		"cfg":  config.GetConfiguration(),
 	})
 }

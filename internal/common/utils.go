@@ -14,7 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/snluu/uuid"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
@@ -62,13 +62,13 @@ func GetCurrentTime() time.Time {
 }
 
 func GetCurrentDirectory() string {
-	dir := system.GetConfiguration().Dir
+	dir := config.GetConfiguration().Dir
 	return dir
 }
 
 // SendMail 发送邮件（简化版本，用于邮件队列）
 func SendMail(to, subject, body string) error {
-	cfg := system.GetConfiguration()
+	cfg := config.GetConfiguration()
 	if !cfg.Smtp.Enabled {
 		return nil
 	}

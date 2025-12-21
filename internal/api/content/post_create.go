@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func PostCreate(c *gin.Context) {
@@ -28,7 +28,7 @@ func PostCreate(c *gin.Context) {
 			"post":    post,
 			"message": err.Error(),
 			"user":    c.MustGet(common.ContextUserKey),
-			"cfg":     system.GetConfiguration(),
+			"cfg":     config.GetConfiguration(),
 		})
 		return
 	}

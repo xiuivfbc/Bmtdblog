@@ -8,8 +8,8 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 type SmmsUploader struct {
@@ -40,7 +40,7 @@ func (u SmmsUploader) upload(file multipart.File, fileHeader *multipart.FileHead
 		ret       SmmsRet
 		bodyBuf   = &bytes.Buffer{}
 		smmsFile  models.SmmsFile
-		cfg       = system.GetConfiguration()
+		cfg       = config.GetConfiguration()
 	)
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	fileWriter, err := bodyWriter.CreateFormFile("smfile", fileHeader.Filename)
@@ -56,12 +56,12 @@ func (u SmmsUploader) upload(file multipart.File, fileHeader *multipart.FileHead
 		return
 	}
 
-	req, err = http.NewRequest("POST", cfg.Smms.ApiUrl, bodyBuf)
+	req, err = http.NewRequest("POST", cfg.Smms.Apiurl, bodyBuf)
 	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", bodyWriter.FormDataContentType())
-	req.Header.Set("Authorization", cfg.Smms.ApiKey)
+	req.Header.Set("Authorization", cfg.Smms.Apikey)
 
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil {

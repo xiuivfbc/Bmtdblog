@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
 type Uploader interface {
@@ -20,7 +20,7 @@ func Upload(c *gin.Context) {
 		uploader Uploader
 		file     multipart.File
 		fh       *multipart.FileHeader
-		cfg      = system.GetConfiguration()
+		cfg      = config.GetConfiguration()
 	)
 	defer common.WriteJSON(c, res)
 	file, fh, err = c.Request.FormFile("file")

@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
-	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 func AdminIndex(c *gin.Context) {
@@ -17,6 +17,6 @@ func AdminIndex(c *gin.Context) {
 		"commentCount": models.CountComment(),
 		"user":         c.MustGet(common.ContextUserKey),
 		"comments":     models.MustListUnreadComment(),
-		"cfg":          system.GetConfiguration(),
+		"cfg":          config.GetConfiguration(),
 	})
 }
