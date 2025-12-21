@@ -1,12 +1,16 @@
-package system
+package middleware
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/xiuivfbc/bmtdblog/internal/system"
 )
 
 // 定义上下文键
@@ -33,21 +37,30 @@ func TraceMiddleware() gin.HandlerFunc {
 		c.Header(GinTraceID, traceID)
 
 		// 记录请求开始
-		Logger.Info("Request started",
+		start := time.Now()
+		path := c.Request.URL.Path
+		method := c.Request.Method
+
+		// 请求开始日志
+		system.Logger.Info("Request started",
 			"trace_id", traceID,
-			"method", c.Request.Method,
-			"path", c.Request.URL.Path,
+			"method", method,
+			"path", path,
 			"client_ip", c.ClientIP(),
 		)
 
 		c.Next()
 
 		// 请求结束日志
-		Logger.Info("Request completed",
+		latency := time.Since(start)
+		status := c.Writer.Status()
+
+		system.Logger.Info("Request completed",
 			"trace_id", traceID,
-			"method", c.Request.Method,
-			"path", c.Request.URL.Path,
-			"status", c.Writer.Status(),
+			"method", method,
+			"path", path,
+			"status", status,
+			"latency", latency.String(),
 		)
 	}
 }
@@ -86,29 +99,48 @@ func ContextFromGin(c *gin.Context) context.Context {
 func LogWithTrace(c *gin.Context) *slog.Logger {
 	traceID := GetTraceID(c)
 	if traceID == "" {
-		return Logger
+		return system.Logger
 	}
-	return Logger.With("trace_id", traceID)
+	return system.Logger.With("trace_id", traceID)
 }
 
 // LogWithContext 从标准 context 获取带 trace_id 的日志记录器
 func LogWithContext(ctx context.Context) *slog.Logger {
 	traceID := GetTraceIDFromContext(ctx)
 	if traceID == "" {
-		return Logger
+		return system.Logger
 	}
-	return Logger.With("trace_id", traceID)
+	return system.Logger.With("trace_id", traceID)
 }
 
-// addCallerArgs 添加调用者信息到日志参数
-func addCallerArgs(skip int, args []any) []any {
-	// 跳过调用栈帧，获取实际调用者信息
-	pc, file, line, ok := runtime.Caller(skip)
-	if ok {
-		funcName := runtime.FuncForPC(pc).Name()
-		args = append(args, "caller", file, "line", line, "func", funcName)
+// getCallerInfo 获取调用者信息（文件路径、函数名、行号）
+// skip 表示跳过的调用栈层数
+func getCallerInfo(skip int) string {
+	pc, filePath, line, ok := runtime.Caller(skip)
+	if !ok {
+		return "unknown/unknown/0"
 	}
-	return args
+
+	// 获取函数名
+	var funcName string
+	fn := runtime.FuncForPC(pc)
+	if fn != nil {
+		funcName = filepath.Base(fn.Name())
+	} else {
+		funcName = "unknown"
+	}
+
+	// 获取相对路径（只保留文件名）
+	file := filepath.Base(filePath)
+
+	// 格式：文件名/函数名/行号
+	return fmt.Sprintf("%s/%s/%d", file, funcName, line)
+}
+
+// addCallerArgs 添加调用者信息到参数列表
+func addCallerArgs(skip int, args []any) []any {
+	location := getCallerInfo(skip)
+	return append(args, "location", location)
 }
 
 // LogInfo 带 trace_id 和调用者信息的 Info 日志

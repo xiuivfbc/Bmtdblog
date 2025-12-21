@@ -2,6 +2,6 @@
 /slog/*
 !/slog/.gitkeep
 /request.token
-/conf/conf_copy.toml
+/configs/conf_mine.toml
 /bmtdblog.exe
-/docs
+/docs/docs

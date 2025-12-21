@@ -25,18 +25,18 @@
 
 ## 实践展示
 ### 前台展示
-![alt text](static/image.png)
-![alt text](static/image-1.png)
-![alt text](static/image-2.png)
-![alt text](static/image-7.png)
-![alt text](static/image-8.png)
-![alt text](static/image-9.png)
+![alt text](front/static/image.png)
+![alt text](front/static/image-1.png)
+![alt text](front/static/image-2.png)
+![alt text](front/static/image-7.png)
+![alt text](front/static/image-8.png)
+![alt text](front/static/image-9.png)
 
 ### 后台管理
-![alt text](static/image-3.png)
-![alt text](static/image-4.png)
-![alt text](static/image-5.png)
-![alt text](static/image-6.png)
+![alt text](front/static/image-3.png)
+![alt text](front/static/image-4.png)
+![alt text](front/static/image-5.png)
+![alt text](front/static/image-6.png)
 
 ## 快速开始
 

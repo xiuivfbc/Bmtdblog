@@ -1,3 +1,21 @@
+// @title Bmtdblog API
+// @version 1.0
+// @description 一个基于Go和Gin的博客系统API文档
+// @termsOfService http://localhost:8090
+
+// @contact.name API Support
+// @contact.url http://localhost:8090
+// @contact.email 3138910969@qq.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8090
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (

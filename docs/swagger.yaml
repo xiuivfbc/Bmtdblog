@@ -1,0 +1,21 @@
+basePath: /
+host: localhost:8090
+info:
+  contact:
+    email: 3138910969@qq.com
+    name: API Support
+    url: http://localhost:8090
+  description: 一个基于Go和Gin的博客系统API文档
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://localhost:8090
+  title: Bmtdblog API
+  version: "1.0"
+paths: {}
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
