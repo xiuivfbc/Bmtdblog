@@ -5,7 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func LinkCreate(c *gin.Context) {
@@ -22,6 +24,7 @@ func LinkCreate(c *gin.Context) {
 		return
 	}
 	sort, _ = strconv.Atoi(c.PostForm("sort"))
+	log.Debug("LinkCreate", zap.String("name", name), zap.String("url", url), zap.Int("sort", sort))
 	link := &models.Link{
 		Name: name,
 		Url:  url,

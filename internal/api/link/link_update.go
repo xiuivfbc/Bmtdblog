@@ -5,7 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func LinkUpdate(c *gin.Context) {
@@ -30,6 +32,7 @@ func LinkUpdate(c *gin.Context) {
 	}
 	// 设置ID
 	link.ID = uint(id)
+	log.Debug("LinkUpdate", zap.Uint("id", link.ID), zap.String("name", link.Name), zap.String("url", link.Url), zap.Int("sort", link.Sort))
 	// 验证数据
 	if link.Name == "" || link.Url == "" {
 		res["message"] = "Name and URL are required"

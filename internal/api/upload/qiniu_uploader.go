@@ -8,7 +8,9 @@ import (
 
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	"github.com/qiniu/go-sdk/v7/storage"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"go.uber.org/zap"
 )
 
 // 获取文件大小的接口
@@ -30,7 +32,8 @@ type PutRet struct {
 type QiniuUploader struct {
 }
 
-func (u QiniuUploader) upload(file multipart.File, _ *multipart.FileHeader) (url string, err error) {
+func (u QiniuUploader) upload(file multipart.File, fileHeader *multipart.FileHeader) (url string, err error) {
+	log.Debug("QiniuUploader.upload", zap.String("fileName", fileHeader.Filename))
 	var (
 		ret  PutRet
 		size int64

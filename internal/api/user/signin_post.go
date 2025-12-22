@@ -6,8 +6,10 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func SigninPost(c *gin.Context) {
@@ -17,6 +19,7 @@ func SigninPost(c *gin.Context) {
 	)
 	username := c.PostForm("username")
 	password := c.PostForm("password")
+	log.Debug("SigninPost", zap.String("username", username))
 	if username == "" || password == "" {
 		c.HTML(http.StatusOK, "auth/signin.html", gin.H{
 			"message": "username or password cannot be null",

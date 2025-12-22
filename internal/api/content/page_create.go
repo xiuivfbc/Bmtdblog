@@ -5,8 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func PageCreate(c *gin.Context) {
@@ -14,6 +16,7 @@ func PageCreate(c *gin.Context) {
 	body := c.PostForm("body")
 	isPublished := c.PostForm("isPublished")
 	published := isPublished == "on"
+	log.Debug("PageCreate", zap.String("title", title), zap.Bool("isPublished", published))
 
 	page := &models.Page{
 		Title:       title,

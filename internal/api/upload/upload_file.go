@@ -5,7 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"go.uber.org/zap"
 )
 
 type Uploader interface {
@@ -22,6 +24,7 @@ func Upload(c *gin.Context) {
 		fh       *multipart.FileHeader
 		cfg      = config.GetConfiguration()
 	)
+	log.Debug("Upload", zap.String("fileServer", cfg.FileServer))
 	defer common.WriteJSON(c, res)
 	file, fh, err = c.Request.FormFile("file")
 	if err != nil {

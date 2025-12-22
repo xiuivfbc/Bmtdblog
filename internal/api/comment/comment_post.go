@@ -7,8 +7,10 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func CommentPost(c *gin.Context) {
@@ -39,6 +41,7 @@ func CommentPost(c *gin.Context) {
 		res["message"] = err.Error()
 		return
 	}
+	log.Debug("CommentPost", zap.Uint("userId", userId), zap.Uint("postId", pid), zap.String("content", content))
 	post, err = models.GetPostByIdWithCache(pid)
 	if err != nil {
 		res["message"] = err.Error()

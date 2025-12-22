@@ -6,9 +6,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 )
 
 func RetryFailedEmails(c *gin.Context) {
+	log.Debug("RetryFailedEmails")
 	count, err := retryFailedEmails()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -27,6 +29,7 @@ func RetryFailedEmails(c *gin.Context) {
 
 // 重试失败的邮件
 func retryFailedEmails() (int, error) {
+	log.Debug("retryFailedEmails")
 	if dao.EmailQueueInstance == nil {
 		return 0, fmt.Errorf("邮件队列未启用")
 	}

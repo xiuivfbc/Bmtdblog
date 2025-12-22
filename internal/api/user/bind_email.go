@@ -3,7 +3,9 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func BindEmail(c *gin.Context) {
@@ -15,6 +17,7 @@ func BindEmail(c *gin.Context) {
 	email := c.PostForm("email")
 	sessionUser, _ := c.Get(common.ContextUserKey)
 	user := sessionUser.(*models.User)
+	log.Debug("BindEmail", zap.String("email", email), zap.Uint("userId", user.ID))
 	if len(user.Email) > 0 {
 		res["message"] = "email have bound"
 		return

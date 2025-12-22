@@ -5,11 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
 func EmailQueueManage(c *gin.Context) {
+	log.Debug("EmailQueueManage")
 	stats, err := getEmailQueueStats()
 	if err != nil {
 		common.HandleMessage(c, "获取队列状态失败: "+err.Error())

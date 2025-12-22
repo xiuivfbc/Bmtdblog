@@ -10,6 +10,7 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/common"
 	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func Oauth2Callback(c *gin.Context) {
@@ -19,6 +20,7 @@ func Oauth2Callback(c *gin.Context) {
 	)
 	code := c.Query("code")
 	state := c.Query("state")
+	log.Debug("Oauth2Callback", zap.String("code", code), zap.String("state", state))
 
 	session := sessions.Default(c)
 	if len(state) == 0 || state != session.Get(common.SessionGithubState) {

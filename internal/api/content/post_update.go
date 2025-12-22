@@ -6,8 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func PostUpdate(c *gin.Context) {
@@ -22,6 +24,7 @@ func PostUpdate(c *gin.Context) {
 		common.HandleMessage(c, err.Error())
 		return
 	}
+	log.Debug("PostUpdate", zap.Uint("id", id), zap.String("title", title), zap.String("tags", tags), zap.Bool("isPublished", published))
 
 	post := &models.Post{
 		Title:       title,

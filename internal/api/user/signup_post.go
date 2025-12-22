@@ -7,8 +7,10 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func SignupPost(c *gin.Context) {
@@ -19,6 +21,7 @@ func SignupPost(c *gin.Context) {
 	telephone := c.PostForm("telephone")
 	password := c.PostForm("password")
 	verifyCode := c.PostForm("verifyCode")
+	log.Debug("SignupPost", zap.String("email", email), zap.String("telephone", telephone))
 
 	// 验证基本字段
 	if len(email) == 0 || len(password) == 0 {

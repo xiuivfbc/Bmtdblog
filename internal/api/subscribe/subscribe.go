@@ -6,13 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func Subscribe(c *gin.Context) {
 	mail := c.PostForm("mail")
 	user, _ := c.Get(common.ContextUserKey)
+	log.Debug("Subscribe", zap.String("mail", mail))
 	var err error
 	if len(mail) > 0 {
 		var subscriber *models.Subscriber

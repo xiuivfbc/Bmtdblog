@@ -34,7 +34,7 @@ func ArchiveGet(c *gin.Context) {
 	if pageIndex <= 0 {
 		pageIndex = 1
 	}
-	log.Info("ArchiveGet", zap.String("year", year), zap.String("month", month), zap.Int("pageIndex", pageIndex))
+	log.Debug("ArchiveGet", zap.String("year", year), zap.String("month", month), zap.Int("pageIndex", pageIndex))
 	posts, err = models.ListPostByArchive(year, month, pageIndex, pageSize)
 	if err != nil {
 		log.Error("models.ListPostByArchive err", "err", err)

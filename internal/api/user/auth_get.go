@@ -7,11 +7,14 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"go.uber.org/zap"
 )
 
 func AuthGet(c *gin.Context) {
 	authType := c.Param("authType")
+	log.Debug("AuthGet", zap.String("authType", authType))
 
 	session := sessions.Default(c)
 	uuid := common.UUID()

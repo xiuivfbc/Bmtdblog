@@ -7,7 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func UnSubscribe(c *gin.Context) {
@@ -19,6 +21,7 @@ func UnSubscribe(c *gin.Context) {
 	}
 	temp, _ := strconv.Atoi(userId)
 	userID := uint(temp)
+	log.Debug("UnSubscribe", zap.Uint("userID", userID))
 	subscriber, err := models.GetSubscriberById(userID)
 	if err != nil || !subscriber.VerifyState || !subscriber.SubscribeState {
 		common.HandleMessage(c, "Unscribe failed.")

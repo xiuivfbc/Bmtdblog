@@ -6,7 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"go.uber.org/zap"
 )
 
 func RestorePost(c *gin.Context) {
@@ -21,6 +23,7 @@ func RestorePost(c *gin.Context) {
 	)
 	defer common.WriteJSON(c, res)
 	fileName = c.PostForm("fileName")
+	log.Debug("RestorePost", zap.String("fileName", fileName))
 	if fileName == "" {
 		res["message"] = "fileName cannot be empty."
 		return

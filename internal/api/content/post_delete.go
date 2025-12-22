@@ -3,7 +3,9 @@ package content
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func PostDelete(c *gin.Context) {
@@ -17,6 +19,7 @@ func PostDelete(c *gin.Context) {
 		res["message"] = err.Error()
 		return
 	}
+	log.Debug("PostDelete", zap.Uint("id", id))
 	post := &models.Post{}
 	post.ID = id
 	err = post.Delete()

@@ -6,11 +6,13 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/common"
 	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
 
 func exchangeTokenByCode(code string) (accessToken string, err error) {
+	log.Debug("exchangeTokenByCode", zap.String("code", code))
 	var (
 		token *oauth2.Token
 		cfg   = config.GetConfiguration()

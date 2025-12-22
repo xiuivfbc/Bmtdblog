@@ -3,6 +3,8 @@ package subscribe
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
+	"go.uber.org/zap"
 )
 
 // 邮箱为空时，发送给所有订阅者
@@ -15,6 +17,7 @@ func SubscriberPost(c *gin.Context) {
 	mail := c.PostForm("mail")
 	subject := c.PostForm("subject")
 	body := c.PostForm("body")
+	log.Debug("SubscriberPost", zap.String("mail", mail), zap.String("subject", subject))
 	if len(mail) > 0 {
 		err = common.SendMail(mail, subject, body)
 	} else {

@@ -8,8 +8,10 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 type SmmsUploader struct {
@@ -33,6 +35,7 @@ type SmmsRet struct {
 }
 
 func (u SmmsUploader) upload(file multipart.File, fileHeader *multipart.FileHeader) (url string, err error) {
+	log.Debug("SmmsUploader.upload", zap.String("fileName", fileHeader.Filename))
 	var (
 		resp      *http.Response
 		req       *http.Request

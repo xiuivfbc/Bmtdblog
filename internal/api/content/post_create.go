@@ -6,8 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func PostCreate(c *gin.Context) {
@@ -16,6 +18,7 @@ func PostCreate(c *gin.Context) {
 	body := c.PostForm("body")
 	isPublished := c.PostForm("isPublished")
 	published := isPublished == "on"
+	log.Debug("PostCreate", zap.String("title", title), zap.String("tags", tags), zap.Bool("isPublished", published))
 
 	post := &models.Post{
 		Title:       title,

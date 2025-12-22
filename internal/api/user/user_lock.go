@@ -3,7 +3,9 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func UserLock(c *gin.Context) {
@@ -19,6 +21,7 @@ func UserLock(c *gin.Context) {
 		res["message"] = err.Error()
 		return
 	}
+	log.Debug("UserLock", zap.Uint("id", id))
 	user, err = models.GetUser(id)
 	if err != nil {
 		res["message"] = err.Error()

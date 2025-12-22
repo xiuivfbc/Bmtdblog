@@ -3,7 +3,9 @@ package link
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func LinkDelete(c *gin.Context) {
@@ -18,6 +20,7 @@ func LinkDelete(c *gin.Context) {
 		res["message"] = err.Error()
 		return
 	}
+	log.Debug("LinkDelete", zap.Uint("id", id))
 
 	link := new(models.Link)
 	link.ID = id
