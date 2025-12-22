@@ -1,17 +1,55 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// 全局日志实例
-var Logger *zap.Logger
+// 定义上下文键
+type contextKey string
+
+const (
+	TraceIDKey contextKey = "trace_id"
+	GinTraceID string     = "X-Trace-ID"
+)
+
+
+// GLSData 存储goroutine的上下文数据
+type GLSData struct {
+	TraceID string
+}
+
+// glsMap 全局goroutine局部存储，以goroutine ID为键
+var (
+	Logger *zap.Logger
+
+	glsMap = make(map[uint64]*GLSData)
+	glsMu  sync.RWMutex
+
+	DaemonDebug = newDaemonLogger(zapcore.DebugLevel, 1)
+	DaemonInfo  = newDaemonLogger(zapcore.InfoLevel, 1)
+	DaemonWarn  = newDaemonLogger(zapcore.WarnLevel, 1)
+	DaemonError = newDaemonLogger(zapcore.ErrorLevel, 1)
+	DaemonFatal = newDaemonLogger(zapcore.FatalLevel, 1)
+
+	Debug  = newLogger(zapcore.DebugLevel, 1)
+	Info   = newLogger(zapcore.InfoLevel, 1)
+	Warn   = newLogger(zapcore.WarnLevel, 1)
+	Error  = newLogger(zapcore.ErrorLevel, 1)
+	Fatal  = newLogger(zapcore.FatalLevel, 1)
+	DPanic = newLogger(zapcore.DPanicLevel, 1)
+)
+
 
 // Init 初始化日志系统
 func Init() error {
@@ -79,10 +117,6 @@ func Init() error {
 	return nil
 }
 
-// GetLogger 获取日志记录器
-func GetLogger() *zap.Logger {
-	return Logger
-}
 
 func processArgs(args []interface{}) []zap.Field {
 	fields := make([]zap.Field, len(args))
@@ -121,21 +155,63 @@ func newLogger(level zapcore.Level, skip int) func(msg string, args ...interface
 			fields = processArgs(args)
 		}
 
+		// 自动从goroutine上下文获取trace_id
+		if data := GetGoroutineContext(); data != nil && data.TraceID != "" {
+			fields = append(fields, zap.String("trace_id", data.TraceID))
+		}
+
 		Logger.WithOptions(zap.AddCallerSkip(skip)).Check(level, msg).Write(fields...)
 	}
 }
 
-var (
-	DaemonDebug = newDaemonLogger(zapcore.DebugLevel, 1)
-	DaemonInfo  = newDaemonLogger(zapcore.InfoLevel, 1)
-	DaemonWarn  = newDaemonLogger(zapcore.WarnLevel, 1)
-	DaemonError = newDaemonLogger(zapcore.ErrorLevel, 1)
-	DaemonFatal = newDaemonLogger(zapcore.FatalLevel, 1)
+// GetGoroutineContext 获取goroutine上下文
+func GetGoroutineContext() *GLSData {
+	gid := getGoroutineID()
+	glsMu.RLock()
+	defer glsMu.RUnlock()
+	return glsMap[gid]
+}
 
-	Debug  = newLogger(zapcore.DebugLevel, 1)
-	Info   = newLogger(zapcore.InfoLevel, 1)
-	Warn   = newLogger(zapcore.WarnLevel, 1)
-	Error  = newLogger(zapcore.ErrorLevel, 1)
-	Fatal  = newLogger(zapcore.FatalLevel, 1)
-	DPanic = newLogger(zapcore.DPanicLevel, 1)
-)
+// getGoroutineID 获取当前goroutine ID
+func getGoroutineID() uint64 {
+	var buf [64]byte
+	n := runtime.Stack(buf[:], false)
+	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
+	id, _ := strconv.ParseUint(idField, 10, 64)
+	return id
+}
+
+// SetGoroutineContext 设置goroutine上下文
+func SetGoroutineContext(ctx context.Context) {
+	if traceID := GetTraceIDFromContext(ctx); traceID != "" {
+		gid := getGoroutineID()
+		glsMu.Lock()
+		glsMap[gid] = &GLSData{TraceID: traceID}
+		glsMu.Unlock()
+	}
+}
+
+// GetTraceIDFromContext 从标准 context 获取 trace_id
+func GetTraceIDFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if traceID, ok := ctx.Value(TraceIDKey).(string); ok {
+		return traceID
+	}
+	return ""
+}
+
+
+// DeleteGoroutineContext 删除goroutine上下文
+func DeleteGoroutineContext() {
+	gid := getGoroutineID()
+	glsMu.Lock()
+	delete(glsMap, gid)
+	glsMu.Unlock()
+}
+
+// GetLogger 获取日志记录器
+func GetLogger() *zap.Logger {
+	return Logger
+}

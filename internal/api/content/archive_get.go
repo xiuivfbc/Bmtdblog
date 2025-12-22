@@ -12,6 +12,7 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	"go.uber.org/zap"
 )
 
 func ArchiveGet(c *gin.Context) {
@@ -33,7 +34,7 @@ func ArchiveGet(c *gin.Context) {
 	if pageIndex <= 0 {
 		pageIndex = 1
 	}
-	log.Debug("ArchiveGet", "year", year, "month", month, "pageIndex", pageIndex)
+	log.Info("ArchiveGet", zap.String("year", year), zap.String("month", month), zap.Int("pageIndex", pageIndex))
 	posts, err = models.ListPostByArchive(year, month, pageIndex, pageSize)
 	if err != nil {
 		log.Error("models.ListPostByArchive err", "err", err)
