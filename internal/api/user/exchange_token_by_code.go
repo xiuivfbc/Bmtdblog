@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -26,7 +27,7 @@ func exchangeTokenByCode(code string) (accessToken string, err error) {
 	}
 	accessToken = token.AccessToken
 	if err := common.SaveToken("./request.token", token); err != nil {
-		config.Logger.Error("saveToken error", "err", err)
+		log.Error("saveToken error", "err", err)
 	}
 	return
 }

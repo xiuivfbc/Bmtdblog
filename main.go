@@ -22,11 +22,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -34,10 +32,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/api/backup"
 	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
-	r "github.com/xiuivfbc/bmtdblog/internal/api/router"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
+	r "github.com/xiuivfbc/bmtdblog/internal/router"
 	"github.com/xiuivfbc/bmtdblog/internal/server"
 	"gorm.io/gorm"
 )
@@ -52,66 +51,55 @@ var (
 )
 
 func main() {
-	// 设置日志
-	logDir := "slog"
-	if err := os.MkdirAll(logDir, 0755); err != nil {
-		panic(err)
-	}
-	logFile := filepath.Join(logDir, fmt.Sprintf("Bmtdblog-%s.log", time.Now().Format("20060102-150405")))
-	f, err = os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		panic(err)
-	}
-
-	// 调试用设置
-	var opts *slog.HandlerOptions = nil
-	opts = &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}
-	logger := slog.New(slog.NewJSONHandler(f, opts))
-	slog.SetDefault(logger)
-	config.SetLogger(logger)
-
 	//configuration
 	configFilePath := flag.String("C", "configs/conf_mine.toml", "config file path")
 	flag.Parse()
 	if err := config.LoadConfiguration(*configFilePath); err != nil {
-		config.Logger.Error("err parsing config log file", "err", err)
-		f.Close()
+		fmt.Printf("err parsing config log file: %v\n", err)
+		if f != nil {
+			f.Close()
+		}
 		os.Exit(1)
+	}
+
+	// 设置日志
+	if err := log.Init(); err != nil {
+		panic(err)
 	}
 
 	//database
 	db, err = models.InitDB()
 	if err != nil {
-		config.Logger.Error("err open databases", "err", err)
-		f.Close()
+		log.Error("err open databases", "err", err)
+		if f != nil {
+			f.Close()
+		}
 		os.Exit(1)
 	}
 
 	// Redis缓存初始化
 	if err := dao.InitRedis(); err != nil {
-		config.Logger.Error("Redis initialization failed", "err", err)
+		log.Error("Redis initialization failed", "err", err)
 		// Redis失败不退出程序，允许降级运行
 	}
 
 	// ElasticSearch搜索初始化
 	if config.GetConfiguration().Elasticsearch.Enabled {
 		if err := dao.InitElasticsearch(); err != nil {
-			config.Logger.Error("ElasticSearch initialization failed", "err", err)
+			log.Error("ElasticSearch initialization failed", "err", err)
 			// ES失败不退出程序，允许降级运行
 		} else {
 			// 启动ES批量任务队列
 			models.InitESTaskQueue()
 		}
 	} else {
-		config.Logger.Info("ElasticSearch功能已禁用")
+		log.Info("ElasticSearch功能已禁用")
 	}
 
 	// 邮件队列初始化
 	workerCount := 3 // 启动3个邮件工作者
 	if err := dao.InitEmailQueue(workerCount); err != nil {
-		config.Logger.Error("EmailQueue initialization failed", "err", err)
+		log.Error("EmailQueue initialization failed", "err", err)
 		// 邮件队列失败不退出程序，允许降级运行
 	} else {
 		// 设置邮件发送回调函数
@@ -137,7 +125,7 @@ func main() {
 
 	// 启动服务器
 	if err := server.StartServer(srv); err != nil && err != http.ErrServerClosed {
-		config.Logger.Error("Server error", "err", err)
+		log.Error("Server error", "err", err)
 	}
 
 	// 清理资源
@@ -166,7 +154,7 @@ func setupGracefulShutdown() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		if err := srv.Shutdown(ctx); err != nil {
-			config.Logger.Error("HTTP server shutdown error", "err", err)
+			log.Error("HTTP server shutdown error", "err", err)
 		}
 		gocron.Clear()
 		dbInstance, _ := db.DB()

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
@@ -26,7 +27,7 @@ func RssGet(c *gin.Context) {
 	feed.Items = make([]*feeds.Item, 0)
 	posts, err := models.ListPublishedPost("", 0, 0)
 	if err != nil {
-		config.Logger.Error("models.ListPublishedPost err", "err", err)
+		log.Error("models.ListPublishedPost err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -43,7 +44,7 @@ func RssGet(c *gin.Context) {
 	}
 	rss, err := feed.ToRss()
 	if err != nil {
-		config.Logger.Error("feed.ToRss err", "err", err)
+		log.Error("feed.ToRss err", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

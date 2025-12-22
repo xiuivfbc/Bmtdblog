@@ -12,6 +12,7 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
 	"github.com/xiuivfbc/bmtdblog/internal/api/upload"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
@@ -28,26 +29,26 @@ func Backup(c ...*gin.Context) (err error) {
 
 	// 日志输出（支持有无上下文）
 	if len(c) > 0 && c[0] != nil {
-		config.Logger.Debug("start backup...")
+		log.Debug("start backup...")
 	} else {
-		config.Logger.Debug("start backup...")
+		log.Debug("start backup...")
 	}
 
 	dsn := cfg.Database.Dsn
 	host, port, username, password, database, err := dao.ParseMySQLDSN(dsn)
 	if err != nil {
-		config.Logger.Error("parse mysql dsn error", "err", err)
+		log.Error("parse mysql dsn error", "err", err)
 		return
 	}
 	bodyBytes, err = dao.Mysqldump(host, port, username, password, database)
 	if err != nil {
-		config.Logger.Error("mysqldump error", "err", err)
+		log.Error("mysqldump error", "err", err)
 		return
 	}
 	if len(cfg.Backup.BackupKey) > 0 {
 		bodyBytes, err = common.Encrypt(bodyBytes, []byte(cfg.Backup.BackupKey))
 		if err != nil {
-			config.Logger.Error("encrypt backup file error", "err", err)
+			log.Error("encrypt backup file error", "err", err)
 			return
 		}
 	}
@@ -62,9 +63,9 @@ func Backup(c ...*gin.Context) (err error) {
 	fileName := fmt.Sprintf("Bmtdblog_%s.sql", common.GetCurrentTime().Format("20060102150405"))
 	err = uploader.Put(context.Background(), &ret, token, fileName, bytes.NewReader(bodyBytes), int64(len(bodyBytes)), &putExtra)
 	if err != nil {
-		config.Logger.Debug("backup error", "err", err)
+		log.Debug("backup error", "err", err)
 		return
 	}
-	config.Logger.Debug("backup successfully.")
+	log.Debug("backup successfully.")
 	return err
 }

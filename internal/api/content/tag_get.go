@@ -9,6 +9,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
@@ -32,13 +33,13 @@ func TagGet(c *gin.Context) {
 	}
 	posts, err = models.ListPublishedPost(tagName, pageIndex, pageSize)
 	if err != nil {
-		config.Logger.Error("models.ListPublishedPost error", "err", err)
+		log.Error("models.ListPublishedPost error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	total, err = models.CountPostByTag(tagName)
 	if err != nil {
-		config.Logger.Error("models.CountPostByTag error", "err", err)
+		log.Error("models.CountPostByTag error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

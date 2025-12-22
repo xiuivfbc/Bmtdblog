@@ -1,7 +1,6 @@
 *.db
-/slog/*
-!/slog/.gitkeep
 /request.token
 /configs/conf_mine.toml
 /bmtdblog.exe
 /docs/docs
+/Bmtdblog.log

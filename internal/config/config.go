@@ -1,8 +1,6 @@
 package config
 
 import (
-	"log/slog"
-
 	"github.com/spf13/viper"
 )
 
@@ -30,6 +28,7 @@ type Configuration struct {
 	TLS           TLSConfig           `mapstructure:"tls"`
 	Navigators    []Navigator         `mapstructure:"navigators"`
 	Backup        Backup              `mapstructure:"backup"`
+	Zap           ZapConfig           `mapstructure:"zap"`
 }
 
 // Database 数据库配置
@@ -128,11 +127,20 @@ type TLSConfig struct {
 	CertDir  string `mapstructure:"cert_dir"`
 }
 
+// ZapConfig zap日志配置
+type ZapConfig struct {
+	Enabled       bool   `mapstructure:"enabled"`
+	Level         string `mapstructure:"level"`
+	EnableTraceID bool   `mapstructure:"enable_trace_id"`
+	Encoding      string `mapstructure:"encoding"`
+	OutputPath    string `mapstructure:"output_path"`
+	MaxAge        int    `mapstructure:"max_age"`
+	MaxBackups    int    `mapstructure:"max_backups"`
+	MaxSize       int    `mapstructure:"max_size"`
+}
+
 // 全局变量
-var (
-	Logger        *slog.Logger
-	configuration *Configuration
-)
+var configuration *Configuration
 
 // LoadConfiguration 加载配置文件
 func LoadConfiguration(path string) error {
@@ -156,11 +164,6 @@ func LoadConfiguration(path string) error {
 // GetConfiguration 获取配置
 func GetConfiguration() *Configuration {
 	return configuration
-}
-
-// SetLogger 设置日志记录器
-func SetLogger(logger *slog.Logger) {
-	Logger = logger
 }
 
 // GetElasticsearchIndexName 获取ES索引名

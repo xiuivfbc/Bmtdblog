@@ -3,11 +3,11 @@ package dao
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
@@ -39,7 +39,7 @@ func InitElasticsearch() error {
 	}
 	defer res.Body.Close()
 
-	config.Logger.Info("ElasticSearch连接成功")
+	log.Info("ElasticSearch连接成功")
 
 	return nil
 }
@@ -59,7 +59,7 @@ func CreatePostIndex(indexName string) error {
 
 	// 如果索引已存在，跳过创建
 	if res.StatusCode == 200 {
-		slog.Info("索引已存在", "index", indexName)
+		log.Info("索引已存在", "index", indexName)
 		return nil
 	}
 
@@ -126,7 +126,7 @@ func CreatePostIndex(indexName string) error {
 		return fmt.Errorf("创建索引失败: %s", res.String())
 	}
 
-	slog.Info("索引创建成功", "index", indexName)
+	log.Info("索引创建成功", "index", indexName)
 	return nil
 }
 

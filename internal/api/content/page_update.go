@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
-	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
@@ -24,7 +24,7 @@ func PageUpdate(c *gin.Context) {
 	page.ID = id
 	err = page.Update()
 	if err != nil {
-		config.Logger.Error("page.Update error", "err", err)
+		log.Error("page.Update error", "err", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

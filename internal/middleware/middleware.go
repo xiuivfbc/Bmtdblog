@@ -6,6 +6,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
@@ -37,7 +38,7 @@ func AuthRequired(adminScope bool) gin.HandlerFunc {
 				return
 			}
 		}
-		config.Logger.Warn("User not authorized to visit", "uri", c.Request.RequestURI)
+		log.Warn("User not authorized to visit", "uri", c.Request.RequestURI)
 		c.HTML(http.StatusForbidden, "errors/error.html", gin.H{
 			"message": "Forbidden!",
 		})

@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 )
 
 // EmailTask 邮件任务结构
@@ -105,40 +105,40 @@ func checkRedisPersistenceConfig() error {
 	// 使用INFO命令获取持久化信息
 	info, err := Redis.client.Info(ctx, "persistence").Result()
 	if err != nil {
-		slog.Warn("无法获取Redis持久化信息", "error", err)
+		log.Warn("无法获取Redis持久化信息", "error", err)
 		return err
 	}
 
 	// 解析AOF状态
 	aofEnabled := strings.Contains(info, "aof_enabled:1")
 	if aofEnabled {
-		slog.Info("✓ Redis AOF持久化已启用")
+		log.Info("✓ Redis AOF持久化已启用")
 
 		// 检查AOF同步策略
 		if strings.Contains(info, "aof_fsync_pending:0") {
-			slog.Info("✓ Redis AOF同步正常")
+			log.Info("✓ Redis AOF同步正常")
 		}
 	} else {
-		slog.Warn("⚠ Redis AOF持久化未启用，邮件队列数据可能在重启后丢失")
-		slog.Info("💡 建议设置: appendonly yes, appendfsync everysec")
+		log.Warn("⚠ Redis AOF持久化未启用，邮件队列数据可能在重启后丢失")
+		log.Info("💡 建议设置: appendonly yes, appendfsync everysec")
 	}
 
 	// 检查RDB状态
 	if strings.Contains(info, "rdb_changes_since_last_save:") {
-		slog.Info("✓ Redis RDB快照功能可用")
+		log.Info("✓ Redis RDB快照功能可用")
 	}
 
 	// 解析最后保存时间
 	if lastSave := parseLastSaveTime(info); lastSave != "" {
-		slog.Info("ℹ Redis最后保存时间", "time", lastSave)
+		log.Info("ℹ Redis最后保存时间", "time", lastSave)
 	}
 
 	// 给出持久化建议
 	if !aofEnabled {
-		slog.Warn("📋 Redis持久化建议:")
-		slog.Warn("   1. 启用AOF: appendonly yes")
-		slog.Warn("   2. 设置同步策略: appendfsync everysec")
-		slog.Warn("   3. 启用混合持久化: aof-use-rdb-preamble yes")
+		log.Warn("📋 Redis持久化建议:")
+		log.Warn("   1. 启用AOF: appendonly yes")
+		log.Warn("   2. 设置同步策略: appendfsync everysec")
+		log.Warn("   3. 启用混合持久化: aof-use-rdb-preamble yes")
 	}
 
 	return nil
@@ -165,7 +165,7 @@ func GetRedisPersistenceStatus() map[string]interface{} {
 	// 使用INFO命令获取持久化状态
 	info, err := Redis.client.Info(ctx, "persistence").Result()
 	if err != nil {
-		slog.Warn("无法获取Redis持久化状态", "error", err)
+		log.Warn("无法获取Redis持久化状态", "error", err)
 		return status
 	}
 
@@ -240,7 +240,7 @@ func (eq *EmailQueue) startWorker(workerID int) {
 	defer eq.workerMutex.Unlock()
 
 	if len(eq.workers) >= eq.maxWorkers {
-		slog.Warn("已达到最大Worker数量，无法启动更多Worker",
+		log.Warn("已达到最大Worker数量，无法启动更多Worker",
 			"current", len(eq.workers),
 			"max", eq.maxWorkers)
 		return
@@ -269,7 +269,7 @@ func (eq *EmailQueue) startWorker(workerID int) {
 	eq.wg.Add(1)
 	go worker.Start()
 
-	slog.Info("启动新的EmailWorker",
+	log.Info("启动新的EmailWorker",
 		"worker_id", workerID,
 		"current_workers", eq.currentWorkers)
 }
@@ -281,7 +281,7 @@ func (eq *EmailQueue) stopWorker(workerID int) {
 
 	worker, exists := eq.workers[workerID]
 	if !exists {
-		slog.Warn("Worker不存在", "worker_id", workerID)
+		log.Warn("Worker不存在", "worker_id", workerID)
 		return
 	}
 
@@ -296,7 +296,7 @@ func (eq *EmailQueue) stopWorker(workerID int) {
 	// 从workers map中移除
 	delete(eq.workers, workerID)
 
-	slog.Info("停止EmailWorker",
+	log.Info("停止EmailWorker",
 		"worker_id", workerID,
 		"current_workers", len(eq.workers))
 }
@@ -305,13 +305,13 @@ func (eq *EmailQueue) stopWorker(workerID int) {
 func InitEmailQueue(workerCount int) error {
 	Redis := GetRedis()
 	if Redis == nil || !Redis.IsAvailable() {
-		slog.Warn("Redis不可用，邮件队列将使用同步模式")
+		log.Warn("Redis不可用，邮件队列将使用同步模式")
 		return nil
 	}
 
 	// 检查Redis持久化配置
 	if err := checkRedisPersistenceConfig(); err != nil {
-		slog.Warn("Redis持久化配置检查失败", "error", err, "建议", "检查AOF和RDB配置")
+		log.Warn("Redis持久化配置检查失败", "error", err, "建议", "检查AOF和RDB配置")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -361,7 +361,7 @@ func InitEmailQueue(workerCount int) error {
 	EmailQueueInstance.wg.Add(1)
 	go EmailQueueInstance.monitorAndScale()
 
-	slog.Info("动态邮件队列已启动",
+	log.Info("动态邮件队列已启动",
 		"min_workers", EmailQueueInstance.minWorkers,
 		"max_workers", EmailQueueInstance.maxWorkers,
 		"current_workers", EmailQueueInstance.currentWorkers,
@@ -396,9 +396,9 @@ func (eq *EmailQueue) PushWithDedupe(to, subject, body string) error {
 	// 2. 检查是否重复（今日内容去重）
 	exists, err := eq.redis.client.Exists(eq.ctx, dedupeKey).Result()
 	if err != nil {
-		slog.Warn("去重检查失败，继续发送", "error", err, "to", to)
+		log.Warn("去重检查失败，继续发送", "error", err, "to", to)
 	} else if exists > 0 {
-		slog.Info("邮件去重生效，跳过发送",
+		log.Info("邮件去重生效，跳过发送",
 			"to", to,
 			"subject", subject,
 			"dedupe_key", hashPart)
@@ -412,7 +412,7 @@ func (eq *EmailQueue) PushWithDedupe(to, subject, body string) error {
 	// 检查任务是否已在处理
 	taskExists, err := eq.redis.client.Exists(eq.ctx, taskDedupeKey).Result()
 	if err == nil && taskExists > 0 {
-		slog.Info("任务正在处理中，跳过", "task_id", taskID)
+		log.Info("任务正在处理中，跳过", "task_id", taskID)
 		return nil
 	}
 
@@ -452,11 +452,11 @@ func (eq *EmailQueue) Push(task EmailTask) error {
 	_, err = eq.redis.client.LPush(eq.ctx, eq.queueKey, taskJSON).Result()
 	if err != nil {
 		// Redis操作失败，降级为同步发送
-		slog.Error("推送邮件任务到队列失败，降级为同步发送", "err", err)
+		log.Error("推送邮件任务到队列失败，降级为同步发送", "err", err)
 		return eq.sendFunc(task.To, task.Subject, task.Body)
 	}
 
-	slog.Debug("邮件任务已推入队列", "task_id", task.ID, "to", task.To)
+	log.Debug("邮件任务已推入队列", "task_id", task.ID, "to", task.To)
 	return nil
 }
 
@@ -483,11 +483,11 @@ func (eq *EmailQueue) PushWithDelay(task EmailTask, delaySeconds int) error {
 
 	if err != nil {
 		// Redis操作失败，降级为同步发送
-		slog.Error("推送延迟邮件任务到队列失败，降级为同步发送", "err", err)
+		log.Error("推送延迟邮件任务到队列失败，降级为同步发送", "err", err)
 		return eq.sendFunc(task.To, task.Subject, task.Body)
 	}
 
-	slog.Debug("延迟邮件任务已推入队列",
+	log.Debug("延迟邮件任务已推入队列",
 		"task_id", task.ID,
 		"to", task.To,
 		"delay_seconds", delaySeconds,
@@ -499,17 +499,17 @@ func (eq *EmailQueue) PushWithDelay(task EmailTask, delaySeconds int) error {
 func (ew *EmailWorker) Start() {
 	defer ew.queue.wg.Done()
 
-	slog.Info("EmailWorker启动", "worker_id", ew.id)
+	log.Info("EmailWorker启动", "worker_id", ew.id)
 
 	for {
 		select {
 		case <-ew.ctx.Done():
-			slog.Info("EmailWorker停止", "worker_id", ew.id)
+			log.Info("EmailWorker停止", "worker_id", ew.id)
 			return
 		default:
 			if err := ew.ProcessTask(); err != nil {
 				// 处理错误，避免worker崩溃
-				slog.Error("EmailWorker处理任务出错",
+				log.Error("EmailWorker处理任务出错",
 					"worker_id", ew.id,
 					"err", err)
 				time.Sleep(1 * time.Second) // 错误后稍微等待
@@ -554,7 +554,7 @@ func (ew *EmailWorker) ProcessTask() error {
 	// 解析任务
 	var task EmailTask
 	if err := json.Unmarshal([]byte(result[1]), &task); err != nil {
-		slog.Error("反序列化邮件任务失败", "err", err, "data", result[1])
+		log.Error("反序列化邮件任务失败", "err", err, "data", result[1])
 		// 任务完成，更新状态
 		ew.mutex.Lock()
 		ew.isRunning = false
@@ -564,7 +564,7 @@ func (ew *EmailWorker) ProcessTask() error {
 	}
 
 	// 执行邮件发送
-	slog.Debug("EmailWorker开始处理任务",
+	log.Debug("EmailWorker开始处理任务",
 		"worker_id", ew.id,
 		"task_id", task.ID,
 		"to", task.To)
@@ -585,7 +585,7 @@ func (ew *EmailWorker) ProcessTask() error {
 	ew.lastActive = time.Now()
 	ew.mutex.Unlock()
 
-	slog.Info("邮件发送成功",
+	log.Info("邮件发送成功",
 		"worker_id", ew.id,
 		"task_id", task.ID,
 		"to", task.To)
@@ -600,7 +600,7 @@ func (ew *EmailWorker) sendEmail(task EmailTask) error {
 		taskSentKey := fmt.Sprintf("%s:task:%s", ew.queue.sentKey, task.ID)
 		exists, err := ew.queue.redis.client.Exists(ew.ctx, taskSentKey).Result()
 		if err == nil && exists > 0 {
-			slog.Info("任务已发送过，跳过", "task_id", task.ID, "worker_id", ew.id)
+			log.Info("任务已发送过，跳过", "task_id", task.ID, "worker_id", ew.id)
 			return nil
 		}
 	}
@@ -609,7 +609,7 @@ func (ew *EmailWorker) sendEmail(task EmailTask) error {
 	if task.DedupeKey != "" {
 		exists, err := ew.queue.redis.client.Exists(ew.ctx, task.DedupeKey).Result()
 		if err == nil && exists > 0 {
-			slog.Info("内容已发送过，跳过",
+			log.Info("内容已发送过，跳过",
 				"content_hash", task.ContentHash[:8],
 				"worker_id", ew.id)
 			return nil
@@ -624,14 +624,14 @@ func (ew *EmailWorker) sendEmail(task EmailTask) error {
 		ew.markEmailAsSent(task)
 		ew.queue.incrementProcessedCount()
 
-		slog.Info("邮件发送成功",
+		log.Info("邮件发送成功",
 			"worker_id", ew.id,
 			"task_id", task.ID,
 			"to", task.To,
 			"content_hash", task.ContentHash[:8])
 	} else {
 		ew.queue.incrementFailedCount()
-		slog.Error("邮件发送失败",
+		log.Error("邮件发送失败",
 			"worker_id", ew.id,
 			"task_id", task.ID,
 			"to", task.To,
@@ -663,7 +663,7 @@ func (ew *EmailWorker) markEmailAsSent(task EmailTask) {
 
 // handleFailedTask 处理失败的任务
 func (ew *EmailWorker) handleFailedTask(task EmailTask, err error) error {
-	slog.Error("邮件发送失败",
+	log.Error("邮件发送失败",
 		"worker_id", ew.id,
 		"task_id", task.ID,
 		"to", task.To,
@@ -676,7 +676,7 @@ func (ew *EmailWorker) handleFailedTask(task EmailTask, err error) error {
 		// 🚀 优化：使用延迟队列代替Sleep，不阻塞Worker
 		// 延迟策略：30秒、60秒、90秒（递增）
 		delaySeconds := task.Retry * 30
-		slog.Info("任务将延迟重试",
+		log.Info("任务将延迟重试",
 			"task_id", task.ID,
 			"retry_count", task.Retry,
 			"delay_seconds", delaySeconds)
@@ -698,17 +698,17 @@ func (ew *EmailWorker) moveToFailedQueue(task EmailTask, err error) error {
 
 	failedJSON, jsonErr := json.Marshal(failedTask)
 	if jsonErr != nil {
-		slog.Error("序列化失败任务出错", "err", jsonErr)
+		log.DaemonError("email_queue", fmt.Sprintf("%d", ew.id), "序列化失败任务出错", "err", jsonErr)
 		return jsonErr
 	}
 
 	_, redisErr := ew.queue.redis.client.LPush(ew.ctx, ew.queue.failKey, failedJSON).Result()
 	if redisErr != nil {
-		slog.Error("移动失败任务到失败队列出错", "err", redisErr)
+		log.DaemonError("email_queue", fmt.Sprintf("%d", ew.id), "移动失败任务到失败队列出错", "err", redisErr)
 		return redisErr
 	}
 
-	slog.Warn("邮件任务已移入失败队列",
+	log.DaemonWarn("email_queue", fmt.Sprintf("%d", ew.id), "邮件任务已移入失败队列",
 		"task_id", task.ID,
 		"worker_id", ew.id,
 		"to", task.To)
@@ -720,7 +720,7 @@ func (ew *EmailWorker) moveToFailedQueue(task EmailTask, err error) error {
 func (eq *EmailQueue) processDelayedTasks() {
 	defer eq.wg.Done()
 
-	slog.Info("延迟任务处理器启动")
+	log.DaemonInfo("email_queue", "delayed_processor", "延迟任务处理器启动")
 
 	ticker := time.NewTicker(5 * time.Second) // 每5秒检查一次
 	defer ticker.Stop()
@@ -728,11 +728,11 @@ func (eq *EmailQueue) processDelayedTasks() {
 	for {
 		select {
 		case <-eq.ctx.Done():
-			slog.Info("延迟任务处理器停止")
+			log.DaemonInfo("email_queue", "delayed_processor", "延迟任务处理器停止")
 			return
 		case <-ticker.C:
 			if err := eq.moveExpiredTasksToQueue(); err != nil {
-				slog.Error("处理延迟任务出错", "err", err)
+				log.DaemonError("email_queue", "delayed_processor", "处理延迟任务出错", "err", err)
 			}
 		}
 	}
@@ -763,7 +763,7 @@ func (eq *EmailQueue) moveExpiredTasksToQueue() error {
 		// 原子操作：从延迟队列移除
 		removed, err := eq.redis.client.ZRem(eq.ctx, eq.delayedKey, taskJSON).Result()
 		if err != nil {
-			slog.Error("从延迟队列移除任务失败", "err", err, "task", taskJSON)
+			log.DaemonError("email_queue", "delayed_processor", "从延迟队列移除任务失败", "err", err, "task", taskJSON)
 			continue
 		}
 
@@ -775,26 +775,26 @@ func (eq *EmailQueue) moveExpiredTasksToQueue() error {
 		// 解析任务
 		var task EmailTask
 		if err := json.Unmarshal([]byte(taskJSON), &task); err != nil {
-			slog.Error("反序列化延迟任务失败", "err", err, "task", taskJSON)
+			log.DaemonError("email_queue", "delayed_processor", "反序列化延迟任务失败", "err", err, "task", taskJSON)
 			continue
 		}
 
 		// 推入正常队列
 		if err := eq.Push(task); err != nil {
-			slog.Error("将延迟任务推入正常队列失败", "err", err, "task_id", task.ID)
+			log.DaemonError("email_queue", "delayed_processor", "将延迟任务推入正常队列失败", "err", err, "task_id", task.ID)
 			// 如果推入失败，可以考虑重新放回延迟队列
 			continue
 		}
 
 		processedCount++
-		slog.Debug("延迟任务已移入正常队列",
+		log.DaemonDebug("email_queue", "delayed_processor", "延迟任务已移入正常队列",
 			"task_id", task.ID,
 			"to", task.To,
 			"original_delay", task.Retry*30)
 	}
 
 	if processedCount > 0 {
-		slog.Info("处理延迟任务完成", "processed_count", processedCount)
+		log.DaemonInfo("email_queue", "delayed_processor", "处理延迟任务完成", "processed_count", processedCount)
 	}
 
 	return nil
@@ -809,7 +809,7 @@ func (eq *EmailQueue) monitorAndScale() {
 	for {
 		select {
 		case <-eq.ctx.Done():
-			slog.Info("自动扩缩容监控器停止")
+			log.Info("自动扩缩容监控器停止")
 			return
 		case <-ticker.C:
 			eq.checkAndScale()
@@ -825,11 +825,11 @@ func (eq *EmailQueue) checkAndScale() {
 	// 获取当前队列长度
 	queueLength, err := eq.redis.client.LLen(eq.ctx, eq.queueKey).Result()
 	if err != nil {
-		slog.Error("获取队列长度失败", "err", err)
+		log.DaemonError("email_queue", "main", "获取队列长度失败", "err", err)
 		return
 	}
 
-	slog.Debug("队列状态检查",
+	log.DaemonDebug("email_queue", "main", "队列状态检查",
 		"queue_length", queueLength,
 		"current_workers", len(eq.workers),
 		"min_workers", eq.minWorkers,
@@ -841,7 +841,7 @@ func (eq *EmailQueue) checkAndScale() {
 		eq.workerIDCounter = newWorkerID
 
 		eq.startWorker(newWorkerID)
-		slog.Info("自动扩容worker",
+		log.Info("自动扩容worker",
 			"new_worker_id", newWorkerID,
 			"total_workers", len(eq.workers),
 			"queue_length", queueLength)
@@ -868,7 +868,7 @@ func (eq *EmailQueue) checkAndScale() {
 		// 如果找到空闲超过idleTimeout的worker，则停止它
 		if oldestWorker != nil && time.Since(oldestTime) > eq.idleTimeout {
 			eq.stopWorker(oldestID)
-			slog.Info("自动缩容worker",
+			log.Info("自动缩容worker",
 				"stopped_worker_id", oldestID,
 				"total_workers", len(eq.workers),
 				"queue_length", queueLength,
@@ -880,7 +880,7 @@ func (eq *EmailQueue) checkAndScale() {
 // Stop 停止邮件队列
 func (eq *EmailQueue) Stop() {
 	if eq.cancel != nil {
-		slog.Info("正在停止邮件队列...")
+		log.Info("正在停止邮件队列...")
 
 		// 发送停止信号
 		eq.cancel()
@@ -894,9 +894,9 @@ func (eq *EmailQueue) Stop() {
 
 		select {
 		case <-done:
-			slog.Info("邮件队列已正常停止")
+			log.Info("邮件队列已正常停止")
 		case <-time.After(10 * time.Second):
-			slog.Warn("邮件队列停止超时，强制退出")
+			log.Warn("邮件队列停止超时，强制退出")
 		}
 	}
 }
@@ -947,10 +947,10 @@ func (eq *EmailQueue) GetQueueStats() (map[string]interface{}, error) {
 // StopEmailQueue 停止邮件队列
 func StopEmailQueue() {
 	if EmailQueueInstance != nil {
-		slog.Info("正在停止邮件队列...")
+		log.DaemonInfo("email_queue", "main", "正在停止邮件队列...")
 		EmailQueueInstance.cancel()
 		EmailQueueInstance.wg.Wait()
-		slog.Info("邮件队列已停止")
+		log.DaemonInfo("email_queue", "main", "邮件队列已停止")
 	}
 }
 
@@ -994,7 +994,7 @@ func (eq *EmailQueue) RetryFailedEmails() (int, error) {
 		// 解析失败任务
 		var failedTask map[string]interface{}
 		if err := json.Unmarshal([]byte(result[1]), &failedTask); err != nil {
-			slog.Error("解析失败任务失败", "err", err)
+			log.Error("解析失败任务失败", "err", err)
 			continue
 		}
 
@@ -1006,20 +1006,20 @@ func (eq *EmailQueue) RetryFailedEmails() (int, error) {
 
 		taskJSON, err := json.Marshal(taskData)
 		if err != nil {
-			slog.Error("序列化任务失败", "err", err)
+			log.Error("序列化任务失败", "err", err)
 			continue
 		}
 
 		var task EmailTask
 		if err := json.Unmarshal(taskJSON, &task); err != nil {
-			slog.Error("反序列化任务失败", "err", err)
+			log.Error("反序列化任务失败", "err", err)
 			continue
 		}
 
 		// 重置重试次数并重新入队
 		task.Retry = 0
 		if err := eq.Push(task); err != nil {
-			slog.Error("重新入队失败", "err", err)
+			log.Error("重新入队失败", "err", err)
 			continue
 		}
 
@@ -1054,6 +1054,6 @@ func (eq *EmailQueue) ClearFailedEmails() (int, error) {
 func sendEmailSync(to, subject, body string) error {
 	// 暂时返回nil，避免循环导入
 	// 实际发送逻辑将在controllers层调用
-	slog.Debug("同步发送邮件", "to", to, "subject", subject)
+	log.Debug("同步发送邮件", "to", to, "subject", subject)
 	return nil
 }

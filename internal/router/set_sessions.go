@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 )
 
@@ -18,7 +19,7 @@ func setSessions(router *gin.Engine) {
 
 	// 检查是否启用Redis
 	if cfg.Redis.Enabled {
-		config.Logger.Info("使用Redis存储Session", "addr", cfg.Redis.Addr)
+		log.Info("使用Redis存储Session", "addr", cfg.Redis.Addr)
 
 		// 创建Redis存储
 		if cfg.Redis.Password != "" {
@@ -44,14 +45,14 @@ func setSessions(router *gin.Engine) {
 		}
 
 		if err != nil {
-			config.Logger.Error("Redis Session存储初始化失败，回退到Cookie存储", "error", err)
+			log.Error("Redis Session存储初始化失败，回退到Cookie存储", "error", err)
 			// 回退到Cookie存储
 			store = cookie.NewStore([]byte(cfg.SessionSecret))
 		} else {
-			config.Logger.Info("Redis Session存储初始化成功")
+			log.Info("Redis Session存储初始化成功")
 		}
 	} else {
-		config.Logger.Info("使用Cookie存储Session")
+		log.Info("使用Cookie存储Session")
 		// 使用Cookie存储
 		store = cookie.NewStore([]byte(cfg.SessionSecret))
 	}

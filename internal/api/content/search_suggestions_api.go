@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
@@ -19,7 +19,7 @@ func SearchSuggestionsAPI(c *gin.Context) {
 
 	suggestions, err := models.GetSearchSuggestions(prefix, 10)
 	if err != nil {
-		config.Logger.Error("获取搜索建议失败", "error", err, "prefix", prefix)
+		log.Error("获取搜索建议失败", "error", err, "prefix", prefix)
 		c.JSON(http.StatusOK, gin.H{"suggestions": []string{}})
 		return
 	}

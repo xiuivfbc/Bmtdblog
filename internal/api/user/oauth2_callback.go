@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
-	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
@@ -29,7 +29,7 @@ func Oauth2Callback(c *gin.Context) {
 	session.Save()
 	token, err := exchangeTokenByCode(code)
 	if err != nil {
-		config.Logger.Error("exchangeTokenByCode error", "err", err)
+		log.Error("exchangeTokenByCode error", "err", err)
 		c.Redirect(http.StatusMovedPermanently, "/signin")
 		return
 	}
@@ -37,7 +37,7 @@ func Oauth2Callback(c *gin.Context) {
 	userInfo, err = getGithubUserInfoByAccessToken(token)
 	fmt.Println(userInfo)
 	if err != nil {
-		config.Logger.Error("getGithubUserInfoByAccessToken error", "err", err)
+		log.Error("getGithubUserInfoByAccessToken error", "err", err)
 		c.Redirect(http.StatusMovedPermanently, "/signin")
 		return
 	}

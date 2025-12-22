@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
-	"github.com/xiuivfbc/bmtdblog/internal/config"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
@@ -17,7 +17,7 @@ func LinkGet(c *gin.Context) {
 	}
 	link, err := models.GetLinkById(id)
 	if err != nil {
-		config.Logger.Error("models.GetLinkById error", "err", err)
+		log.Error("models.GetLinkById error", "err", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

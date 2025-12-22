@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xiuivfbc/bmtdblog/internal/common"
+	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 	"github.com/xiuivfbc/bmtdblog/internal/config"
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
@@ -40,10 +41,10 @@ func SearchGet(c *gin.Context) {
 
 	// 执行搜索
 	fmt.Printf("开始搜索: keyword=%s, page=%d, sort=%s\n", keyword, page, sortBy)
-	config.Logger.Debug("开始搜索", "keyword", keyword, "page", page, "sort", sortBy)
+	log.Debug("开始搜索", "keyword", keyword, "page", page, "sort", sortBy)
 	searchResp, err := models.SearchPosts(req)
 	if err != nil {
-		config.Logger.Error("搜索失败", "error", err, "keyword", keyword)
+		log.Error("搜索失败", "error", err, "keyword", keyword)
 		c.HTML(http.StatusOK, "search/results.html", gin.H{
 			"keyword": keyword,
 			"error":   "搜索服务暂时不可用，请稍后重试",
@@ -56,7 +57,7 @@ func SearchGet(c *gin.Context) {
 	// 记录搜索日志（用于分析热门搜索词）
 	go recordSearchLog(keyword, int(searchResp.Total))
 
-	config.Logger.Debug("搜索完成", "keyword", keyword, "results", len(searchResp.Posts), "total", searchResp.Total)
+	log.Debug("搜索完成", "keyword", keyword, "results", len(searchResp.Posts), "total", searchResp.Total)
 
 	user, _ := c.Get(common.ContextUserKey)
 	c.HTML(http.StatusOK, "search/results.html", gin.H{
