@@ -119,7 +119,7 @@ func checkRedisPersistenceConfig() error {
 			log.Info("✓ Redis AOF同步正常")
 		}
 	} else {
-		log.Warn("⚠ Redis AOF持久化未启用，邮件队列数据可能在重启后丢失")
+		log.Info("⚠ Redis AOF持久化未启用，邮件队列数据可能在重启后丢失")
 		log.Info("💡 建议设置: appendonly yes, appendfsync everysec")
 	}
 
@@ -135,10 +135,10 @@ func checkRedisPersistenceConfig() error {
 
 	// 给出持久化建议
 	if !aofEnabled {
-		log.Warn("📋 Redis持久化建议:")
-		log.Warn("   1. 启用AOF: appendonly yes")
-		log.Warn("   2. 设置同步策略: appendfsync everysec")
-		log.Warn("   3. 启用混合持久化: aof-use-rdb-preamble yes")
+		log.Info("📋 Redis持久化建议:")
+		log.Info("   1. 启用AOF: appendonly yes")
+		log.Info("   2. 设置同步策略: appendfsync everysec")
+		log.Info("   3. 启用混合持久化: aof-use-rdb-preamble yes")
 	}
 
 	return nil
