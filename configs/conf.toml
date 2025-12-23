@@ -10,8 +10,16 @@ public = 'front/static'
 view = 'front/views/**/*.html'
 dir = '.'
 
-[database]
-dsn = 'bmtdblog.db'
+[mysql]
+user = 'root'
+password = 'password'
+host = 'localhost'
+port = '3306'
+db_name = 'bmtdblog'
+log_level = 3
+max_idle_conns = 10
+max_open_conns = 100
+max_idle_time = 15
 
 [redis]
 enabled = false

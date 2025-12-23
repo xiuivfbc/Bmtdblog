@@ -67,8 +67,8 @@ func main() {
 		panic(err)
 	}
 
-	//database
-	db, err = models.InitDB()
+	// mysql 初始化数据库
+	dao.InitMysql(config.GetConfiguration().Mysql)
 	if err != nil {
 		log.Error("err open databases", "err", err)
 		if f != nil {
@@ -76,9 +76,16 @@ func main() {
 		}
 		os.Exit(1)
 	}
+	if err = models.RegisterModels(dao.GetMysqlDB()); err != nil {
+		log.Error("err register models", "err", err)
+		if f != nil {
+			f.Close()
+		}
+		os.Exit(1)
+	}
 
 	// Redis缓存初始化
-	if err := dao.InitRedis(); err != nil {
+	if err := dao.InitRedis(config.GetConfiguration().Redis); err != nil {
 		log.Error("Redis initialization failed", "err", err)
 		// Redis失败不退出程序，允许降级运行
 	}

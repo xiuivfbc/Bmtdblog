@@ -17,7 +17,7 @@ type Configuration struct {
 	PublicDir     string              `mapstructure:"public"`
 	ViewDir       string              `mapstructure:"view"`
 	Dir           string              `mapstructure:"dir"`
-	Database      Database            `mapstructure:"database"`
+	Mysql         Mysql               `mapstructure:"mysql"`
 	Seo           Seo                 `mapstructure:"seo"`
 	Qiniu         Qiniu               `mapstructure:"qiniu"`
 	Smms          Smms                `mapstructure:"smms"`
@@ -31,9 +31,17 @@ type Configuration struct {
 	Zap           ZapConfig           `mapstructure:"zap"`
 }
 
-// Database 数据库配置
-type Database struct {
-	Dsn string `mapstructure:"dsn"`
+// Mysql 数据库配置
+type Mysql struct {
+	User         string `mapstructure:"user"`
+	Password     string `mapstructure:"password"`
+	Host         string `mapstructure:"host"`
+	Port         string `mapstructure:"port"`
+	DbName       string `mapstructure:"db_name"`
+	LogLevel     int    `mapstructure:"log_level"`
+	MaxIdleConns int    `mapstructure:"max_idle_conns"`
+	MaxOpenConns int    `mapstructure:"max_open_conns"`
+	MaxIdleTime  int    `mapstructure:"max_idle_time"`
 }
 
 // Seo SEO配置

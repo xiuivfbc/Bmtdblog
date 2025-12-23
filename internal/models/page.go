@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
+)
 
 type Page struct {
 	ID          uint       `gorm:"primarykey"`
@@ -13,10 +17,12 @@ type Page struct {
 }
 
 func (page *Page) Insert() error {
+	DB := dao.GetMysqlDB()
 	return DB.Create(page).Error
 }
 
 func (page *Page) Update() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(page).Updates(map[string]any{
 		"title":        page.Title,
 		"body":         page.Body,
@@ -25,17 +31,20 @@ func (page *Page) Update() error {
 }
 
 func (page *Page) UpdateView() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(page).Updates(map[string]any{
 		"view": page.View,
 	}).Error
 }
 
 func (page *Page) Delete() error {
+	DB := dao.GetMysqlDB()
 	return DB.Delete(page).Error
 }
 
 func GetPageById(id uint) (*Page, error) {
 	var page Page
+	DB := dao.GetMysqlDB()
 	err := DB.First(&page, "id = ?", id).Error
 	return &page, err
 }
@@ -49,6 +58,7 @@ func ListAllPage() ([]*Page, error) {
 }
 
 func _listPage(published bool) ([]*Page, error) {
+	DB := dao.GetMysqlDB()
 	var pages []*Page
 	var err error
 	if published {
@@ -61,6 +71,7 @@ func _listPage(published bool) ([]*Page, error) {
 
 func CountPage() int64 {
 	var count int64
+	DB := dao.GetMysqlDB()
 	DB.Model(&Page{}).Count(&count)
 	return count
 }

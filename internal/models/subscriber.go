@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
 )
 
 type Subscriber struct {
@@ -18,10 +20,12 @@ type Subscriber struct {
 }
 
 func (s *Subscriber) Insert() error {
+	DB := dao.GetMysqlDB()
 	return DB.FirstOrCreate(s, "email = ?", s.Email).Error
 }
 
 func (s *Subscriber) Update() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(s).UpdateColumns(map[string]interface{}{
 		"verify_state":    s.VerifyState,
 		"subscribe_state": s.SubscribeState,
@@ -33,6 +37,7 @@ func (s *Subscriber) Update() error {
 
 func ListSubscriber(valid bool) ([]*Subscriber, error) {
 	var subscribers []*Subscriber
+	DB := dao.GetMysqlDB()
 	db := DB.Model(&Subscriber{})
 	if valid {
 		db.Where("verify_state = ? and subscribe_state = ?", true, true)
@@ -43,24 +48,28 @@ func ListSubscriber(valid bool) ([]*Subscriber, error) {
 
 func CountSubscriber() (int64, error) {
 	var count int64
+	DB := dao.GetMysqlDB()
 	err := DB.Model(&Subscriber{}).Where("verify_state = ? and subscribe_state = ?", true, true).Count(&count).Error
 	return count, err
 }
 
 func GetSubscriberByEmail(mail string) (*Subscriber, error) {
 	var subscriber Subscriber
+	DB := dao.GetMysqlDB()
 	err := DB.First(&subscriber, "email = ?", mail).Error
 	return &subscriber, err
 }
 
 func GetSubscriberBySignature(key string) (*Subscriber, error) {
 	var subscriber Subscriber
+	DB := dao.GetMysqlDB()
 	err := DB.First(&subscriber, "signature = ?", key).Error
 	return &subscriber, err
 }
 
 func GetSubscriberById(id uint) (*Subscriber, error) {
 	var subscriber Subscriber
+	DB := dao.GetMysqlDB()
 	err := DB.First(&subscriber, id).Error
 	return &subscriber, err
 }

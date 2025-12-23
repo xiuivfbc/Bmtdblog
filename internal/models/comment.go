@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
+)
 
 type Comment struct {
 	ID        uint       `gorm:"primarykey"`
@@ -16,18 +20,22 @@ type Comment struct {
 }
 
 func (comment *Comment) Insert() error {
+	DB := dao.GetMysqlDB()
 	return DB.Create(comment).Error
 }
 
 func (comment *Comment) Update() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(comment).UpdateColumn("read_state", true).Error
 }
 
 func SetAllCommentRead() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(&Comment{}).Where("read_state = ?", false).Update("read_state", true).Error
 }
 
 func ListUnreadComment() ([]*Comment, error) {
+	DB := dao.GetMysqlDB()
 	var comments []*Comment
 	err := DB.Where("read_state = ?", false).Order("created_at desc").Find(&comments).Error
 	return comments, err
@@ -39,11 +47,13 @@ func MustListUnreadComment() []*Comment {
 }
 
 func (comment *Comment) Delete() error {
+	DB := dao.GetMysqlDB()
 	return DB.Delete(comment, "user_id = ?", comment.UserID).Error
 }
 
 func ListCommentByPostID(id uint) ([]*Comment, error) {
 	var comments []*Comment
+	DB := dao.GetMysqlDB()
 	rows, err := DB.Raw("select c.*,u.github_login_id nick_name,u.avatar_url,u.github_url from comments c inner join users u on c.user_id = u.id where c.post_id = ? order by created_at desc", id).Rows()
 	if err != nil {
 		return nil, err
@@ -59,12 +69,14 @@ func ListCommentByPostID(id uint) ([]*Comment, error) {
 
 func CountComment() int64 {
 	var count int64
+	DB := dao.GetMysqlDB()
 	DB.Model(&Comment{}).Count(&count)
 	return count
 }
 
 func CountCommentByPostID(postID uint) int {
 	var count int64
+	DB := dao.GetMysqlDB()
 	DB.Model(&Comment{}).Where("post_id = ?", postID).Count(&count)
 	return int(count)
 }

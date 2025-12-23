@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
+)
 
 type SmmsFile struct {
 	ID        uint       `gorm:"primarykey"`
@@ -18,6 +22,7 @@ type SmmsFile struct {
 }
 
 func (sf SmmsFile) Insert() (err error) {
+	DB := dao.GetMysqlDB()
 	err = DB.Create(&sf).Error
 	return
 }

@@ -20,9 +20,9 @@ func Backup(c ...*gin.Context) (err error) {
 	var (
 		ret       upload.PutRet
 		bodyBytes []byte
-		cfg       = config.GetConfiguration()
+		conf      = config.GetConfiguration()
 	)
-	if !cfg.Backup.Enabled || !cfg.Qiniu.Enabled {
+	if !conf.Backup.Enabled || !conf.Qiniu.Enabled {
 		err = errors.New("backup or qiniu not enabled")
 		return
 	}
@@ -34,19 +34,14 @@ func Backup(c ...*gin.Context) (err error) {
 		log.Debug("start backup...")
 	}
 
-	dsn := cfg.Database.Dsn
-	host, port, username, password, database, err := dao.ParseMySQLDSN(dsn)
-	if err != nil {
-		log.Error("parse mysql dsn error", "err", err)
-		return
-	}
-	bodyBytes, err = dao.Mysqldump(host, port, username, password, database)
+	bodyBytes, err = dao.Mysqldump(conf.Mysql.Host, conf.Mysql.Port, conf.Mysql.User, conf.Mysql.Password, conf.Mysql.DbName)
 	if err != nil {
 		log.Error("mysqldump error", "err", err)
 		return
 	}
-	if len(cfg.Backup.BackupKey) > 0 {
-		bodyBytes, err = common.Encrypt(bodyBytes, []byte(cfg.Backup.BackupKey))
+
+	if len(conf.Backup.BackupKey) > 0 {
+		bodyBytes, err = common.Encrypt(bodyBytes, []byte(conf.Backup.BackupKey))
 		if err != nil {
 			log.Error("encrypt backup file error", "err", err)
 			return
@@ -54,9 +49,9 @@ func Backup(c ...*gin.Context) (err error) {
 	}
 	// upload to qiniu
 	putPolicy := storage.PutPolicy{
-		Scope: cfg.Qiniu.Bucket,
+		Scope: conf.Qiniu.Bucket,
 	}
-	mac := qbox.NewMac(cfg.Qiniu.Accesskey, cfg.Qiniu.Secretkey)
+	mac := qbox.NewMac(conf.Qiniu.Accesskey, conf.Qiniu.Secretkey)
 	token := putPolicy.UploadToken(mac)
 	uploader := storage.NewFormUploader(&storage.Config{})
 	putExtra := storage.PutExtra{}

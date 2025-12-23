@@ -35,6 +35,7 @@ type QrArchive struct {
 }
 
 func (post *Post) Insert() error {
+	DB := dao.GetMysqlDB()
 	err := DB.Create(post).Error
 	if err != nil {
 		return err
@@ -63,6 +64,7 @@ func (post *Post) Insert() error {
 }
 
 func (post *Post) Update() error {
+	DB := dao.GetMysqlDB()
 	// 延迟双删策略：第一步 - 先删除缓存
 	if err := post.DelayedDoubleDel(); err != nil {
 		log.Error("Failed to initiate delayed double delete", "id", post.ID, "error", err)
@@ -93,12 +95,14 @@ func (post *Post) Update() error {
 }
 
 func (post *Post) UpdateView() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(post).Updates(map[string]interface{}{
 		"view": post.View,
 	}).Error
 }
 
 func (post *Post) Delete() error {
+	DB := dao.GetMysqlDB()
 	err := DB.Delete(post).Error
 	if err != nil {
 		return err
@@ -420,6 +424,7 @@ func ListAllPost(tag string) ([]*Post, error) {
 func _listPost(tagId string, published bool, pageIndex, pageSize int) ([]*Post, error) {
 	var posts []*Post
 	var err error
+	DB := dao.GetMysqlDB()
 	if len(tagId) > 0 {
 		var rows *sql.Rows
 		if published {
@@ -460,6 +465,7 @@ func MustListMaxReadPost() (posts []*Post) {
 }
 
 func ListMaxReadPost() (posts []*Post, err error) {
+	DB := dao.GetMysqlDB()
 	err = DB.Where("is_published = ?", true).Order("view desc").Limit(5).Find(&posts).Error
 	return
 }
@@ -473,6 +479,7 @@ func ListMaxCommentPost() (posts []*Post, err error) {
 	var (
 		rows *sql.Rows
 	)
+	DB := dao.GetMysqlDB()
 	rows, err = DB.Raw("select p.*,c.total comment_total from posts p inner join (select post_id,count(*) total from comments group by post_id) c on p.id = c.post_id order by c.total desc limit 5").Rows()
 	if err != nil {
 		return
@@ -487,6 +494,7 @@ func ListMaxCommentPost() (posts []*Post, err error) {
 }
 
 func CountPostByTag(tagId string) (count int, err error) {
+	DB := dao.GetMysqlDB()
 	if len(tagId) > 0 {
 		err = DB.Raw("select count(*) from posts p inner join post_tags pt on p.id = pt.post_id where pt.tag_id = ? and p.is_published = ?", tagId, true).Row().Scan(&count)
 	} else {
@@ -497,12 +505,14 @@ func CountPostByTag(tagId string) (count int, err error) {
 
 func CountPost() int64 {
 	var count int64
+	DB := dao.GetMysqlDB()
 	DB.Model(&Post{}).Count(&count)
 	return count
 }
 
 func GetPostById(id uint) (*Post, error) {
 	var post Post
+	DB := dao.GetMysqlDB()
 	err := DB.First(&post, "id = ?", id).Error
 	return &post, err
 }
@@ -517,6 +527,7 @@ func ListPostArchives() ([]*QrArchive, error) {
 		archives []*QrArchive
 		querySql string
 	)
+	DB := dao.GetMysqlDB()
 	querySql = `select date_format(created_at,'%Y-%m') as month,count(*) as total from posts where is_published = ? group by month order by month desc`
 	rows, err := DB.Raw(querySql, true).Rows()
 	if err != nil {
@@ -542,6 +553,7 @@ func ListPostByArchive(year, month string, pageIndex, pageSize int) ([]*Post, er
 		err      error
 		querySql string
 	)
+	DB := dao.GetMysqlDB()
 	if len(month) == 1 {
 		month = "0" + month
 	}
@@ -568,6 +580,7 @@ func ListPostByArchive(year, month string, pageIndex, pageSize int) ([]*Post, er
 
 func CountPostByArchive(year, month string) (count int, err error) {
 	var querySql string
+	DB := dao.GetMysqlDB()
 	if len(month) == 1 {
 		month = "0" + month
 	}

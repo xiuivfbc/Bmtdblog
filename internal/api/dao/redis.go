@@ -21,14 +21,15 @@ type RedisCacheClient struct {
 var redisclient *RedisCacheClient
 
 // 初始化Redis连接
-func InitRedis() error {
-	cfg := config.GetConfiguration()
+func InitRedis(conf config.RedisConfig) error {
+
+	password := conf.Password
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.Redis.Addr,
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.DB,
-		PoolSize: cfg.Redis.PoolSize,
+		Addr:     conf.Addr,
+		Password: password,
+		DB:       conf.DB,
+		PoolSize: conf.PoolSize,
 	})
 
 	// 测试连接
@@ -45,8 +46,8 @@ func InitRedis() error {
 	}
 
 	log.Info("Redis connected successfully",
-		"addr", cfg.Redis.Addr,
-		"db", cfg.Redis.DB)
+		"addr", conf.Addr,
+		"db", conf.DB)
 
 	return nil
 }

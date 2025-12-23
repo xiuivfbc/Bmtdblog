@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
 	"gorm.io/gorm"
 )
 
@@ -26,10 +27,12 @@ type User struct {
 }
 
 func (user *User) Insert() error {
+	DB := dao.GetMysqlDB()
 	return DB.Create(user).Error
 }
 
 func (user *User) Update() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(user).Updates(map[string]any{
 		"Email":         user.Email,
 		"Telephone":     user.Telephone,
@@ -48,12 +51,14 @@ func (user *User) Update() error {
 
 func GetUserByUsername(username string) (*User, error) {
 	var user User
+	DB := dao.GetMysqlDB()
 	err := DB.First(&user, "email = ?", username).Error
 	return &user, err
 }
 
 func GetUserForLogin(email string) (*User, error) {
 	var user User
+	DB := dao.GetMysqlDB()
 	err := DB.Select("id, email, password, lock_state").
 		Where("email = ?", email).
 		First(&user).Error
@@ -61,27 +66,32 @@ func GetUserForLogin(email string) (*User, error) {
 }
 
 func (user *User) FirstOrCreate() (*User, error) {
+	DB := dao.GetMysqlDB()
 	err := DB.FirstOrCreate(user, "github_login_id = ?", user.GithubLoginId).Error
 	return user, err
 }
 
 func IsGithubIdExists(githubId string, id uint) (*User, error) {
 	var user User
+	DB := dao.GetMysqlDB()
 	err := DB.First(&user, "github_login_id = ? and id != ?", githubId, id).Error
 	return &user, err
 }
 
 func GetUser(id interface{}) (*User, error) {
 	var user User
+	DB := dao.GetMysqlDB()
 	err := DB.First(&user, id).Error
 	return &user, err
 }
 
 func (user *User) UpdateProfile(avatarUrl, nickName string) error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(user).Updates(User{AvatarUrl: avatarUrl, NickName: nickName}).Error
 }
 
 func (user *User) UpdateEmail(email string) error {
+	DB := dao.GetMysqlDB()
 	if len(email) > 0 {
 		return DB.Model(user).Update("email", email).Error
 	} else {
@@ -91,6 +101,7 @@ func (user *User) UpdateEmail(email string) error {
 
 func (user *User) UpdateGithubUserInfo() error {
 	var githubLoginId interface{}
+	DB := dao.GetMysqlDB()
 	if len(user.GithubLoginId) == 0 {
 		githubLoginId = gorm.Expr("NULL")
 	} else {
@@ -104,6 +115,7 @@ func (user *User) UpdateGithubUserInfo() error {
 }
 
 func (user *User) Lock() error {
+	DB := dao.GetMysqlDB()
 	return DB.Model(user).UpdateColumns(map[string]interface{}{
 		"lock_state": user.LockState,
 	}).Error
@@ -111,6 +123,7 @@ func (user *User) Lock() error {
 
 func ListUsers() ([]*User, error) {
 	var users []*User
+	DB := dao.GetMysqlDB()
 	err := DB.Find(&users, "is_admin = ?", false).Error
 	return users, err
 }

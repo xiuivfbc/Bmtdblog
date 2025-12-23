@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/xiuivfbc/bmtdblog/internal/api/dao"
+)
 
 type Tag struct {
 	ID        uint       `gorm:"primarykey"`
@@ -11,11 +15,13 @@ type Tag struct {
 }
 
 func (tag *Tag) Insert() error {
+	DB := dao.GetMysqlDB()
 	return DB.FirstOrCreate(tag, "name = ?", tag.Name).Error
 }
 
 func ListTag() ([]*Tag, error) {
 	var tags []*Tag
+	DB := dao.GetMysqlDB()
 	rows, err := DB.Raw("select t.*,count(*) total from tags t inner join post_tags pt on t.id = pt.tag_id inner join posts p on pt.post_id = p.id where p.is_published = ? group by pt.tag_id", true).Rows()
 	if err != nil {
 		return nil, err
@@ -36,6 +42,7 @@ func MustListTag() []*Tag {
 
 func ListTagByPostId(id uint) ([]*Tag, error) {
 	var tags []*Tag
+	DB := dao.GetMysqlDB()
 	rows, err := DB.Raw("select t.* from tags t inner join post_tags pt on t.id = pt.tag_id where pt.post_id = ?", id).Rows()
 	if err != nil {
 		return nil, err
@@ -51,6 +58,7 @@ func ListTagByPostId(id uint) ([]*Tag, error) {
 
 func CountTag() int64 {
 	var count int64
+	DB := dao.GetMysqlDB()
 	DB.Model(&Tag{}).Count(&count)
 	return count
 }

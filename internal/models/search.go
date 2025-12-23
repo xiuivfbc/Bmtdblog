@@ -347,6 +347,7 @@ func searchPostsFromDB(req *SearchRequest) (*SearchResponse, error) {
 
 	var posts []*Post
 	var total int64
+	DB := dao.GetMysqlDB()
 
 	query := DB.Model(&Post{}).Where("is_published = ?", true)
 
@@ -450,6 +451,7 @@ func GetSearchSuggestions(prefix string, limit int) ([]string, error) {
 // getSearchSuggestionsFromDB 从数据库获取搜索建议
 func getSearchSuggestionsFromDB(prefix string, limit int) ([]string, error) {
 	var suggestions []string
+	DB := dao.GetMysqlDB()
 
 	err := DB.Model(&Post{}).
 		Where("is_published = ? AND title LIKE ?", true, prefix+"%").
@@ -473,6 +475,7 @@ func SyncAllPostsToES() error {
 	}
 
 	var posts []*Post
+	DB := dao.GetMysqlDB()
 	err := DB.Where("is_published = ?", true).Find(&posts).Error
 	if err != nil {
 		return fmt.Errorf("查询博文失败: %w", err)
@@ -662,6 +665,7 @@ func performIncrementalSync() {
 
 	// 获取上次同步状态
 	var syncStatus ESSyncStatus
+	DB := dao.GetMysqlDB()
 	result := DB.Order("id desc").First(&syncStatus)
 
 	var lastSyncTime time.Time
@@ -748,6 +752,7 @@ func performIncrementalSync() {
 // GetESIndexStatus 获取ES索引状态
 func GetESIndexStatus() (*ESSyncStatus, error) {
 	var syncStatus ESSyncStatus
+	DB := dao.GetMysqlDB()
 	err := DB.Order("id desc").First(&syncStatus).Error
 	if err != nil {
 		return nil, err
@@ -771,6 +776,7 @@ func ForceFullReindex() error {
 	}
 
 	// 清除同步状态
+	DB := dao.GetMysqlDB()
 	if err := DB.Where("1 = 1").Delete(&ESSyncStatus{}).Error; err != nil {
 		log.Error("清除同步状态失败", "error", err)
 	}

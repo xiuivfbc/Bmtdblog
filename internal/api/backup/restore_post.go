@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -19,7 +20,7 @@ func RestorePost(c *gin.Context) {
 		res       = gin.H{}
 		resp      *http.Response
 		bodyBytes []byte
-		cfg       = config.GetConfiguration()
+		conf      = config.GetConfiguration()
 	)
 	defer common.WriteJSON(c, res)
 	fileName = c.PostForm("fileName")
@@ -28,12 +29,12 @@ func RestorePost(c *gin.Context) {
 		res["message"] = "fileName cannot be empty."
 		return
 	}
-	if !cfg.Backup.Enabled || !cfg.Qiniu.Enabled {
+	if !conf.Backup.Enabled || !conf.Qiniu.Enabled {
 		res["message"] = "backup or qiniu not enabled"
 		return
 	}
 
-	fileUrl = cfg.Qiniu.FileServer + fileName
+	fileUrl = conf.Qiniu.FileServer + fileName
 	resp, err = http.Get(fileUrl)
 	if err != nil {
 		res["message"] = err.Error()
@@ -45,15 +46,19 @@ func RestorePost(c *gin.Context) {
 		res["message"] = err.Error()
 		return
 	}
-	if len(cfg.Backup.BackupKey) > 0 {
-		bodyBytes, err = common.Decrypt(bodyBytes, []byte(cfg.Backup.BackupKey))
+	if len(conf.Backup.BackupKey) > 0 {
+		bodyBytes, err = common.Decrypt(bodyBytes, []byte(conf.Backup.BackupKey))
 		if err != nil {
 			res["message"] = err.Error()
 			return
 		}
 	}
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=UTC",
+		conf.Mysql.User, conf.Mysql.Password, conf.Mysql.Host, conf.Mysql.Port, conf.Mysql.DbName,
+	)
 
-	err = mysqlRestore(string(bodyBytes), cfg.Database.Dsn)
+	err = mysqlRestore(string(bodyBytes), dsn)
 	if err != nil {
 		res["message"] = err.Error()
 		return
