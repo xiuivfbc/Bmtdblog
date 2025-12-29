@@ -7,18 +7,18 @@ import (
 )
 
 type SmmsFile struct {
-	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
-	FileName  string     `json:"filename"`
-	StoreName string     `json:"storename"`
-	Size      int        `json:"size"`
-	Width     int        `json:"width"`
-	Height    int        `json:"height"`
-	Hash      string     `json:"hash"`
-	Delete    string     `json:"delete"`
-	Url       string     `json:"url"`
-	Path      string     `json:"path"`
+	ID        uint       `gorm:"column:id;type:uint;primary_key;AUTO_INCREMENT" json:"id"`
+	FileName  string     `gorm:"column:file_name;type:varchar(255)" json:"filename"`
+	StoreName string     `gorm:"column:store_name;type:varchar(255)" json:"storename"`
+	Size      int        `gorm:"column:size;type:int" json:"size"`
+	Width     int        `gorm:"column:width;type:int" json:"width"`
+	Height    int        `gorm:"column:height;type:int" json:"height"`
+	Hash      string     `gorm:"column:hash;type:varchar(255)" json:"hash"`
+	Delete    string     `gorm:"column:delete;type:varchar(255)" json:"delete"`
+	Url       string     `gorm:"column:url;type:varchar(500)" json:"url"`
+	Path      string     `gorm:"column:path;type:varchar(255)" json:"path"`
+	CreatedAt *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
 func (sf SmmsFile) Insert() (err error) {

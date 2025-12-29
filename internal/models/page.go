@@ -7,13 +7,13 @@ import (
 )
 
 type Page struct {
-	ID          uint       `gorm:"primarykey"`
-	CreatedAt   *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   *time.Time `gorm:"autoUpdateTime"`
-	Title       string     `gorm:"type:text"`     // title
-	Body        string     `gorm:"type:longtext"` // body
-	View        int        // view count
-	IsPublished bool       // published or not
+	ID          uint       `gorm:"column:id;type:uint;primary_key;AUTO_INCREMENT" json:"id"`
+	Title       string     `gorm:"column:title;type:text" json:"title"`                             // title
+	Body        string     `gorm:"column:body;type:longtext" json:"body"`                           // body
+	View        int        `gorm:"column:view;type:int;default:0" json:"view"`                      // view count
+	IsPublished bool       `gorm:"column:is_published;type:bool;default:false" json:"is_published"` // published or not
+	CreatedAt   *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt   *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
 func (page *Page) Insert() error {

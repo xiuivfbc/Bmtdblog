@@ -15,16 +15,16 @@ import (
 )
 
 type Post struct {
-	ID           uint       `gorm:"primarykey"`
-	CreatedAt    *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt    *time.Time `gorm:"autoUpdateTime"`
-	Title        string     `gorm:"type:text"`
-	Body         string     `gorm:"type:longtext"`
-	View         int
-	IsPublished  bool
-	Tags         []*Tag     `gorm:"-"`
-	Comments     []*Comment `gorm:"-"`
-	CommentTotal int        `gorm:"->"`
+	ID           uint       `gorm:"column:id;type:uint;primary_key;AUTO_INCREMENT" json:"id"`
+	Title        string     `gorm:"column:title;type:text" json:"title"`
+	Body         string     `gorm:"column:body;type:longtext" json:"body"`
+	View         int        `gorm:"column:view;type:int;default:0" json:"view"`
+	IsPublished  bool       `gorm:"column:is_published;type:bool;default:false" json:"is_published"`
+	Tags         []*Tag     `gorm:"-" json:"tags"`
+	Comments     []*Comment `gorm:"-" json:"comments"`
+	CommentTotal int        `gorm:"->" json:"comment_total"`
+	CreatedAt    *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt    *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
 type QrArchive struct {

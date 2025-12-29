@@ -32,11 +32,11 @@ type PostDocument struct {
 	Tags         []string  `json:"tags"`
 	Author       string    `json:"author"`
 	IsPublished  bool      `json:"is_published"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
 	ViewCount    int       `json:"view_count"`
 	CommentCount int       `json:"comment_count"`
 	Excerpt      string    `json:"excerpt"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 // SearchRequest 搜索请求结构

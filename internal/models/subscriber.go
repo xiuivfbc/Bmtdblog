@@ -7,16 +7,16 @@ import (
 )
 
 type Subscriber struct {
-	ID             uint       `gorm:"primarykey"`
-	CreatedAt      *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt      *time.Time `gorm:"autoUpdateTime"`
-	DeletedAt      *time.Time `gorm:"index"`
-	Email          string     `gorm:"type:varchar(255);uniqueIndex"`
-	VerifyState    bool       `gorm:"default:false"`
-	SubscribeState bool       `gorm:"default:true"`
-	OutTime        time.Time  `gorm:"default:null"`
-	SecretKey      string
-	Signature      string
+	ID             uint       `gorm:"column:id;type:uint;primary_key;AUTO_INCREMENT" json:"id"`
+	Email          string     `gorm:"column:email;type:varchar(255);uniqueIndex" json:"email"`
+	VerifyState    bool       `gorm:"column:verify_state;type:bool;default:false" json:"verify_state"`
+	SubscribeState bool       `gorm:"column:subscribe_state;type:bool;default:true" json:"subscribe_state"`
+	OutTime        time.Time  `gorm:"column:out_time;type:datetime;default:null" json:"out_time"`
+	SecretKey      string     `gorm:"column:secret_key;type:varchar(255)" json:"secret_key"`
+	Signature      string     `gorm:"column:signature;type:varchar(255)" json:"signature"`
+	CreatedAt      *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt      *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
+	DeletedAt      *time.Time `gorm:"column:deleted_at;index" json:"deleted_at"`
 }
 
 func (s *Subscriber) Insert() error {

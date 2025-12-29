@@ -7,11 +7,11 @@ import (
 )
 
 type PostTag struct {
-	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
-	PostId    uint       `gorm:"uniqueIndex:uk_post_tag"` // post id
-	TagId     uint       `gorm:"uniqueIndex:uk_post_tag"` // tag id
+	ID        uint       `gorm:"column:id;type:uint;primary_key;AUTO_INCREMENT" json:"id"`
+	PostId    uint       `gorm:"column:post_id;type:uint;uniqueIndex:uk_post_tag" json:"post_id"` // post id
+	TagId     uint       `gorm:"column:tag_id;type:uint;uniqueIndex:uk_post_tag" json:"tag_id"`   // tag id
+	CreatedAt *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
 // post_tags

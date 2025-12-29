@@ -7,11 +7,11 @@ import (
 )
 
 type Tag struct {
-	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
-	Name      string
-	Total     int `gorm:"->"`
+	ID        uint       `gorm:"column:id;type:uint;primary_key;AUTO_INCREMENT" json:"id"`
+	Name      string     `gorm:"column:name;type:varchar(50)" json:"name"`
+	Total     int        `gorm:"->" json:"total"`
+	CreatedAt *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
 func (tag *Tag) Insert() error {

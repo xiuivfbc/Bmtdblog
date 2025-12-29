@@ -7,16 +7,16 @@ import (
 )
 
 type Comment struct {
-	ID        uint       `gorm:"primarykey"`
-	CreatedAt *time.Time `gorm:"autoCreateTime"`
-	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
-	UserID    uint
-	Content   string `gorm:"type:text"`
-	PostID    uint
-	ReadState bool   `gorm:"default:false"`
-	NickName  string `gorm:"-"`
-	AvatarUrl string `gorm:"-"`
-	GithubUrl string `gorm:"-"`
+	ID        uint       `gorm:"column:id;type:uint;primary_key;AUTO_INCREMENT" json:"id"`
+	UserID    uint       `gorm:"column:user_id;type:uint" json:"user_id"`
+	Content   string     `gorm:"column:content;type:text" json:"content"`
+	PostID    uint       `gorm:"column:post_id;type:uint" json:"post_id"`
+	ReadState bool       `gorm:"column:read_state;type:bool;default:false" json:"read_state"`
+	NickName  string     `gorm:"-" json:"nick_name"`
+	AvatarUrl string     `gorm:"-" json:"avatar_url"`
+	GithubUrl string     `gorm:"-" json:"github_url"`
+	CreatedAt *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 }
 
 func (comment *Comment) Insert() error {
