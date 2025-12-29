@@ -42,13 +42,6 @@ description = 'Bmtdblog, just my toy'
 name = 'xiuivfbc'
 email = '3138910969@qq.com'
 
-[qiniu]
-enabled = false
-accesskey = ''
-secretkey = ''
-fileserver = ''
-bucket = 'Bmtdblog'
-
 [smms]
 enabled = false
 apiurl = 'https://sm.ms/api/v2/upload'
