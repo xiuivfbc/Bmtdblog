@@ -164,12 +164,12 @@ func DefineRouter() *gin.Engine {
 		admin.POST("/read_all", comment.CommentReadAll) // 标记所有评论为已读
 
 		// 备份与恢复
-		admin.GET("/backup", backup.BackupPost)                        // 备份数据（七牛云）
-		admin.GET("/backup/local", backup.LocalBackup)                 // 本地备份
-		admin.GET("/backup/local/files", backup.GetLocalBackupFiles)   // 获取本地备份文件列表
-		admin.POST("/restore", backup.RestorePost)                     // 恢复数据（七牛云）
-		admin.POST("/restore/local", backup.LocalRestore)              // 本地恢复（上传文件）
-		admin.POST("/restore/local/file", backup.RestoreFromLocalFile) // 从指定文件恢复
+		admin.GET("/backup", backup.BackupPost)                       // 备份数据（七牛云）
+		admin.GET("/backup/local", backup.LocalBackup)                // 本地备份
+		admin.GET("/backup/local/files", backup.GetLocalBackupFiles)  // 获取本地备份文件列表
+		admin.POST("/restore", backup.RestorePost)                    // 恢复数据（七牛云）
+		admin.POST("/restore/local", backup.LocalRestore)             // 本地恢复（上传文件）
+		admin.GET("/restore/local/file", backup.RestoreFromLocalFile) // 从指定文件恢复
 
 		// 邮件管理
 		admin.POST("/new_mail", email.SendMail)           // 发送单封邮件
