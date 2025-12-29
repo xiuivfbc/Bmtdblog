@@ -92,6 +92,7 @@ target = ''
 [backup]
 enabled = false
 backup_key = ''
+local_path = './backups'
 
 [tls]
 enabled = false

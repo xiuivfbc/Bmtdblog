@@ -122,6 +122,7 @@ type Navigator struct {
 type Backup struct {
 	Enabled   bool   `mapstructure:"enabled"`
 	BackupKey string `mapstructure:"backup_key"`
+	LocalPath string `mapstructure:"local_path"`
 }
 
 // TLSConfig TLS/SSL配置

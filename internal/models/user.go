@@ -14,13 +14,13 @@ type User struct {
 	Password      string     `gorm:"column:password;type:varchar(255);index:idx_email_password_lockstate" json:"password"`
 	VerifyState   string     `gorm:"column:verify_state;type:varchar(10);default:'0'" json:"verify_state"`
 	SecretKey     string     `gorm:"column:secret_key;type:varchar(255)" json:"secret_key"`
-	OutTime       time.Time  `gorm:"column:out_time;type:datetime" json:"out_time"`
 	GithubLoginId string     `gorm:"column:github_login_id;type:varchar(255);uniqueIndex;default:null" json:"github_login_id"`
 	GithubUrl     string     `gorm:"column:github_url;type:varchar(255)" json:"github_url"`
 	IsAdmin       bool       `gorm:"column:is_admin;type:bool" json:"is_admin"`
 	AvatarUrl     string     `gorm:"column:avatar_url;type:varchar(255)" json:"avatar_url"`
 	NickName      string     `gorm:"column:nick_name;type:varchar(50)" json:"nick_name"`
 	LockState     bool       `gorm:"column:lock_state;type:bool;index:idx_email_password_lockstate;default:false" json:"lock_state"`
+	OutTime       *time.Time `gorm:"column:out_time;type:datetime" json:"out_time"`
 	CreatedAt     *time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
 	UpdatedAt     *time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 	DeletedAt     *time.Time `gorm:"column:deleted_at;index" json:"deleted_at"`
