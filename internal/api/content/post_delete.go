@@ -8,6 +8,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 删除文章
+// @Description 删除指定ID的文章及其相关标签
+// @Tags 文章管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param id path uint true "文章ID"
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/post/{id}/delete [post]
 func PostDelete(c *gin.Context) {
 	var (
 		err error

@@ -6,6 +6,14 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 解绑Github账号
+// @Description 解绑用户的Github账号
+// @Tags 个人资料管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/profile/github/unbind [post]
 func UnbindGithub(c *gin.Context) {
 	var (
 		err error

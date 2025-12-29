@@ -17,7 +17,2046 @@
     },
     "host": "localhost:8090",
     "basePath": "/",
-    "paths": {},
+    "paths": {
+        "/": {
+            "get": {
+                "description": "获取博客首页文章列表，支持分页",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容浏览"
+                ],
+                "summary": "首页内容",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页码，默认1",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "首页文章列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/active": {
+            "get": {
+                "description": "通过激活链接激活订阅者邮箱",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "订阅管理"
+                ],
+                "summary": "激活订阅者",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "激活签名",
+                        "name": "sid",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "激活失败的消息",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/backup/post": {
+            "post": {
+                "description": "备份文章数据到七牛云",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "备份管理"
+                ],
+                "summary": "备份文章",
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/backup/restore": {
+            "post": {
+                "description": "从七牛云恢复文章数据",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "备份管理"
+                ],
+                "summary": "恢复文章",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "备份文件名",
+                        "name": "fileName",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/comment/{id}": {
+            "post": {
+                "description": "将指定ID的评论标记为已读状态",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论管理"
+                ],
+                "summary": "标记评论为已读",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "评论ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/email_queue": {
+            "get": {
+                "description": "查看邮件队列状态和管理邮件队列",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "队列管理"
+                ],
+                "summary": "邮件队列管理",
+                "responses": {
+                    "200": {
+                        "description": "获取队列状态失败的消息",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/index": {
+            "get": {
+                "description": "显示管理后台的统计信息和仪表盘",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "管理后台"
+                ],
+                "summary": "管理后台首页",
+                "responses": {
+                    "200": {
+                        "description": "管理后台首页",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/link": {
+            "get": {
+                "description": "显示管理后台的友情链接列表",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "友情链接管理"
+                ],
+                "summary": "友情链接列表",
+                "responses": {
+                    "200": {
+                        "description": "友情链接列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/link/create": {
+            "post": {
+                "description": "创建新的友情链接",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "链接管理"
+                ],
+                "summary": "创建链接",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "链接名称",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "链接URL",
+                        "name": "url",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "排序值",
+                        "name": "sort",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/link/{id}": {
+            "post": {
+                "description": "更新已存在的友情链接信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "链接管理"
+                ],
+                "summary": "更新链接",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "链接ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "链接名称",
+                        "name": "name",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "链接URL",
+                        "name": "url",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "排序值",
+                        "name": "sort",
+                        "in": "body",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/link/{id}/delete": {
+            "post": {
+                "description": "删除指定ID的友情链接",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "友情链接管理"
+                ],
+                "summary": "删除友情链接",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "友情链接ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/new_page": {
+            "get": {
+                "description": "管理后台创建新页面的表单页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "页面管理"
+                ],
+                "summary": "创建页面表单",
+                "responses": {
+                    "200": {
+                        "description": "创建页面表单",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/new_post": {
+            "get": {
+                "description": "管理后台创建新文章的表单页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "文章管理"
+                ],
+                "summary": "创建文章表单",
+                "responses": {
+                    "200": {
+                        "description": "创建文章表单",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/page": {
+            "get": {
+                "description": "管理后台的页面列表页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "页面管理"
+                ],
+                "summary": "页面列表",
+                "responses": {
+                    "200": {
+                        "description": "页面列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/page/create": {
+            "post": {
+                "description": "创建新的博客页面",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "页面管理"
+                ],
+                "summary": "创建新页面",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页面标题",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "页面内容",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "是否发布(on表示发布)",
+                        "name": "isPublished",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建失败的页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "301": {
+                        "description": "重定向到页面管理页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/page/{id}/delete": {
+            "post": {
+                "description": "删除指定ID的页面",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "页面管理"
+                ],
+                "summary": "删除页面",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页面ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/page/{id}/edit": {
+            "get": {
+                "description": "管理后台编辑页面的表单页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "页面管理"
+                ],
+                "summary": "编辑页面表单",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页面ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "编辑页面表单",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "404": {
+                        "description": "页面不存在",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "更新指定ID的页面内容",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "页面管理"
+                ],
+                "summary": "更新页面",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页面ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "页面标题",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "页面内容",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "是否发布(on表示发布)",
+                        "name": "isPublished",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "301": {
+                        "description": "更新成功，重定向到页面列表",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/page/{id}/publish": {
+            "post": {
+                "description": "切换指定ID页面的发布状态（发布/下架）",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "页面管理"
+                ],
+                "summary": "切换页面发布状态",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页面ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/post": {
+            "get": {
+                "description": "管理后台的文章列表页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "文章管理"
+                ],
+                "summary": "文章列表",
+                "responses": {
+                    "200": {
+                        "description": "文章列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/post/create": {
+            "post": {
+                "description": "创建新的博客文章并添加标签",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容管理"
+                ],
+                "summary": "创建新文章",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文章标题",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "文章内容",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "文章标签ID，逗号分隔",
+                        "name": "tags",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "是否发布(on表示发布)",
+                        "name": "isPublished",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建失败的页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "301": {
+                        "description": "重定向到文章管理页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/post/{id}": {
+            "post": {
+                "description": "更新已存在的博客文章，包括内容、标题、标签和发布状态",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容管理"
+                ],
+                "summary": "更新文章",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "文章标题",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "文章内容",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "文章标签ID，逗号分隔",
+                        "name": "tags",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "是否发布(on表示发布)",
+                        "name": "isPublished",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新失败的页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "301": {
+                        "description": "重定向到文章管理页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/post/{id}/delete": {
+            "post": {
+                "description": "删除指定ID的文章及其相关标签",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章管理"
+                ],
+                "summary": "删除文章",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/post/{id}/edit": {
+            "get": {
+                "description": "管理后台编辑文章的表单页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "文章管理"
+                ],
+                "summary": "编辑文章表单",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "编辑文章表单",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "404": {
+                        "description": "文章不存在",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/post/{id}/publish": {
+            "post": {
+                "description": "切换指定ID文章的发布状态（发布/下架）",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文章管理"
+                ],
+                "summary": "切换文章发布状态",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/profile": {
+            "get": {
+                "description": "显示管理后台的个人资料页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "个人资料管理"
+                ],
+                "summary": "获取个人资料",
+                "responses": {
+                    "200": {
+                        "description": "个人资料页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/profile/email/unbind": {
+            "post": {
+                "description": "解绑用户的邮箱地址",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "个人资料管理"
+                ],
+                "summary": "解绑邮箱",
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/profile/github/unbind": {
+            "post": {
+                "description": "解绑用户的Github账号",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "个人资料管理"
+                ],
+                "summary": "解绑Github账号",
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/queue/retry_failed_emails": {
+            "post": {
+                "description": "重新发送队列中失败的邮件",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "队列管理"
+                ],
+                "summary": "重试失败邮件",
+                "responses": {
+                    "200": {
+                        "description": "{\"success\":true,\"message\":\"重试成功\",\"count\":10}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "{\"success\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/read_all": {
+            "post": {
+                "description": "将所有未读评论标记为已读状态",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论管理"
+                ],
+                "summary": "标记所有评论为已读",
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/subscriber": {
+            "get": {
+                "description": "显示管理后台的订阅者列表",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "订阅者管理"
+                ],
+                "summary": "订阅者列表",
+                "responses": {
+                    "200": {
+                        "description": "订阅者列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "向订阅者发送邮件，邮箱为空时发送给所有订阅者",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订阅者管理"
+                ],
+                "summary": "发送订阅邮件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮件地址，为空时发送给所有订阅者",
+                        "name": "mail",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮件主题",
+                        "name": "subject",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "邮件内容",
+                        "name": "body",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tag/create": {
+            "post": {
+                "description": "创建新的文章标签",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "标签管理"
+                ],
+                "summary": "创建标签",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "标签名称",
+                        "name": "value",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/user": {
+            "get": {
+                "description": "显示管理后台的用户列表",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "用户列表",
+                "responses": {
+                    "200": {
+                        "description": "用户列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/user/bindemail": {
+            "post": {
+                "description": "绑定用户邮箱",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "绑定邮箱",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱地址",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/user/profile": {
+            "post": {
+                "description": "更新用户个人资料信息",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "更新个人资料",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "头像URL",
+                        "name": "avatarUrl",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "昵称",
+                        "name": "nickName",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/user/{id}/lock": {
+            "post": {
+                "description": "切换指定ID用户的锁定状态（锁定/解锁）",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "锁定/解锁用户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\\\"succeed\\\":false,\\\"message\\\":\\\"错误信息\\\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/search/suggestions": {
+            "get": {
+                "description": "根据输入前缀获取搜索建议列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "搜索功能"
+                ],
+                "summary": "获取搜索建议",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "搜索关键词前缀(至少2个字符)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"suggestions\":[]}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/archives/{year}/{month}": {
+            "get": {
+                "description": "获取指定年份和月份的文章列表，支持分页",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容浏览"
+                ],
+                "summary": "归档页内容",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "年份",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "月份",
+                        "name": "month",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码，默认1",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "归档文章列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/{authType}": {
+            "get": {
+                "description": "根据认证类型获取第三方登录URL",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "获取认证URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "认证类型，如github",
+                        "name": "authType",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "重定向到认证页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "参数错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/captcha": {
+            "get": {
+                "description": "生成并返回验证码图片",
+                "produces": [
+                    "image/png"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "获取验证码",
+                "responses": {
+                    "200": {
+                        "description": "验证码图片",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/index": {
+            "get": {
+                "description": "获取博客首页文章列表，支持分页",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容浏览"
+                ],
+                "summary": "首页内容",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页码，默认1",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "首页文章列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "get": {
+                "description": "退出当前用户登录状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "用户登出",
+                "responses": {
+                    "302": {
+                        "description": "登出成功，重定向到首页",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/oauth2callback": {
+            "get": {
+                "description": "处理GitHub OAuth2认证回调，完成用户登录或绑定",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "GitHub OAuth回调",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "GitHub授权码",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "状态参数，用于防止CSRF攻击",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "301": {
+                        "description": "认证失败后重定向到登录页",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/page/{id}": {
+            "get": {
+                "description": "根据ID获取静态页面的详细内容",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容浏览"
+                ],
+                "summary": "页面详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页面ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "页面详情页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "404": {
+                        "description": "页面不存在或未发布",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/post/{id}": {
+            "get": {
+                "description": "根据ID获取文章的详细内容",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容管理"
+                ],
+                "summary": "获取文章详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "文章详情页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "文章不存在或未发布",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/rss": {
+            "get": {
+                "description": "获取博客RSS订阅内容，XML格式",
+                "consumes": [
+                    "*/*"
+                ],
+                "produces": [
+                    "application/xml"
+                ],
+                "tags": [
+                    "内容浏览"
+                ],
+                "summary": "RSS订阅",
+                "responses": {
+                    "200": {
+                        "description": "RSS订阅内容（XML格式）",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search": {
+            "get": {
+                "description": "根据关键词搜索文章，支持标签过滤、时间范围过滤和排序",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "搜索功能"
+                ],
+                "summary": "搜索文章",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "搜索关键词",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "标签过滤",
+                        "name": "tags",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码，默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "排序方式：relevance(相关性)、date(日期)、read(阅读量)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始日期(YYYY-MM-DD)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束日期(YYYY-MM-DD)",
+                        "name": "date_to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "搜索失败页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/index": {
+            "get": {
+                "description": "显示搜索表单页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "搜索功能"
+                ],
+                "summary": "搜索首页",
+                "responses": {
+                    "200": {
+                        "description": "搜索首页",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            }
+        },
+        "/signin": {
+            "get": {
+                "description": "显示用户登录表单页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "用户登录页面",
+                "responses": {
+                    "200": {
+                        "description": "登录页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "使用用户名和密码登录系统",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "用户名",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录失败，返回错误信息",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "302": {
+                        "description": "登录成功，重定向到相应页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/signup": {
+            "get": {
+                "description": "显示用户注册表单页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "用户注册页面",
+                "responses": {
+                    "200": {
+                        "description": "注册页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "处理用户注册表单提交，创建新用户",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "用户认证"
+                ],
+                "summary": "用户注册提交",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "邮箱地址",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "手机号码",
+                        "name": "telephone",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "密码",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "验证码",
+                        "name": "verifyCode",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "注册失败，返回注册页面并显示错误信息",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "301": {
+                        "description": "注册成功，重定向到登录页",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/subscribe": {
+            "get": {
+                "description": "显示博客订阅页面",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "订阅管理"
+                ],
+                "summary": "订阅页面",
+                "responses": {
+                    "200": {
+                        "description": "订阅页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "提交邮箱订阅博客更新",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "订阅管理"
+                ],
+                "summary": "订阅博客",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "订阅邮箱",
+                        "name": "mail",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "订阅失败页面",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/tag/{tag}": {
+            "get": {
+                "description": "获取指定标签下的文章列表，支持分页",
+                "consumes": [
+                    "text/html"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "内容浏览"
+                ],
+                "summary": "标签页内容",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "标签名称",
+                        "name": "tag",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码，默认1",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "标签文章列表页面",
+                        "schema": {
+                            "type": "html"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/unsubscribe": {
+            "get": {
+                "description": "取消博客订阅",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订阅管理"
+                ],
+                "summary": "取消订阅",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "订阅用户ID",
+                        "name": "userId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "取消订阅失败的消息",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/visitor/comment/{id}/delete": {
+            "post": {
+                "description": "删除自己发布的评论",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论管理"
+                ],
+                "summary": "删除评论",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "评论ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/visitor/new_comment/{postId}": {
+            "post": {
+                "description": "为指定文章发表评论",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论管理"
+                ],
+                "summary": "发表评论",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章ID",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "评论内容",
+                        "name": "content",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "验证码",
+                        "name": "verifyCode",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"succeed\":false,\"message\":\"错误信息\"}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
     "securityDefinitions": {
         "BearerAuth": {
             "type": "apiKey",

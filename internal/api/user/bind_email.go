@@ -8,6 +8,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 绑定邮箱
+// @Description 绑定用户邮箱
+// @Tags 用户管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param email formData string true "邮箱地址"
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/user/bindemail [post]
 func BindEmail(c *gin.Context) {
 	var (
 		err error

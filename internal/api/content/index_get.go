@@ -14,6 +14,16 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 首页内容
+// @Description 获取博客首页文章列表，支持分页
+// @Tags 内容浏览
+// @Accept html
+// @Produce html
+// @Param page query int false "页码，默认1"
+// @Success 200 {html} string "首页文章列表页面"
+// @Failure 500 {string} string "服务器内部错误"
+// @Router / [get]
+// @Router /index [get]
 func IndexGet(c *gin.Context) {
 	var (
 		pageIndex int

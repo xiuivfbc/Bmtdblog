@@ -15,6 +15,17 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 归档页内容
+// @Description 获取指定年份和月份的文章列表，支持分页
+// @Tags 内容浏览
+// @Accept html
+// @Produce html
+// @Param year path string true "年份"
+// @Param month path string true "月份"
+// @Param page query int false "页码，默认1"
+// @Success 200 {html} string "归档文章列表页面"
+// @Failure 500 {string} string "服务器内部错误"
+// @Router /archives/{year}/{month} [get]
 func ArchiveGet(c *gin.Context) {
 	var (
 		year      string

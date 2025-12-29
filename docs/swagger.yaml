@@ -12,7 +12,1360 @@ info:
   termsOfService: http://localhost:8090
   title: Bmtdblog API
   version: "1.0"
-paths: {}
+paths:
+  /:
+    get:
+      consumes:
+      - text/html
+      description: 获取博客首页文章列表，支持分页
+      parameters:
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 首页文章列表页面
+          schema:
+            type: html
+        "500":
+          description: 服务器内部错误
+          schema:
+            type: string
+      summary: 首页内容
+      tags:
+      - 内容浏览
+  /active:
+    get:
+      consumes:
+      - text/html
+      description: 通过激活链接激活订阅者邮箱
+      parameters:
+      - description: 激活签名
+        in: query
+        name: sid
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 激活失败的消息
+          schema:
+            type: string
+      summary: 激活订阅者
+      tags:
+      - 订阅管理
+  /admin/backup/post:
+    post:
+      consumes:
+      - application/json
+      description: 备份文章数据到七牛云
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 备份文章
+      tags:
+      - 备份管理
+  /admin/backup/restore:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 从七牛云恢复文章数据
+      parameters:
+      - description: 备份文件名
+        in: formData
+        name: fileName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 恢复文章
+      tags:
+      - 备份管理
+  /admin/comment/{id}:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 将指定ID的评论标记为已读状态
+      parameters:
+      - description: 评论ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 标记评论为已读
+      tags:
+      - 评论管理
+  /admin/email_queue:
+    get:
+      consumes:
+      - application/json
+      description: 查看邮件队列状态和管理邮件队列
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 获取队列状态失败的消息
+          schema:
+            type: string
+      summary: 邮件队列管理
+      tags:
+      - 队列管理
+  /admin/index:
+    get:
+      consumes:
+      - text/html
+      description: 显示管理后台的统计信息和仪表盘
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 管理后台首页
+          schema:
+            type: html
+      summary: 管理后台首页
+      tags:
+      - 管理后台
+  /admin/link:
+    get:
+      consumes:
+      - text/html
+      description: 显示管理后台的友情链接列表
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 友情链接列表页面
+          schema:
+            type: html
+      summary: 友情链接列表
+      tags:
+      - 友情链接管理
+  /admin/link/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 更新已存在的友情链接信息
+      parameters:
+      - description: 链接ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 链接名称
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      - description: 链接URL
+        in: body
+        name: url
+        required: true
+        schema:
+          type: string
+      - description: 排序值
+        in: body
+        name: sort
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 更新链接
+      tags:
+      - 链接管理
+  /admin/link/{id}/delete:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 删除指定ID的友情链接
+      parameters:
+      - description: 友情链接ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除友情链接
+      tags:
+      - 友情链接管理
+  /admin/link/create:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 创建新的友情链接
+      parameters:
+      - description: 链接名称
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: 链接URL
+        in: formData
+        name: url
+        required: true
+        type: string
+      - description: 排序值
+        in: formData
+        name: sort
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 创建链接
+      tags:
+      - 链接管理
+  /admin/new_page:
+    get:
+      consumes:
+      - text/html
+      description: 管理后台创建新页面的表单页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 创建页面表单
+          schema:
+            type: html
+      summary: 创建页面表单
+      tags:
+      - 页面管理
+  /admin/new_post:
+    get:
+      consumes:
+      - text/html
+      description: 管理后台创建新文章的表单页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 创建文章表单
+          schema:
+            type: html
+      summary: 创建文章表单
+      tags:
+      - 文章管理
+  /admin/page:
+    get:
+      consumes:
+      - text/html
+      description: 管理后台的页面列表页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 页面列表页面
+          schema:
+            type: html
+      summary: 页面列表
+      tags:
+      - 页面管理
+  /admin/page/{id}/delete:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 删除指定ID的页面
+      parameters:
+      - description: 页面ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除页面
+      tags:
+      - 页面管理
+  /admin/page/{id}/edit:
+    get:
+      consumes:
+      - text/html
+      description: 管理后台编辑页面的表单页面
+      parameters:
+      - description: 页面ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 编辑页面表单
+          schema:
+            type: html
+        "404":
+          description: 页面不存在
+          schema:
+            type: string
+      summary: 编辑页面表单
+      tags:
+      - 页面管理
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 更新指定ID的页面内容
+      parameters:
+      - description: 页面ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 页面标题
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: 页面内容
+        in: formData
+        name: body
+        required: true
+        type: string
+      - description: 是否发布(on表示发布)
+        in: formData
+        name: isPublished
+        type: string
+      produces:
+      - text/html
+      responses:
+        "301":
+          description: 更新成功，重定向到页面列表
+          schema:
+            type: string
+        "500":
+          description: 服务器内部错误
+          schema:
+            type: string
+      summary: 更新页面
+      tags:
+      - 页面管理
+  /admin/page/{id}/publish:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 切换指定ID页面的发布状态（发布/下架）
+      parameters:
+      - description: 页面ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 切换页面发布状态
+      tags:
+      - 页面管理
+  /admin/page/create:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 创建新的博客页面
+      parameters:
+      - description: 页面标题
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: 页面内容
+        in: formData
+        name: body
+        required: true
+        type: string
+      - description: 是否发布(on表示发布)
+        in: formData
+        name: isPublished
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 创建失败的页面
+          schema:
+            type: string
+        "301":
+          description: 重定向到页面管理页面
+          schema:
+            type: string
+      summary: 创建新页面
+      tags:
+      - 页面管理
+  /admin/post:
+    get:
+      consumes:
+      - text/html
+      description: 管理后台的文章列表页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 文章列表页面
+          schema:
+            type: html
+      summary: 文章列表
+      tags:
+      - 文章管理
+  /admin/post/{id}:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 更新已存在的博客文章，包括内容、标题、标签和发布状态
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 文章标题
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: 文章内容
+        in: formData
+        name: body
+        required: true
+        type: string
+      - description: 文章标签ID，逗号分隔
+        in: formData
+        name: tags
+        required: true
+        type: string
+      - description: 是否发布(on表示发布)
+        in: formData
+        name: isPublished
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 更新失败的页面
+          schema:
+            type: string
+        "301":
+          description: 重定向到文章管理页面
+          schema:
+            type: string
+      summary: 更新文章
+      tags:
+      - 内容管理
+  /admin/post/{id}/delete:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 删除指定ID的文章及其相关标签
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除文章
+      tags:
+      - 文章管理
+  /admin/post/{id}/edit:
+    get:
+      consumes:
+      - text/html
+      description: 管理后台编辑文章的表单页面
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 编辑文章表单
+          schema:
+            type: html
+        "404":
+          description: 文章不存在
+          schema:
+            type: string
+      summary: 编辑文章表单
+      tags:
+      - 文章管理
+  /admin/post/{id}/publish:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 切换指定ID文章的发布状态（发布/下架）
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 切换文章发布状态
+      tags:
+      - 文章管理
+  /admin/post/create:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 创建新的博客文章并添加标签
+      parameters:
+      - description: 文章标题
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: 文章内容
+        in: formData
+        name: body
+        required: true
+        type: string
+      - description: 文章标签ID，逗号分隔
+        in: formData
+        name: tags
+        required: true
+        type: string
+      - description: 是否发布(on表示发布)
+        in: formData
+        name: isPublished
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 创建失败的页面
+          schema:
+            type: string
+        "301":
+          description: 重定向到文章管理页面
+          schema:
+            type: string
+      summary: 创建新文章
+      tags:
+      - 内容管理
+  /admin/profile:
+    get:
+      consumes:
+      - text/html
+      description: 显示管理后台的个人资料页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 个人资料页面
+          schema:
+            type: html
+      summary: 获取个人资料
+      tags:
+      - 个人资料管理
+  /admin/profile/email/unbind:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 解绑用户的邮箱地址
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 解绑邮箱
+      tags:
+      - 个人资料管理
+  /admin/profile/github/unbind:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 解绑用户的Github账号
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 解绑Github账号
+      tags:
+      - 个人资料管理
+  /admin/queue/retry_failed_emails:
+    post:
+      consumes:
+      - application/json
+      description: 重新发送队列中失败的邮件
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"success":true,"message":"重试成功","count":10}'
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: '{"success":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 重试失败邮件
+      tags:
+      - 队列管理
+  /admin/read_all:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 将所有未读评论标记为已读状态
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 标记所有评论为已读
+      tags:
+      - 评论管理
+  /admin/subscriber:
+    get:
+      consumes:
+      - text/html
+      description: 显示管理后台的订阅者列表
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 订阅者列表页面
+          schema:
+            type: html
+      summary: 订阅者列表
+      tags:
+      - 订阅者管理
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 向订阅者发送邮件，邮箱为空时发送给所有订阅者
+      parameters:
+      - description: 邮件地址，为空时发送给所有订阅者
+        in: formData
+        name: mail
+        type: string
+      - description: 邮件主题
+        in: formData
+        name: subject
+        required: true
+        type: string
+      - description: 邮件内容
+        in: formData
+        name: body
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 发送订阅邮件
+      tags:
+      - 订阅者管理
+  /admin/tag/create:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 创建新的文章标签
+      parameters:
+      - description: 标签名称
+        in: formData
+        name: value
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 创建标签
+      tags:
+      - 标签管理
+  /admin/user:
+    get:
+      consumes:
+      - text/html
+      description: 显示管理后台的用户列表
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 用户列表页面
+          schema:
+            type: html
+      summary: 用户列表
+      tags:
+      - 用户管理
+  /admin/user/{id}/lock:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 切换指定ID用户的锁定状态（锁定/解锁）
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{\"succeed\":false,\"message\":\"错误信息\"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 锁定/解锁用户
+      tags:
+      - 用户管理
+  /admin/user/bindemail:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 绑定用户邮箱
+      parameters:
+      - description: 邮箱地址
+        in: formData
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 绑定邮箱
+      tags:
+      - 用户管理
+  /admin/user/profile:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 更新用户个人资料信息
+      parameters:
+      - description: 头像URL
+        in: formData
+        name: avatarUrl
+        type: string
+      - description: 昵称
+        in: formData
+        name: nickName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 更新个人资料
+      tags:
+      - 用户管理
+  /api/search/suggestions:
+    get:
+      consumes:
+      - application/json
+      description: 根据输入前缀获取搜索建议列表
+      parameters:
+      - description: 搜索关键词前缀(至少2个字符)
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"suggestions":[]}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取搜索建议
+      tags:
+      - 搜索功能
+  /archives/{year}/{month}:
+    get:
+      consumes:
+      - text/html
+      description: 获取指定年份和月份的文章列表，支持分页
+      parameters:
+      - description: 年份
+        in: path
+        name: year
+        required: true
+        type: string
+      - description: 月份
+        in: path
+        name: month
+        required: true
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 归档文章列表页面
+          schema:
+            type: html
+        "500":
+          description: 服务器内部错误
+          schema:
+            type: string
+      summary: 归档页内容
+      tags:
+      - 内容浏览
+  /auth/{authType}:
+    get:
+      consumes:
+      - application/json
+      description: 根据认证类型获取第三方登录URL
+      parameters:
+      - description: 认证类型，如github
+        in: path
+        name: authType
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: 重定向到认证页面
+          schema:
+            type: string
+        "400":
+          description: 参数错误
+          schema:
+            type: string
+      summary: 获取认证URL
+      tags:
+      - 用户认证
+  /captcha:
+    get:
+      description: 生成并返回验证码图片
+      produces:
+      - image/png
+      responses:
+        "200":
+          description: 验证码图片
+          schema:
+            type: file
+      summary: 获取验证码
+      tags:
+      - 用户认证
+  /index:
+    get:
+      consumes:
+      - text/html
+      description: 获取博客首页文章列表，支持分页
+      parameters:
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 首页文章列表页面
+          schema:
+            type: html
+        "500":
+          description: 服务器内部错误
+          schema:
+            type: string
+      summary: 首页内容
+      tags:
+      - 内容浏览
+  /logout:
+    get:
+      consumes:
+      - application/json
+      description: 退出当前用户登录状态
+      produces:
+      - text/html
+      responses:
+        "302":
+          description: 登出成功，重定向到首页
+          schema:
+            type: string
+      summary: 用户登出
+      tags:
+      - 用户认证
+  /oauth2callback:
+    get:
+      consumes:
+      - application/json
+      description: 处理GitHub OAuth2认证回调，完成用户登录或绑定
+      parameters:
+      - description: GitHub授权码
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: 状态参数，用于防止CSRF攻击
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "301":
+          description: 认证失败后重定向到登录页
+          schema:
+            type: string
+      summary: GitHub OAuth回调
+      tags:
+      - 用户认证
+  /page/{id}:
+    get:
+      consumes:
+      - text/html
+      description: 根据ID获取静态页面的详细内容
+      parameters:
+      - description: 页面ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 页面详情页面
+          schema:
+            type: html
+        "404":
+          description: 页面不存在或未发布
+          schema:
+            type: string
+      summary: 页面详情
+      tags:
+      - 内容浏览
+  /post/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取文章的详细内容
+      parameters:
+      - description: 文章ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 文章详情页面
+          schema:
+            type: string
+        "404":
+          description: 文章不存在或未发布
+          schema:
+            type: string
+      summary: 获取文章详情
+      tags:
+      - 内容管理
+  /rss:
+    get:
+      consumes:
+      - '*/*'
+      description: 获取博客RSS订阅内容，XML格式
+      produces:
+      - application/xml
+      responses:
+        "200":
+          description: RSS订阅内容（XML格式）
+          schema:
+            type: string
+        "500":
+          description: 服务器内部错误
+          schema:
+            type: string
+      summary: RSS订阅
+      tags:
+      - 内容浏览
+  /search:
+    get:
+      consumes:
+      - application/json
+      description: 根据关键词搜索文章，支持标签过滤、时间范围过滤和排序
+      parameters:
+      - description: 搜索关键词
+        in: query
+        name: q
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: 标签过滤
+        in: query
+        items:
+          type: string
+        name: tags
+        type: array
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 排序方式：relevance(相关性)、date(日期)、read(阅读量)
+        in: query
+        name: sort
+        type: string
+      - description: 开始日期(YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: 结束日期(YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 搜索失败页面
+          schema:
+            type: string
+      summary: 搜索文章
+      tags:
+      - 搜索功能
+  /search/index:
+    get:
+      consumes:
+      - text/html
+      description: 显示搜索表单页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 搜索首页
+          schema:
+            type: html
+      summary: 搜索首页
+      tags:
+      - 搜索功能
+  /signin:
+    get:
+      consumes:
+      - text/html
+      description: 显示用户登录表单页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 登录页面
+          schema:
+            type: html
+      summary: 用户登录页面
+      tags:
+      - 用户认证
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 使用用户名和密码登录系统
+      parameters:
+      - description: 用户名
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: 密码
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 登录失败，返回错误信息
+          schema:
+            type: string
+        "302":
+          description: 登录成功，重定向到相应页面
+          schema:
+            type: string
+      summary: 用户登录
+      tags:
+      - 用户认证
+  /signup:
+    get:
+      consumes:
+      - text/html
+      description: 显示用户注册表单页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 注册页面
+          schema:
+            type: html
+      summary: 用户注册页面
+      tags:
+      - 用户认证
+    post:
+      consumes:
+      - multipart/form-data
+      description: 处理用户注册表单提交，创建新用户
+      parameters:
+      - description: 邮箱地址
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: 手机号码
+        in: formData
+        name: telephone
+        type: string
+      - description: 密码
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: 验证码
+        in: formData
+        name: verifyCode
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 注册失败，返回注册页面并显示错误信息
+          schema:
+            type: html
+        "301":
+          description: 注册成功，重定向到登录页
+          schema:
+            type: string
+      summary: 用户注册提交
+      tags:
+      - 用户认证
+  /subscribe:
+    get:
+      consumes:
+      - text/html
+      description: 显示博客订阅页面
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 订阅页面
+          schema:
+            type: html
+      summary: 订阅页面
+      tags:
+      - 订阅管理
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 提交邮箱订阅博客更新
+      parameters:
+      - description: 订阅邮箱
+        in: formData
+        name: mail
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 订阅失败页面
+          schema:
+            type: string
+      summary: 订阅博客
+      tags:
+      - 订阅管理
+  /tag/{tag}:
+    get:
+      consumes:
+      - text/html
+      description: 获取指定标签下的文章列表，支持分页
+      parameters:
+      - description: 标签名称
+        in: path
+        name: tag
+        required: true
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 标签文章列表页面
+          schema:
+            type: html
+        "500":
+          description: 服务器内部错误
+          schema:
+            type: string
+      summary: 标签页内容
+      tags:
+      - 内容浏览
+  /unsubscribe:
+    get:
+      consumes:
+      - application/json
+      description: 取消博客订阅
+      parameters:
+      - description: 订阅用户ID
+        in: query
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 取消订阅失败的消息
+          schema:
+            type: string
+      summary: 取消订阅
+      tags:
+      - 订阅管理
+  /visitor/comment/{id}/delete:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 删除自己发布的评论
+      parameters:
+      - description: 评论ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除评论
+      tags:
+      - 评论管理
+  /visitor/new_comment/{postId}:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: 为指定文章发表评论
+      parameters:
+      - description: 文章ID
+        in: path
+        name: postId
+        required: true
+        type: integer
+      - description: 评论内容
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: 验证码
+        in: formData
+        name: verifyCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"succeed":false,"message":"错误信息"}'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 发表评论
+      tags:
+      - 评论管理
 securityDefinitions:
   BearerAuth:
     in: header

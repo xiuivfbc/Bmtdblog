@@ -9,6 +9,13 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 管理后台首页
+// @Description 显示管理后台的统计信息和仪表盘
+// @Tags 管理后台
+// @Accept html
+// @Produce html
+// @Success 200 {html} string "管理后台首页"
+// @Router /admin/index [get]
 func AdminIndex(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin/index.html", gin.H{
 		"pageCount":    models.CountPage(),

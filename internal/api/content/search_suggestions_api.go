@@ -9,7 +9,15 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
-// SearchSuggestionsAPI 搜索建议API
+// @Summary 获取搜索建议
+// @Description 根据输入前缀获取搜索建议列表
+// @Tags 搜索功能
+// @Accept json
+// @Produce json
+// @Param q query string true "搜索关键词前缀(至少2个字符)"
+// @Success 200 {object} map[string]interface{} "{"suggestions":["建议1","建议2"]}"
+// @Failure 200 {object} map[string]interface{} "{"suggestions":[]}"
+// @Router /api/search/suggestions [get]
 func SearchSuggestionsAPI(c *gin.Context) {
 	prefix := strings.TrimSpace(c.Query("q"))
 	if len(prefix) < 2 {

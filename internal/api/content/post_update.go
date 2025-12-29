@@ -12,6 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 更新文章
+// @Description 更新已存在的博客文章，包括内容、标题、标签和发布状态
+// @Tags 内容管理
+// @Accept x-www-form-urlencoded
+// @Produce html
+// @Param id path uint true "文章ID"
+// @Param title formData string true "文章标题"
+// @Param body formData string true "文章内容"
+// @Param tags formData string true "文章标签ID，逗号分隔"
+// @Param isPublished formData string false "是否发布(on表示发布)"
+// @Success 301 {string} redirect "重定向到文章管理页面"
+// @Failure 200 {string} html "更新失败的页面"
+// @Router /admin/post/{id} [post]
 func PostUpdate(c *gin.Context) {
 	tags := c.PostForm("tags")
 	title := c.PostForm("title")

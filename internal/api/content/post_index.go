@@ -9,6 +9,13 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 文章列表
+// @Description 管理后台的文章列表页面
+// @Tags 文章管理
+// @Accept html
+// @Produce html
+// @Success 200 {html} string "文章列表页面"
+// @Router /admin/post [get]
 func PostIndex(c *gin.Context) {
 	posts, _ := models.ListAllPost("")
 	c.HTML(http.StatusOK, "admin/post.html", gin.H{

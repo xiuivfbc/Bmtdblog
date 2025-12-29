@@ -13,6 +13,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 用户注册提交
+// @Description 处理用户注册表单提交，创建新用户
+// @Tags 用户认证
+// @Accept multipart/form-data
+// @Produce html
+// @Param email formData string true "邮箱地址"
+// @Param telephone formData string false "手机号码"
+// @Param password formData string true "密码"
+// @Param verifyCode formData string true "验证码"
+// @Success 301 {string} string "注册成功，重定向到登录页"
+// @Failure 200 {html} string "注册失败，返回注册页面并显示错误信息"
+// @Router /signup [post]
 func SignupPost(c *gin.Context) {
 	var (
 		err error

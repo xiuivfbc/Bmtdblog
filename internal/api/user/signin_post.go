@@ -12,6 +12,16 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 用户登录
+// @Description 使用用户名和密码登录系统
+// @Tags 用户认证
+// @Accept x-www-form-urlencoded
+// @Produce html
+// @Param username formData string true "用户名"
+// @Param password formData string true "密码"
+// @Success 302 {string} string "登录成功，重定向到相应页面"
+// @Failure 200 {string} string "登录失败，返回错误信息"
+// @Router /signin [post]
 func SigninPost(c *gin.Context) {
 	var (
 		err  error

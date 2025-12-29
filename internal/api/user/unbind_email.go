@@ -6,6 +6,14 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 解绑邮箱
+// @Description 解绑用户的邮箱地址
+// @Tags 个人资料管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/profile/email/unbind [post]
 func UnbindEmail(c *gin.Context) {
 	var (
 		err error

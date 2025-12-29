@@ -9,6 +9,15 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 获取文章详情
+// @Description 根据ID获取文章的详细内容
+// @Tags 内容管理
+// @Accept json
+// @Produce html
+// @Param id path uint true "文章ID"
+// @Success 200 {string} string "文章详情页面"
+// @Failure 404 {string} string "文章不存在或未发布"
+// @Router /post/{id} [get]
 func PostGet(c *gin.Context) {
 	id, err := common.ParamUint(c, "id")
 	if err != nil {

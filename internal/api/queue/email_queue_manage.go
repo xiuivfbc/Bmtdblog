@@ -10,6 +10,14 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 邮件队列管理
+// @Description 查看邮件队列状态和管理邮件队列
+// @Tags 队列管理
+// @Accept json
+// @Produce html
+// @Success 200 {string} html "邮件队列管理页面"
+// @Failure 200 {string} string "获取队列状态失败的消息"
+// @Router /admin/email_queue [get]
 func EmailQueueManage(c *gin.Context) {
 	log.Debug("EmailQueueManage")
 	stats, err := getEmailQueueStats()

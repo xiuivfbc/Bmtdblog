@@ -7,6 +7,12 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/common"
 )
 
+// @Summary 获取验证码
+// @Description 生成并返回验证码图片
+// @Tags 用户认证
+// @Produce image/png
+// @Success 200 {file} binary "验证码图片"
+// @Router /captcha [get]
 func CaptchaGet(context *gin.Context) {
 	session := sessions.Default(context)
 	captchaId := captcha.NewLen(4)

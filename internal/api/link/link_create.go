@@ -10,6 +10,17 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 创建链接
+// @Description 创建新的友情链接
+// @Tags 链接管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param name formData string true "链接名称"
+// @Param url formData string true "链接URL"
+// @Param sort formData int false "排序值"
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/link/create [post]
 func LinkCreate(c *gin.Context) {
 	var (
 		err  error

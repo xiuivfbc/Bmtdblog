@@ -8,6 +8,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 标记评论为已读
+// @Description 将指定ID的评论标记为已读状态
+// @Tags 评论管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param id path uint true "评论ID"
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/comment/{id} [post]
 func CommentRead(c *gin.Context) {
 	var (
 		id  uint

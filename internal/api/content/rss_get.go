@@ -12,6 +12,14 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary RSS订阅
+// @Description 获取博客RSS订阅内容，XML格式
+// @Tags 内容浏览
+// @Accept */*
+// @Produce application/xml
+// @Success 200 {string} string "RSS订阅内容（XML格式）"
+// @Failure 500 {string} string "服务器内部错误"
+// @Router /rss [get]
 func RssGet(c *gin.Context) {
 	cfg := config.GetConfiguration()
 	now := common.GetCurrentTime()

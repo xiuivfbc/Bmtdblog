@@ -9,6 +9,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 删除评论
+// @Description 删除自己发布的评论
+// @Tags 评论管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param id path uint true "评论ID"
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /visitor/comment/{id}/delete [post]
 func CommentDelete(c *gin.Context) {
 	var (
 		err error

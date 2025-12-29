@@ -12,6 +12,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 恢复文章
+// @Description 从七牛云恢复文章数据
+// @Tags 备份管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param fileName formData string true "备份文件名"
+// @Success 200 {object} map[string]interface{} "{"succeed":true}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/backup/restore [post]
 func RestorePost(c *gin.Context) {
 	var (
 		fileName  string

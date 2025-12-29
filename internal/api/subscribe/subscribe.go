@@ -12,6 +12,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 订阅博客
+// @Description 提交邮箱订阅博客更新
+// @Tags 订阅管理
+// @Accept x-www-form-urlencoded
+// @Produce html
+// @Param mail formData string true "订阅邮箱"
+// @Success 200 {string} html "订阅成功页面"
+// @Failure 200 {string} html "订阅失败页面"
+// @Router /subscribe [post]
 func Subscribe(c *gin.Context) {
 	mail := c.PostForm("mail")
 	user, _ := c.Get(common.ContextUserKey)

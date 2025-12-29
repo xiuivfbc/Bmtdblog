@@ -12,6 +12,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 取消订阅
+// @Description 取消博客订阅
+// @Tags 订阅管理
+// @Accept json
+// @Produce json
+// @Param userId query string true "订阅用户ID"
+// @Success 200 {object} map[string]interface{} "{"msg":"Unsubscribe Successful!","succeed":true}"
+// @Failure 200 {string} string "取消订阅失败的消息"
+// @Router /unsubscribe [get]
 func UnSubscribe(c *gin.Context) {
 	fmt.Println("UnSubscribe")
 	userId := c.Query("userId")

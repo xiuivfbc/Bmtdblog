@@ -13,6 +13,17 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 发表评论
+// @Description 为指定文章发表评论
+// @Tags 评论管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param postId path uint true "文章ID"
+// @Param content formData string true "评论内容"
+// @Param verifyCode formData string true "验证码"
+// @Success 200 {object} map[string]interface{} "{"succeed":true,"message":""}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /visitor/new_comment/{postId} [post]
 func CommentPost(c *gin.Context) {
 	var (
 		err  error

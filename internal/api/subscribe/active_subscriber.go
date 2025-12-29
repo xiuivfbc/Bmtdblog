@@ -8,6 +8,15 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 激活订阅者
+// @Description 通过激活链接激活订阅者邮箱
+// @Tags 订阅管理
+// @Accept html
+// @Produce html
+// @Param sid query string true "激活签名"
+// @Success 200 {string} string "激活成功或失败的消息"
+// @Failure 200 {string} string "激活失败的消息"
+// @Router /active [get]
 func ActiveSubscriber(c *gin.Context) {
 	var (
 		err        error

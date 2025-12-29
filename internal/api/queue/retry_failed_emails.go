@@ -9,6 +9,14 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/common/log"
 )
 
+// @Summary 重试失败邮件
+// @Description 重新发送队列中失败的邮件
+// @Tags 队列管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "{"success":true,"message":"重试成功","count":10}"
+// @Failure 500 {object} map[string]interface{} "{"success":false,"message":"错误信息"}"
+// @Router /admin/queue/retry_failed_emails [post]
 func RetryFailedEmails(c *gin.Context) {
 	log.Debug("RetryFailedEmails")
 	count, err := retryFailedEmails()

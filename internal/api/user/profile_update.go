@@ -8,6 +8,16 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 更新个人资料
+// @Description 更新用户个人资料信息
+// @Tags 用户管理
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param avatarUrl formData string false "头像URL"
+// @Param nickName formData string false "昵称"
+// @Success 200 {object} map[string]interface{} "{"succeed":true,"user":{"avatarUrl":"头像URL","nickName":"昵称"}}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/user/profile [post]
 func ProfileUpdate(c *gin.Context) {
 	var (
 		err error

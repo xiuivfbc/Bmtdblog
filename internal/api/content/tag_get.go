@@ -14,6 +14,16 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
+// @Summary 标签页内容
+// @Description 获取指定标签下的文章列表，支持分页
+// @Tags 内容浏览
+// @Accept html
+// @Produce html
+// @Param tag path string true "标签名称"
+// @Param page query int false "页码，默认1"
+// @Success 200 {html} string "标签文章列表页面"
+// @Failure 500 {string} string "服务器内部错误"
+// @Router /tag/{tag} [get]
 func TagGet(c *gin.Context) {
 	var (
 		tagName   string

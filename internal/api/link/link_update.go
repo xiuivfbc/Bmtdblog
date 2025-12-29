@@ -10,6 +10,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary 更新链接
+// @Description 更新已存在的友情链接信息
+// @Tags 链接管理
+// @Accept json
+// @Produce json
+// @Param id path int true "链接ID"
+// @Param name body string true "链接名称"
+// @Param url body string true "链接URL"
+// @Param sort body int false "排序值"
+// @Success 200 {object} map[string]interface{} "{"succeed":true,"link":{"id":1,"name":"链接名","url":"https://example.com","sort":1}}"
+// @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
+// @Router /admin/link/{id} [post]
 func LinkUpdate(c *gin.Context) {
 	var (
 		link models.Link

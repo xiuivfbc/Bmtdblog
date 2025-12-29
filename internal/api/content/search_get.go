@@ -14,7 +14,20 @@ import (
 	"github.com/xiuivfbc/bmtdblog/internal/models"
 )
 
-// SearchGet 搜索页面
+// @Summary 搜索文章
+// @Description 根据关键词搜索文章，支持标签过滤、时间范围过滤和排序
+// @Tags 搜索功能
+// @Accept json
+// @Produce html
+// @Param q query string true "搜索关键词"
+// @Param tags query []string false "标签过滤"
+// @Param page query int false "页码，默认1"
+// @Param sort query string false "排序方式：relevance(相关性)、date(日期)、read(阅读量)"
+// @Param date_from query string false "开始日期(YYYY-MM-DD)"
+// @Param date_to query string false "结束日期(YYYY-MM-DD)"
+// @Success 200 {string} html "搜索结果页面"
+// @Failure 200 {string} html "搜索失败页面"
+// @Router /search [get]
 func SearchGet(c *gin.Context) {
 	keyword := strings.TrimSpace(c.Query("q"))
 	tags := c.QueryArray("tags")
