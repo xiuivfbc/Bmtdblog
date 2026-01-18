@@ -3,16 +3,16 @@ version: '3.8'
 services:
   # 应用服务
   bmtdblog:
-    build: .
+    build:
+      context: ../../  # 指向项目根目录
+      dockerfile: deploy/docker/Dockerfile  # 指定Dockerfile路径
     container_name: bmtdblog-app
     ports:
       - "8090:8090"
     environment:
       - TZ=Asia/Shanghai
     volumes:
-      - ./logs:/root/logs
-      - ./slog:/root/slog
-      - ./conf/conf_docker.toml:/root/conf/conf.toml:ro
+      - ../../configs:/root/configs:ro
     depends_on:
       - mysql
       - redis
@@ -25,14 +25,12 @@ services:
     image: mysql:8.0
     container_name: bmtdblog-mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_ROOT_PASSWORD=p123456
       - MYSQL_DATABASE=bmtdblog
-      - MYSQL_USER=
-      - MYSQL_PASSWORD=
       - TZ=Asia/Shanghai
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./conf/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+      - ../../configs/mysql.cnf:/etc/mysql/configs.d/mysql.cnf:ro
     ports:
       - "3306:3306"
     networks:
@@ -43,10 +41,10 @@ services:
   redis:
     image: redis:7-alpine
     container_name: bmtdblog-redis
-    command: redis-server /usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.configs
     volumes:
       - redis_data:/data
-      - ./conf/redis-email-queue.conf:/usr/local/etc/redis/redis.conf:ro
+      - ../../configs/redis.conf:/usr/local/etc/redis/redis.configs:ro
     ports:
       - "6379:6379"
     networks:

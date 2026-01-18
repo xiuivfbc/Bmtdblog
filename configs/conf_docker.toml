@@ -10,8 +10,16 @@ public = 'static'
 view = 'views/**/*.html'
 dir = '.'
 
-[database]
-dsn = 'cp:cp123456@tcp(mysql:3306)/bmtdblog?charset=utf8mb4&parseTime=True&loc=Local'
+[mysql]
+user = 'root'
+password = 'p123456'
+host = 'mysql'
+port = '3306'
+db_name = 'bmtdblog'
+log_level = 3
+max_idle_conns = 10
+max_open_conns = 100
+max_idle_time = 15
 
 [seo]
 description = 'Bmtdblog, just my toy'

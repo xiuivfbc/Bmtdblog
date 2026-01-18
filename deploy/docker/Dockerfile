@@ -35,15 +35,15 @@ WORKDIR /root/
 COPY --from=builder /app/bmtdblog .
 
 # 复制配置文件和静态资源
-COPY --from=builder /app/conf ./conf
-COPY --from=builder /app/views ./views
-COPY --from=builder /app/static ./static
+COPY --from=builder /app/configs ./configs
+COPY --from=builder /app/front/views ./front/views
+COPY --from=builder /app/front/static ./front/static
 
 # 创建必要的目录
-RUN mkdir -p logs slog
+RUN mkdir -p logs slog backups
 
 # 暴露端口
 EXPOSE 8090
 
-# 启动命令
-CMD ["./bmtdblog", "-C", "conf/conf_docker.toml"]
+# 启动命令（已更新配置路径）
+CMD ["./bmtdblog", "-C", "configs/conf_docker.toml"]

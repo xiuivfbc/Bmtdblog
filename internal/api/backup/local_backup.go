@@ -21,6 +21,7 @@ import (
 // @Success 200 {object} map[string]interface{} "{"succeed":true,"message":"备份成功"}"
 // @Failure 200 {object} map[string]interface{} "{"succeed":false,"message":"错误信息"}"
 // @Router /admin/backup/local [post]
+// 保持LocalBackup函数不变，让它调用新的Backup函数
 func LocalBackup(c *gin.Context) {
 	var (
 		err error
@@ -29,7 +30,7 @@ func LocalBackup(c *gin.Context) {
 	defer common.WriteJSON(c, res)
 
 	log.Debug("LocalBackup")
-	err = localBackup()
+	err = Backup()
 	if err != nil {
 		res["message"] = err.Error()
 		res["succeed"] = false
@@ -41,7 +42,8 @@ func LocalBackup(c *gin.Context) {
 }
 
 // localBackup 执行本地备份操作
-func localBackup() (err error) {
+// 将localBackup改为Backup（大写开头，公开函数）
+func Backup() (err error) {
 	conf := config.GetConfiguration()
 
 	// 检查备份功能是否启用
