@@ -6,7 +6,7 @@ domain = 'http://localhost:8090'
 file_server = 'smms'
 notify_emails = ''
 page_size = 10
-public = 'static'
+public = 'front/static'
 view = 'views/**/*.html'
 dir = '.'
 
